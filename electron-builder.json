@@ -1,6 +1,6 @@
 {
-  "appId": "com.example.electron-nextjs-app",
-  "productName": "Electron Next.js App",
+  "appId": "com.apionix.v2",
+  "productName": "APIONIX V2",
   "directories": {
     "output": "dist"
   },

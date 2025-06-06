@@ -2,6 +2,9 @@
   "name": "apionix-v2",
   "version": "0.1.0",
   "private": true,
+  "description": "A desktop application built with Electron and Next.js",
+  "author": "TETRAX",
+  "main": "electron/main.js",
   "scripts": {
     "dev": "next dev",
     "build": "next build",

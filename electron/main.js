@@ -5,7 +5,6 @@ const isDev = process.env.NODE_ENV === "development"
 let mainWindow
 
 function createWindow() {
-  // Create the browser window
   mainWindow = new BrowserWindow({
     width: 1200,
     height: 800,
@@ -21,28 +20,24 @@ function createWindow() {
     show: false,
   })
 
-  // Load the Next.js app
-  const startUrl = isDev ? "http://localhost:3001" : `file://${path.join(__dirname, "../.next/server/app/index.html")}`
+
+  const startUrl = isDev ? "http://localhost:3000" : `file://${path.join(__dirname, "../.next/server/app/index.html")}`
 
   mainWindow.loadURL(startUrl)
 
-  // Show window when ready to prevent visual flash
   mainWindow.once("ready-to-show", () => {
     mainWindow.show()
 
-    // Open DevTools in development
     if (isDev) {
       mainWindow.webContents.openDevTools()
     }
   })
 
-  // Handle window closed
   mainWindow.on("closed", () => {
     mainWindow = null
   })
 }
 
-// App event listeners
 app.whenReady().then(() => {
   createWindow()
   createMenu()
@@ -60,7 +55,6 @@ app.on("window-all-closed", () => {
   }
 })
 
-// Create application menu
 function createMenu() {
   const template = [
     {
@@ -124,7 +118,7 @@ function createMenu() {
   Menu.setApplicationMenu(menu)
 }
 
-// IPC handlers
+
 ipcMain.handle("get-app-version", () => {
   return app.getVersion()
 })
@@ -148,15 +142,14 @@ ipcMain.handle("get-system-info", () => {
   }
 })
 
-// Handle app data
+
 ipcMain.handle("save-data", async (event, data) => {
-  // In a real app, you'd save to a file or database
+
   console.log("Saving data:", data)
   return { success: true, message: "Data saved successfully" }
 })
 
 ipcMain.handle("load-data", async () => {
-  // In a real app, you'd load from a file or database
   return {
     lastOpened: new Date().toISOString(),
     settings: {
