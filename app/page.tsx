@@ -867,8 +867,191 @@ export default function Home() {
               )}
 
               {activeRequestTab === "Params" && (
-                <div className="h-[calc(100%-60px)] flex items-center justify-center">
-                  <p className="text-white/50 text-xs">Params configuration coming soon...!</p>
+                <div className="min-h-screen overflow-y-auto">
+                  <div className="flex flex-col gap-1">
+                    <div className='flex items-center gap-1 '>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="checkbox"
+                          defaultChecked
+                          className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
+                        />
+                        <GripVertical size={14} className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing" />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Content-Type"
+                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
+                      />
+                      <input
+                        type="text"
+                        placeholder="application/json"
+                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
+                      />
+                      <button
+                        className="p-1 hover:bg-white/10 rounded transition-colors duration-200"
+                      >
+                        <Trash2 className='text-white/50 hover:text-white/70' size={14} />
+                      </button>
+                    </div>
+
+                    <div className='flex items-center gap-1'>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="checkbox"
+                          defaultChecked
+                          className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
+                        />
+                        <GripVertical size={14} className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing" />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Authorization"
+                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
+                      />
+                      <input
+                        type="text"
+                        placeholder="Bearer token"
+                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
+                      />
+                      <button
+                        className="p-1 hover:bg-white/10 rounded transition-colors duration-200"
+                      >
+                        <Trash2 className='text-white/50 hover:text-white/70' size={14} />
+                      </button>
+                    </div>
+
+                    <div className='flex items-center gap-1'>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="checkbox"
+                          defaultChecked
+                          className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
+                        />
+                        <GripVertical size={14} className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing" />
+                      </div>
+                      <input
+                        type="text"
+                        placeholder="Accept"
+                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
+                      />
+                      <input
+                        type="text"
+                        placeholder="application/json"
+                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
+                      />
+                      <button
+                        className="p-1 hover:bg-white/10 rounded transition-colors duration-200"
+                      >
+                        <Trash2 className='text-white/50 hover:text-white/70' size={14} />
+                      </button>
+                    </div>
+
+                    <div className='flex items-center gap-1 mt-1'>
+                      <div className="flex items-center gap-1">
+                        <input
+                          type="checkbox"
+                          defaultChecked
+                          className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
+                        />
+                        <GripVertical size={14} className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing" />
+                      </div>
+                      <input
+                        type="text"
+                        value="Content-Type"
+                        readOnly
+                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 text-white/70 text-xs outline-none px-2 py-1.5"
+                      />
+                      <div className="flex-1 relative">
+                        <input
+                          type="text"
+                          value="multipart/form-data"
+                          readOnly
+                          className="w-full bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 text-white/70 text-xs outline-none px-2 py-1.5"
+                        />
+                        <input
+                          type="file"
+                          className="absolute inset-0 opacity-0 cursor-pointer"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              console.log("File selected:", file.name);
+                            }
+                          }}
+                        />
+                      </div>
+                      <button
+                        className="p-1 hover:bg-white/10 rounded transition-colors duration-200"
+                      >
+                        <Trash2 className='text-white/50 hover:text-white/70' size={14} />
+                      </button>
+                    </div>
+
+                    <button
+                      onClick={() => {
+                        const headerRow = document.createElement('div');
+                        headerRow.className = 'flex items-center gap-1 mt-1';
+                        headerRow.innerHTML = `
+                          <div class="flex items-center gap-1">
+                            <input type="checkbox" checked class="accent-[#DBDE52] h-3 w-3 cursor-pointer">
+                            <svg class="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M9 6V8M9 12V14M9 18V20M15 6V8M15 12V14M15 18V20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                            </svg>
+                          </div>
+                          <input type="text" placeholder="Header name" class="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5">
+                          <input type="text" placeholder="Header value" class="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5">
+                          <button class="p-1 hover:bg-white/10 rounded transition-colors duration-200">
+                            <svg class="text-white/50 hover:text-white/70" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                              <path d="M3 6H5M5 6H21M5 6V20C5 20.5523 5.44772 21 6 21H18C18.5523 21 19 20.5523 19 20V6M8 6V4C8 3.44772 8.44772 3 9 3H15C15.5523 3 16 3.44772 16 4V6M10 11V17M14 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
+                            </svg>
+                          </button>
+                        `;
+
+                        const addButton = document.querySelector('.flex.items-center.gap-1\\.5.text-\\[\\#4B78E6\\]');
+                        if (addButton && addButton.parentNode) {
+                          addButton.parentNode.insertBefore(headerRow, addButton);
+                        }
+                      }}
+                      className="flex items-center gap-1.5 text-[#4B78E6] text-xs border border-dashed border-gray-600/20 hover:border-[#4B78E6]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors"
+                    >
+                      <Plus size={12} />
+                      Add New Header
+                    </button>
+
+                    <div className="flex items-center gap-1.5 text-[#73DC8C] text-xs border border-dashed border-gray-600/20 hover:border-[#73DC8C]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors cursor-pointer">
+                      <Plus size={12} />
+                      <label className="flex-1 cursor-pointer">
+                        Add File Upload
+                        <input
+                          type="file"
+                          className="hidden"
+                          onChange={(e) => {
+                            const file = e.target.files?.[0];
+                            if (file) {
+                              console.log("File selected for upload:", file.name);
+                            }
+                          }}
+                        />
+                      </label>
+                    </div>
+
+                    <div className="mt-4 bg-black/20 rounded-lg p-2 border border-gray-600/20">
+                      <p className="text-white/60 text-xs mb-1">Common Headers:</p>
+                      <div className="grid grid-cols-2 gap-1">
+                        <span className="text-[#4B78E6] text-xs">Content-Type</span>
+                        <span className="text-white/50 text-xs">application/json</span>
+
+                        <span className="text-[#4B78E6] text-xs">Accept</span>
+                        <span className="text-white/50 text-xs">application/json</span>
+
+                        <span className="text-[#4B78E6] text-xs">Authorization</span>
+                        <span className="text-white/50 text-xs">Bearer token</span>
+
+                        <span className="text-[#4B78E6] text-xs">Content-Type</span>
+                        <span className="text-white/50 text-xs">multipart/form-data</span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               )}
 
