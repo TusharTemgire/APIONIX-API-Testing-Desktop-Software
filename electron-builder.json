@@ -1,0 +1,43 @@
+{
+  "appId": "com.example.electron-nextjs-app",
+  "productName": "Electron Next.js App",
+  "directories": {
+    "output": "dist"
+  },
+  "files": ["electron/**/*", ".next/**/*", "public/**/*", "package.json"],
+  "extraResources": [
+    {
+      "from": ".next",
+      "to": ".next"
+    }
+  ],
+  "mac": {
+    "category": "public.app-category.productivity",
+    "target": [
+      {
+        "target": "dmg",
+        "arch": ["x64", "arm64"]
+      }
+    ]
+  },
+  "win": {
+    "target": [
+      {
+        "target": "nsis",
+        "arch": ["x64", "ia32"]
+      }
+    ]
+  },
+  "linux": {
+    "target": [
+      {
+        "target": "AppImage",
+        "arch": ["x64"]
+      }
+    ]
+  },
+  "nsis": {
+    "oneClick": false,
+    "allowToChangeInstallationDirectory": true
+  }
+}
