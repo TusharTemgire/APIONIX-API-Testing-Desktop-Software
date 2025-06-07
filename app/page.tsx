@@ -107,75 +107,6 @@ export default function Home() {
     }
   };
 
-  const handleDragStart = (e: React.DragEvent, headerId: string) => {
-    setDraggedItem(headerId);
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/html', headerId);
-  };
-
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = 'move';
-  };
-
-  const handleDrop = (e: React.DragEvent, targetId: string) => {
-    e.preventDefault();
-    
-    if (!draggedItem || draggedItem === targetId) {
-      setDraggedItem(null);
-      return;
-    }
-
-    const draggedIndex = headers.findIndex(header => header.id === draggedItem);
-    const targetIndex = headers.findIndex(header => header.id === targetId);
-
-    if (draggedIndex === -1 || targetIndex === -1) {
-      setDraggedItem(null);
-      return;
-    }
-
-    const newHeaders = [...headers];
-    const [removed] = newHeaders.splice(draggedIndex, 1);
-    newHeaders.splice(targetIndex, 0, removed);
-
-    setHeaders(newHeaders);
-    setDraggedItem(null);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedItem(null);
-  };
-
-  const updateHeader = (id: string, updates: Partial<Header>) => {
-    setHeaders(prev => prev.map(header => 
-      header.id === id ? { ...header, ...updates } : header
-    ));
-  };
-
-  const removeHeader = (id: string) => {
-    setHeaders(prev => prev.filter(header => header.id !== id));
-  };
-
-  const addNewHeader = () => {
-    const newHeader: Header = {
-      id: Date.now().toString(),
-      key: '',
-      value: '',
-      enabled: true
-    };
-    setHeaders(prev => [...prev, newHeader]);
-  };
-
-  const addFileUploadHeader = () => {
-    const newHeader: Header = {
-      id: Date.now().toString(),
-      key: 'Content-Type',
-      value: 'multipart/form-data',
-      enabled: true,
-      isFile: true
-    };
-    setHeaders(prev => [...prev, newHeader]);
-  };
 
   const loadFromLocalStorage = () => {
     try {
@@ -502,24 +433,7 @@ export default function Home() {
     }
   };
 
-  const handleRequest = async () => {
-    if (msg) {
-      setIsLoading(true);
-      try {
-        window.electron?.sendMessage(msg);
-      } catch (error) {
-        console.error("Request failed:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    } else {
-      alert("Please enter a valid API URL.");
-    }
-  };
 
-  const toggleTokenVisibility = () => {
-    setShowToken(!showToken);
-  };
 
   const handleResponseExpand = () => {
     setIsResponseExpanded(!isResponseExpanded);
