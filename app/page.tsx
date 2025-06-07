@@ -1562,7 +1562,7 @@ export default function Home() {
                         ${isResponseBodyExpanded ? "max-h-96" : "max-h-28"}
                       `}
                       >
-                        <div className="hover:bg-black/10 flex gap-1 justify-start items-center text-white/50 text-xs px-2 py-1">
+                        <div className="bg-black/10 flex gap-1 justify-start items-center text-white/50 text-xs px-2 py-1">
                           <button
                             onClick={handleResponseBodyExpand}
                             className={`
@@ -1584,7 +1584,10 @@ export default function Home() {
                             fontFamily:
                               "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
                           }}
-                          value="Cannot GET /api/users"
+                           value="{}"
+                          onChange={(e) => {
+                            console.log("Response body changed:", e.target.value);
+                          }}
                           readOnly
                         />
                       </div>
