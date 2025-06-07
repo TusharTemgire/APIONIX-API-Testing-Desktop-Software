@@ -115,7 +115,7 @@ export default function Home() {
             fontSize: "12px",
             fontWeight: "500"
           },
-          icon: "✓",
+          icon: "✗",
           duration: 2000
         });
     }
@@ -193,7 +193,7 @@ export default function Home() {
             fontSize: "12px",
             fontWeight: "500"
           },
-          icon: "✓",
+          icon: "✗",
           duration: 2000
         });
       setTabs([
@@ -458,7 +458,7 @@ export default function Home() {
     validateAndSuggestJson(value);
     updateActiveTab({ bodyData: value });
   };
-
+//hii
 const handleHello = async () => {
   if (!msg || msg.trim() === '') {
     return; 
@@ -486,7 +486,7 @@ const handleHello = async () => {
             fontSize: "12px",
             fontWeight: "500"
           },
-          icon: "✓",
+          icon: "✗",
           duration: 2000
         });
     
@@ -849,12 +849,12 @@ const formatJsonResponse = (data: any): string => {
         <div className="flex gap-1.5">
           <button
             onClick={handleHello}
-            disabled={isLoading}
+            disabled={isLoading || !isValidUrl(msg)}
             className={`
             flex justify-center items-center text-black text-xs px-2 py-1 rounded-md shadow-[0_0_5px_rgba(115,220,140,0.2)]
             transition-all duration-200
             ${
-              isLoading
+              isLoading || !isValidUrl(msg)
                 ? "bg-[#5ea372] cursor-not-allowed"
                 : "bg-[#73DC8C] hover:bg-[#66c97f]"
             }
@@ -865,6 +865,8 @@ const formatJsonResponse = (data: any): string => {
                 <LoaderCircle className="animate-spin mr-1" size={12} />
                 Sending
               </>
+            ) : !isValidUrl(msg) ? (
+              "Enter URL"
             ) : (
               "Send"
             )}
@@ -1243,7 +1245,7 @@ const formatJsonResponse = (data: any): string => {
                             const file = e.target.files?.[0];
                             if (file) {
                               console.log("File selected:", file.name);
-                                    toast.error("Failed to upload file", {
+                                    toast.success("File Selected: " + file.name, {
           style: {
             backgroundColor: "rgba(18, 18, 18, 0.8)",
             backdropFilter: "blur(5px)",
@@ -1320,7 +1322,7 @@ const formatJsonResponse = (data: any): string => {
                                 "File selected for upload:",
                                 file.name
                               );
-                                          toast.error("File Selected: " + file.name, {
+                                          toast.success("File Selected: " + file.name, {
           style: {
             backgroundColor: "rgba(18, 18, 18, 0.8)",
             backdropFilter: "blur(5px)",
@@ -1502,7 +1504,7 @@ const formatJsonResponse = (data: any): string => {
                             const file = e.target.files?.[0];
                             if (file) {
                               console.log("File selected:", file.name);
-                                          toast.error("File Selected: " + file.name, {
+                                          toast.success("File Selected: " + file.name, {
           style: {
             backgroundColor: "rgba(18, 18, 18, 0.8)",
             backdropFilter: "blur(5px)",
@@ -1579,7 +1581,7 @@ const formatJsonResponse = (data: any): string => {
                                 "File selected for upload:",
                                 file.name
                               );
-                                          toast.error("File Selected For Upload: " + file.name, {
+                                          toast.success("File Selected For Upload: " + file.name, {
           style: {
             backgroundColor: "rgba(18, 18, 18, 0.8)",
             backdropFilter: "blur(5px)",
