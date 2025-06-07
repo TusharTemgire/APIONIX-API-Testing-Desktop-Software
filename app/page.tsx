@@ -2385,6 +2385,43 @@ export default function Home() {
             </div>
           </Panel>
         </PanelGroup>
+        <div className="flex justify-center items-center mt-2">
+          <div className="bg-[#201C1C] w-full p-3 rounded-lg shadow-md border border-gray-600/20">
+            <div className="flex items-start gap-3">
+              <div className="bg-[#1a1a1a] p-2 rounded-lg border border-gray-600/20">
+                <CodeXml size={18} className="text-[#73DC8C]" />
+              </div>
+              <div className="text-white/70 text-xs space-y-1 flex-1">
+                <p>
+                  <span className="text-[#73DC8C] font-medium">APIONIX</span> is a lightweight API
+                  testing tool designed for developers to quickly test and debug
+                  APIs without complex setups or configurations.
+                </p>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[10px] text-white/70">
+                  <span className="flex items-center"><span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>HTTP methods</span>
+                  <span className="flex items-center"><span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>JSON validation</span>
+                  <span className="flex items-center"><span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>Custom headers</span>
+                  <span className="flex items-center"><span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>Multi-tab</span>
+                  <span className="flex items-center"><span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>Environment vars</span>
+                  <span className="flex items-center"><span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>Response time</span>
+                </div>
+                <div className="flex justify-between items-center mt-2 pt-1 border-t border-gray-600/20">
+                  <div className="text-white/40 text-[10px]">
+                    v1.0.1 • Built with ♥ by TRONIX
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button className="px-2 py-0.5 bg-[#1a1a1a] shadow-sm hover:bg-[#2a2a2a] border border-gray-600/20 rounded text-[10px] text-white/60">
+                      Documentation
+                    </button>
+                    <button className="px-2 py-0.5 bg-[#1a1a1a] shadow-sm hover:bg-[#2a2a2a] border border-gray-600/20 rounded text-[10px] text-white/60">
+                      About
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
