@@ -3,6 +3,7 @@
 import { ChevronsRight, CodeXml, AlertCircle, CheckCircle, Lightbulb, ChevronsUpDown, Plus, X, Trash2, KeyRound, Eye, EyeClosed, GripVertical, GlobeLock, Loader, LoaderCircle, Layers } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
+import { Toaster, toast } from "sonner"
 
 declare global {
   interface Window {
@@ -65,9 +66,9 @@ export default function Home() {
   const [tabs, setTabs] = useState<Tab[]>([
     {
       id: '1',
-      url: 'api.dos9rental.in/api/sites',
+      url: 'api.tronix.in/api/demos',
       method: 'POST',
-      name: 'api.dos9rental.in/api/sites',
+      name: 'api.tronix.in/api/demos',
       bodyData: '',
       isActive: true
     }
@@ -75,13 +76,10 @@ export default function Home() {
   const [activeTabId, setActiveTabId] = useState('1');
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [headers, setHeaders] = useState<Header[]>([
-    { id: '1', key: 'Content-Type', value: 'application/json', enabled: true },
-    { id: '2', key: 'Authorization', value: 'Bearer token', enabled: true },
-    { id: '3', key: 'Accept', value: 'application/json', enabled: true },
-    { id: '4', key: 'Content-Type', value: 'multipart/form-data', enabled: true, isFile: true }
-  ]);
-  const [draggedItem, setDraggedItem] = useState<string | null>(null);
+  const [apiResponse, setApiResponse] = useState<any>(null);
+  const [responseStatus, setResponseStatus] = useState<number | null>(null);
+  const [responseTime, setResponseTime] = useState<number>(0);
+  const [responseHeaders, setResponseHeaders] = useState<Record<string, string>>({});
 
 
   const saveToLocalStorage = () => {
@@ -105,6 +103,21 @@ export default function Home() {
       localStorage.setItem('apionix-app-state', JSON.stringify(appState));
     } catch (error) {
       console.error('Failed to save to localStorage:', error);
+            toast.error("Failed to save to localStorage", {
+          style: {
+            backgroundColor: "rgba(18, 18, 18, 0.8)",
+            backdropFilter: "blur(5px)",
+            color: "#ffffff",
+            borderRadius: "10px",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
+            padding: "8px 12px",
+            fontSize: "12px",
+            fontWeight: "500"
+          },
+          icon: "✓",
+          duration: 2000
+        });
     }
   };
 
@@ -125,6 +138,15 @@ export default function Home() {
         setIsResponseExpanded(appState.isResponseExpanded || false);
         setIsResponseBodyExpanded(appState.isResponseBodyExpanded || false);
         setShowToken(appState.showToken || false);
+        setJsonErrors(appState.jsonErrors || []);
+        setJsonSuggestions(appState.jsonSuggestions || []);
+        setShowSuggestions(appState.showSuggestions || false);
+        setIsLoaded(true);
+        setIsLoading(false);
+        setApiResponse(appState.apiResponse || null);
+        setResponseStatus(appState.responseStatus || null);
+        setResponseTime(appState.responseTime || 0);
+        setResponseHeaders(appState.responseHeaders || {});
 
         if (appState.tabs && appState.tabs.length > 0) {
           setTabs(appState.tabs);
@@ -132,9 +154,9 @@ export default function Home() {
           setTabs([
             {
               id: '1',
-              url: 'api.dos9rental.in/api/sites',
+              url: 'api.tronix.in/api/demos',
               method: 'POST',
-              name: 'api.dos9rental.in/api/sites',
+              name: 'api.tronix.in/api/demos',
               bodyData: '',
               isActive: true
             }
@@ -149,9 +171,9 @@ export default function Home() {
         setTabs([
           {
             id: '1',
-            url: 'api.dos9rental.in/api/sites',
+            url: 'api.tronix.in/api/demos',
             method: 'POST',
-            name: 'api.dos9rental.in/api/sites',
+            name: 'api.tronix.in/api/demos',
             bodyData: '',
             isActive: true
           }
@@ -159,12 +181,27 @@ export default function Home() {
       }
     } catch (error) {
       console.error('Failed to load from localStorage:', error);
+            toast.error("Failed to load from localStorage", {
+          style: {
+            backgroundColor: "rgba(18, 18, 18, 0.8)",
+            backdropFilter: "blur(5px)",
+            color: "#ffffff",
+            borderRadius: "10px",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
+            padding: "8px 12px",
+            fontSize: "12px",
+            fontWeight: "500"
+          },
+          icon: "✓",
+          duration: 2000
+        });
       setTabs([
         {
           id: '1',
-          url: 'api.dos9rental.in/api/sites',
+          url: 'api.tronix.in/api/demos',
           method: 'POST',
-          name: 'api.dos9rental.in/api/sites',
+          name: 'api.tronix.in/api/demos',
           bodyData: '',
           isActive: true
         }
@@ -422,19 +459,252 @@ export default function Home() {
     updateActiveTab({ bodyData: value });
   };
 
-  const handleHello = async () => {
-    setIsLoading(true);
-    try {
-      await new Promise(resolve => setTimeout(resolve, 2000));
+const handleHello = async () => {
+  if (!msg || msg.trim() === '') {
+    return; 
+  }
 
-    } catch (error) {
-      console.error("Request failed:", error);
-    } finally {
-      setIsLoading(false);
+  let url = msg.trim();
+
+  if (!url.startsWith('http://') && !url.startsWith('https://')) {
+    url = 'https://' + url;
+  }
+
+  try {
+    new URL(url);
+  } catch (error) {
+    console.error("Invalid URL:", error);
+                toast.error("Invalid URL", {
+          style: {
+            backgroundColor: "rgba(18, 18, 18, 0.8)",
+            backdropFilter: "blur(5px)",
+            color: "#ffffff",
+            borderRadius: "10px",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
+            padding: "8px 12px",
+            fontSize: "12px",
+            fontWeight: "500"
+          },
+          icon: "✓",
+          duration: 2000
+        });
+    
+    const errorResponse = {
+      error: "Invalid URL",
+      message: "Please enter a valid URL",
+      details: "The URL format is invalid. Please check and try again.",
+      timestamp: new Date().toISOString(),
+      url: msg
+    };
+
+    setApiResponse(errorResponse);
+    setResponseStatus(0);
+    setResponseHeaders({
+      'Connection': 'failed',
+      'Status': '0 Invalid URL',
+      'Error': 'Invalid URL format',
+      'Date': new Date().toUTCString()
+    });
+    return;
+  }
+
+  setIsLoading(true);
+  setApiResponse(null);
+  setResponseStatus(null);
+  setResponseTime(0);
+  setResponseHeaders({});
+
+  const startTime = Date.now();
+
+  try {
+    const requestHeaders: Record<string, string> = {
+      'User-Agent': 'APIONIX/1.0',
+      'Accept': 'application/json, text/plain, */*',
+      'Accept-Language': 'en-US,en;q=0.9',
+      'Cache-Control': 'no-cache',
+    };
+
+    if (['POST', 'PUT', 'PATCH'].includes(selectedMethod)) {
+      if (bodyData.trim()) {
+        try {
+          JSON.parse(bodyData);
+          requestHeaders['Content-Type'] = 'application/json';
+        } catch {
+          if (bodyData.includes('Content-Disposition: form-data')) {
+            requestHeaders['Content-Type'] = 'multipart/form-data';
+          } else {
+            requestHeaders['Content-Type'] = 'application/x-www-form-urlencoded';
+          }
+        }
+      } else {
+        requestHeaders['Content-Type'] = 'application/json';
+      }
     }
+
+    if (authToken) {
+      requestHeaders['Authorization'] = `Bearer ${authToken}`;
+    }
+
+    const requestOptions: RequestInit = {
+      method: selectedMethod,
+      headers: requestHeaders,
+      mode: 'cors',
+      credentials: 'omit',
+    };
+
+    if (['POST', 'PUT', 'PATCH'].includes(selectedMethod) && bodyData.trim()) {
+      requestOptions.body = bodyData;
+    }
+
+    const response = await fetch(url, requestOptions);
+    const endTime = Date.now();
+    
+    setResponseTime(endTime - startTime);
+    setResponseStatus(response.status);
+
+    const headers: Record<string, string> = {};
+    response.headers.forEach((value, key) => {
+      headers[key] = value;
+    });
+
+    headers['Status'] = `${response.status} ${response.statusText}`;
+    headers['Version'] = 'HTTP/1.1';
+    
+    setResponseHeaders(headers);
+
+    const contentType = response.headers.get('content-type');
+    let responseData;
+
+    if (contentType?.includes('application/json')) {
+      responseData = await response.json();
+    } else if (contentType?.includes('text/')) {
+      responseData = await response.text();
+    } else {
+      const text = await response.text();
+      try {
+        responseData = JSON.parse(text);
+      } catch {
+        responseData = text;
+      }
+    }
+
+    setApiResponse(responseData);
+
+  } catch (error) {
+    console.error("Request failed:", error);
+                toast.error("Request failed", {
+          style: {
+            backgroundColor: "rgba(18, 18, 18, 0.8)",
+            backdropFilter: "blur(5px)",
+            color: "#ffffff",
+            borderRadius: "10px",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
+            padding: "8px 12px",
+            fontSize: "12px",
+            fontWeight: "500"
+          },
+          icon: "✓",
+          duration: 2000
+        });
+    
+    const errorResponse = {
+      error: "Request failed",
+      message: error instanceof Error ? error.message : "Unknown error",
+      details: "Failed to connect to the server. Please check the URL and network connectivity.",
+      timestamp: new Date().toISOString(),
+      url: msg
+    };
+
+    setApiResponse(errorResponse);
+    setResponseStatus(0);
+    setResponseTime(Date.now() - startTime);
+
+    setResponseHeaders({
+      'Connection': 'failed',
+      'Status': '0 Connection Failed',
+      'Error': error instanceof Error ? error.message : 'Network Error',
+      'Date': new Date().toUTCString()
+    });
+    
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+const isValidUrl = (url: string): boolean => {
+  if (!url || url.trim() === '') return false;
+  
+  try {
+    const testUrl = url.startsWith('http://') || url.startsWith('https://') 
+      ? url 
+      : 'https://' + url;
+    
+    new URL(testUrl);
+    return true;
+  } catch {
+    return false;
+  }
+};
+
+const formatJsonResponse = (data: any): string => {
+  if (typeof data === 'string') {
+    try {
+      data = JSON.parse(data);
+    } catch {
+      return `<span style="color: #ffffff80">${data.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>`;
+    }
+  }
+  const jsonString = JSON.stringify(data, null, 2);
+  
+  let formatted = jsonString
+
+    .replace(/"([^"]+)"(\s*):/g, '<span style="color: #e06c75">"$1"</span>$2<span style="color: #61afef">:</span>')
+
+    .replace(/:\s*"([^"]*)"/g, ': <span style="color: #98c379">"$1"</span>')
+
+    .replace(/:\s*(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g, ': <span style="color: #d19a66">$1</span>')
+
+    .replace(/:\s*(true|false)(?=\s*[,\}\]])/g, ': <span style="color: #56b6c2">$1</span>')
+
+    .replace(/:\s*(null)(?=\s*[,\}\]])/g, ': <span style="color: #c678dd">$1</span>')
+
+    .replace(/([{}[\]])/g, '<span style="color: #61afef">$1</span>')
+
+    .replace(/,(?=\s*[\n\r])/g, '<span style="color: #61afef">,</span>')
+
+    .replace(/(\[\s*)"([^"]*)"(?=\s*[,\]])/g, '$1<span style="color: #98c379">"$2"</span>')
+
+    .replace(/(\[\s*)(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)(?=\s*[,\]])/g, '$1<span style="color: #d19a66">$2</span>')
+
+    .replace(/(\[\s*)(true|false)(?=\s*[,\]])/g, '$1<span style="color: #56b6c2">$2</span>')
+
+    .replace(/(\[\s*)(null)(?=\s*[,\]])/g, '$1<span style="color: #c678dd">$2</span>');
+
+  return formatted;
+};
+  const getStatusColor = (status: number | null): string => {
+    if (!status) return '#ef4444';
+    if (status >= 200 && status < 300) return '#22c55e';
+    if (status >= 300 && status < 400) return '#f59e0b';
+    if (status >= 400 && status < 500) return '#ef4444';
+    if (status >= 500) return '#dc2626';
+    return '#6b7280';
   };
 
-
+  const getStatusText = (status: number | null): string => {
+    if (!status) return 'Connection Failed';
+    if (status === 200) return 'OK';
+    if (status === 201) return 'Created';
+    if (status === 204) return 'No Content';
+    if (status === 400) return 'Bad Request';
+    if (status === 401) return 'Unauthorized';
+    if (status === 403) return 'Forbidden';
+    if (status === 404) return 'Not Found';
+    if (status === 500) return 'Internal Server Error';
+    return 'Unknown';
+  };
 
   const handleResponseExpand = () => {
     setIsResponseExpanded(!isResponseExpanded);
@@ -472,6 +742,9 @@ export default function Home() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-[#191515] p-2">
+            <Toaster
+        position="top-center"
+      />
       {/* <h1 className="text-3xl text-white font-medium mb-2">ElectronJS</h1> */}
       <div className="w-full mb-1">
         <div className="flex items-center">
@@ -970,6 +1243,21 @@ export default function Home() {
                             const file = e.target.files?.[0];
                             if (file) {
                               console.log("File selected:", file.name);
+                                    toast.error("Failed to upload file", {
+          style: {
+            backgroundColor: "rgba(18, 18, 18, 0.8)",
+            backdropFilter: "blur(5px)",
+            color: "#ffffff",
+            borderRadius: "10px",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
+            padding: "8px 12px",
+            fontSize: "12px",
+            fontWeight: "500"
+          },
+          icon: "✓",
+          duration: 2000
+        });
                             }
                           }}
                         />
@@ -1032,6 +1320,21 @@ export default function Home() {
                                 "File selected for upload:",
                                 file.name
                               );
+                                          toast.error("File Selected: " + file.name, {
+          style: {
+            backgroundColor: "rgba(18, 18, 18, 0.8)",
+            backdropFilter: "blur(5px)",
+            color: "#ffffff",
+            borderRadius: "10px",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
+            padding: "8px 12px",
+            fontSize: "12px",
+            fontWeight: "500"
+          },
+          icon: "✓",
+          duration: 2000
+        });
                             }
                           }}
                         />
@@ -1199,6 +1502,21 @@ export default function Home() {
                             const file = e.target.files?.[0];
                             if (file) {
                               console.log("File selected:", file.name);
+                                          toast.error("File Selected: " + file.name, {
+          style: {
+            backgroundColor: "rgba(18, 18, 18, 0.8)",
+            backdropFilter: "blur(5px)",
+            color: "#ffffff",
+            borderRadius: "10px",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
+            padding: "8px 12px",
+            fontSize: "12px",
+            fontWeight: "500"
+          },
+          icon: "✓",
+          duration: 2000
+        });
                             }
                           }}
                         />
@@ -1261,6 +1579,21 @@ export default function Home() {
                                 "File selected for upload:",
                                 file.name
                               );
+                                          toast.error("File Selected For Upload: " + file.name, {
+          style: {
+            backgroundColor: "rgba(18, 18, 18, 0.8)",
+            backdropFilter: "blur(5px)",
+            color: "#ffffff",
+            borderRadius: "10px",
+            border: "1px solid rgba(255, 255, 255, 0.1)",
+            boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
+            padding: "8px 12px",
+            fontSize: "12px",
+            fontWeight: "500"
+          },
+          icon: "✓",
+          duration: 2000
+        });
                             }
                           }}
                         />
@@ -1358,7 +1691,7 @@ export default function Home() {
                         </button>
                         <h2 className="text-[#73DC8C] flex items-center gap-1 text-[13px] whitespace-nowrap overflow-hidden">
                           <span>{selectedMethod}</span>
-                          <span className="text-white font-mono truncate max-w-[200px]">
+                          <span className="text-white font-mono ">
                             {msg || "https://apionix/api/users"}
                           </span>
                           <span className="text-white/40 border border-gray-700/50 shadow-sm bg-white/5 px-1.5 rounded text-[10px] font-mono flex-shrink-0">
@@ -1384,32 +1717,91 @@ export default function Home() {
                               <span className="text-[#4B78E6]">
                                 Content-Type
                               </span>
-                              <span>application/json</span>
+                              <span>
+                                {(() => {
+                                  if (['POST', 'PUT', 'PATCH'].includes(selectedMethod) && bodyData) {
+                                    try {
+                                      JSON.parse(bodyData);
+                                      return 'application/json';
+                                    } catch {
+                                      if (bodyData.includes('Content-Disposition: form-data') || 
+                                          bodyData.includes('------WebKitFormBoundary')) {
+                                        return 'multipart/form-data';
+                                      } else if (bodyData.includes('=') && !bodyData.includes('{')) {
+                                        return 'application/x-www-form-urlencoded';
+                                      }
+                                      return 'text/plain';
+                                    }
+                                  } else if (selectedMethod === 'GET') {
+                                    return 'application/json';
+                                  }
+                                  return 'application/json';
+                                })()}
+                              </span>
                             </div>
                             <div className="grid grid-cols-2 gap-2">
                               <span className="text-[#4B78E6]">Host</span>
                               <span>
                                 {msg
-                                  ? new URL(
-                                      `https://${msg.replace(
-                                        /^https?:\/\//,
-                                        ""
-                                      )}`
-                                    ).hostname
-                                  : "api.dos9rental.in"}
+                                  ? msg.startsWith('http://') || msg.startsWith('https://')
+                                    ? new URL(msg).host
+                                    : msg.includes('/')
+                                      ? msg.split('/')[0]
+                                      : msg
+                                  : "api.tronix.in"}
                               </span>
                             </div>
                             <div className="grid grid-cols-2 gap-2">
                               <span className="text-[#4B78E6]">User-Agent</span>
                               <span>APIONIX</span>
                             </div>
+                            {msg && (
+                              <>
+                              <div className="grid grid-cols-2 gap-2">
+                                <span className="text-[#4B78E6]">Path</span>
+                                <span>
+                                {(() => {
+                                  try {
+                                  const url = msg.startsWith('http://') || msg.startsWith('https://')
+                                    ? new URL(msg).pathname
+                                    : '/' + (msg.includes('/') ? msg.split('/').slice(1).join('/') : '');
+                                  return url || '/';
+                                  } catch {
+                                  return '/';
+                                  }
+                                })()}
+                                </span>
+                              </div>
+                              {msg.includes('?') && (
+                                <div className="grid grid-cols-2 gap-2">
+                                <span className="text-[#4B78E6]">Query Params</span>
+                                <div>
+                                  {(() => {
+                                  try {
+                                    const urlObj = new URL(msg.startsWith('http') ? msg : `https://${msg}`);
+                                    return Array.from(urlObj.searchParams.entries()).map(([key, value], i) => (
+                                    <div key={i} className="text-xs">
+                                      <span className="text-yellow-300">{key}</span>
+                                      <span className="text-white/50"> = </span>
+                                      <span className="text-green-300">{value}</span>
+                                    </div>
+                                    ));
+                                  } catch {
+                                    return null;
+                                  }
+                                  })()}
+                                </div>
+                                </div>
+                              )}
+                              </>
+                            )}
                             {authToken && (
                               <div className="grid grid-cols-2 gap-2">
                                 <span className="text-[#4B78E6]">
                                   Authorization
                                 </span>
                                 <span>
-                                  Bearer {authToken.substring(0, 20)}...
+                                  Bearer <span className="text-[#789b28]">{authToken.substring(0, 40)}...</span>
                                 </span>
                               </div>
                             )}
@@ -1421,9 +1813,15 @@ export default function Home() {
                                 <p className="text-[#4B78E6] text-xs mb-1">
                                   Request Body:
                                 </p>
-                                <pre className="text-white/60 text-xs whitespace-pre-wrap break-words">
-                                  {bodyData}
-                                </pre>
+                                  <pre 
+                                    className="text-xs font-mono mt-2 whitespace-pre-wrap break-words max-w-full"
+                                    style={{
+                                      fontFamily: "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace"
+                                    }}
+                                    dangerouslySetInnerHTML={{
+                                      __html: bodyData ? formatJsonText(bodyData) : '<span class="text-gray-400">No request body</span>'
+                                    }}
+                                  />
                               </div>
                             </>
                           )}
@@ -1434,6 +1832,220 @@ export default function Home() {
                 )}
 
                 {activeResponseTab === "Response" && (
+  <div>
+    <div
+      className={`
+        overflow-hidden rounded-md -mt-1
+        transition-all duration-300 ease-in-out
+        ${isResponseExpanded ? "max-h-96" : "max-h-12"}
+      `}
+    >
+      <div className="hover:bg-black/10 flex gap-1 justify-start items-center text-white/50 text-xs px-2 py-1">
+        <button
+          onClick={handleResponseExpand}
+          className={`
+            bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-gray-600/20 p-1 
+            flex justify-center items-center text-white rounded-md
+            transition-transform duration-300 ease-in-out
+            ${isResponseExpanded ? "rotate-90" : "rotate-0"}
+          `}
+        >
+          <ChevronsRight size={14} />
+        </button>
+
+        <h2 
+          className="text-[13px]"
+          style={{ color: getStatusColor(responseStatus) }}
+        >
+          {responseStatus ? `${responseStatus} ${getStatusText(responseStatus)}` : 'No Response'}
+        </h2>
+        {responseTime > 0 && (
+          <span className="text-white/40 text-[10px] ml-auto">
+            {responseTime}ms
+          </span>
+        )}
+      </div>
+
+      <div
+        className={`
+        pb-2 text-white/50 text-xs space-y-2
+        transition-opacity duration-300 ease-in-out
+        ${isResponseExpanded ? "opacity-100" : "opacity-0"}
+      `}
+      >
+        <div className="bg-black/20 p-2 sm:p-3 rounded-md overflow-x-auto">
+          <div className="flex items-center justify-between mb-1">
+            <p 
+              className="text-xs font-extrabold"
+              style={{ color: getStatusColor(responseStatus) }}
+            >
+              HTTP/1.1 {responseStatus ? `${responseStatus} ${getStatusText(responseStatus)}` : 'Connection Failed'}
+            </p>
+            {responseTime > 0 && (
+              <span className="text-white/40 text-[10px]">
+                {responseTime}ms
+              </span>
+            )}
+          </div>
+          <div className="border-t border-gray-600/10"></div>
+          
+          <div className="space-y-2 text-white/60 mt-1 min-w-[300px]">
+            {Object.keys(responseHeaders).length > 0 ? (
+              <>
+
+                {Object.entries(responseHeaders).map(([key, value]) => (
+                  <div key={key} className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
+                    <span className="text-[#4B78E6] text-xs">
+                      {key.split('-').map(word => 
+                        word.charAt(0).toUpperCase() + word.slice(1)
+                      ).join('-')}
+                    </span>
+                    <span className="text-xs break-all ml-4 sm:ml-0">
+                      {value}
+                    </span>
+                  </div>
+                ))}
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
+                  <span className="text-[#4B78E6] text-xs">
+                    Content-Length
+                  </span>
+                  <span className="text-xs break-all ml-4 sm:ml-0">
+                    {responseHeaders['content-length'] || 
+                     responseHeaders['Content-Length'] || 
+                     (apiResponse ? JSON.stringify(apiResponse).length + ' bytes' : 'Unknown')}
+                  </span>
+                </div>
+
+                {apiResponse && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
+                    <span className="text-[#4B78E6] text-xs">
+                      Response Size
+                    </span>
+                    <span className="text-xs break-all ml-4 sm:ml-0">
+                      {(JSON.stringify(apiResponse).length / 1024).toFixed(2)} KB
+                    </span>
+                  </div>
+                )}
+              </>
+            ) : (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
+                  <span className="text-[#4B78E6] text-xs">
+                    Access-Control-Allow-Origin
+                  </span>
+                  <span className="text-xs break-all ml-4 sm:ml-0">
+                    *
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
+                  <span className="text-[#4B78E6] text-xs">
+                    Connection
+                  </span>
+                  <span className="text-xs break-all ml-4 sm:ml-0">
+                    {responseStatus ? 'keep-alive' : 'No response headers available'}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
+                  <span className="text-[#4B78E6] text-xs">
+                    Content-Type
+                  </span>
+                  <span className="text-xs break-all ml-4 sm:ml-0">
+                    application/json; charset=utf-8
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
+                  <span className="text-[#4B78E6] text-xs">
+                    Date
+                  </span>
+                  <span className="text-xs break-all ml-4 sm:ml-0">
+                    {new Date().toUTCString()}
+                  </span>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
+                  <span className="text-[#4B78E6] text-xs">
+                    Server
+                  </span>
+                  <span className="text-xs break-all ml-4 sm:ml-0">
+                    nginx/1.24.0 (Ubuntu)
+                  </span>
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div className="">
+      <div
+        className={`
+        overflow-hidden rounded-md -mt-1
+        transition-all duration-300 ease-in-out
+        ${isResponseBodyExpanded ? "max-h-96" : "max-h-28"}
+      `}
+      >
+        <div className="bg-black/10 flex gap-1 justify-start items-center text-white/50 text-xs px-2 py-1">
+          <button
+            onClick={handleResponseBodyExpand}
+            className={`
+            bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-gray-600/20 p-1 
+            flex justify-center items-center text-white rounded-md
+            transition-transform duration-300 ease-in-out
+            ${isResponseBodyExpanded ? "rotate-90" : "rotate-0"}
+          `}
+          >
+            <ChevronsRight size={14} />
+          </button>
+          <h3 className="text-[#73DC8C] text-xs font-medium">
+            Response Body
+          </h3>
+          {apiResponse && (
+            <span className="text-white/40 text-[10px] ml-auto">
+              {typeof apiResponse === 'object' ? 'JSON' : 'TEXT'}
+            </span>
+          )}
+        </div>
+        
+        {apiResponse ? (
+          <div 
+            className="w-full h-80 bg-black/20 backdrop-blur-md p-3 rounded-md overflow-auto text-white/80 text-xs"
+            style={{
+              fontFamily: "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
+            }}
+          >
+            <pre 
+              className="whitespace-pre-wrap break-words"
+              dangerouslySetInnerHTML={{
+                __html: formatJsonResponse(apiResponse)
+              }}
+            />
+          </div>
+        ) : (
+          <div 
+            className="w-full h-80 bg-black/20 backdrop-blur-md p-3 rounded-md overflow-auto text-white/80 text-xs flex items-center justify-center"
+            style={{
+              fontFamily: "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
+            }}
+          >
+            <div className="text-white/40 text-center">
+              {isLoading ? (
+                <div className="flex items-center gap-2">
+                  <LoaderCircle className="animate-spin" size={16} />
+                  <span>Sending request...</span>
+                </div>
+              ) : (
+                <span>No response data available. Send a request to see the response.</span>
+              )}
+            </div>
+          </div>
+        )}
+      </div>
+    </div>
+  </div>
+)}
+
+                {/* {activeResponseTab === "Response" && (
                   <div>
                     <div
                       className={`
@@ -1480,18 +2092,32 @@ export default function Home() {
                               <span className="text-[#4B78E6] text-xs">
                                 Access-Control-Allow-Origin
                               </span>
-                              <span className="text-xs break-all ml-4 sm:ml-0">
-                                *
-                              </span>
+                                <span className="text-xs break-all ml-4 sm:ml-0">
+                                {responseHeaders['access-control-allow-origin'] || 
+                                 responseHeaders['Access-Control-Allow-Origin'] || '*'}
+                                </span>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                              <span className="text-[#4B78E6] text-xs">
-                                Connection
-                              </span>
-                              <span className="text-xs break-all ml-4 sm:ml-0">
-                                close
-                              </span>
-                            </div>
+                            {Object.keys(responseHeaders).length > 0 ? (
+                              Object.entries(responseHeaders).map(([key, value], index) => (
+                                <div key={index} className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
+                                  <span className="text-[#4B78E6] text-xs">
+                                    {key}
+                                  </span>
+                                  <span className="text-xs break-all ml-4 sm:ml-0">
+                                    {value}
+                                  </span>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
+                                <span className="text-[#4B78E6] text-xs">
+                                  Connection
+                                </span>
+                                <span className="text-xs break-all ml-4 sm:ml-0">
+                                  {responseStatus ? 'close' : 'No response headers available'}
+                                </span>
+                              </div>
+                            )}
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
                               <span className="text-[#4B78E6] text-xs">
                                 Content-Length
@@ -1510,10 +2136,12 @@ export default function Home() {
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
                               <span className="text-[#4B78E6] text-xs">
-                                Date
+                              Date
                               </span>
                               <span className="text-xs break-all ml-4 sm:ml-0">
-                                Tue, 03 Jun 2025 11:04:57 GMT
+                              {responseHeaders['date'] || 
+                               responseHeaders['Date'] || 
+                               new Date().toUTCString()}
                               </span>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
@@ -1521,7 +2149,10 @@ export default function Home() {
                                 Etag
                               </span>
                               <span className="text-xs break-all ml-4 sm:ml-0">
-                                W/"2-l9Fw4VUO7kr8CvBlt4zaMCqXZ0w"
+                                {responseHeaders['etag'] || 
+                                 responseHeaders['Etag'] || 
+                                 responseHeaders['ETag'] || 
+                                 (responseStatus ? 'W/"2-l9Fw4VUO7kr8CvBlt4zaMCqXZ0w"' : 'No ETag available')}
                               </span>
                             </div>
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
@@ -1593,7 +2224,9 @@ export default function Home() {
                       </div>
                     </div>
                   </div>
-                )}
+                )} */}
+
+
               </div>
             </div>
           </Panel>
