@@ -39,13 +39,6 @@ interface Tab {
   isActive: boolean;
 }
 
-interface Header {
-  id: string;
-  key: string;
-  value: string;
-  enabled: boolean;
-  isFile?: boolean;
-}
 
 export default function Home() {
   const [msg, setMsg] = useState("");
@@ -102,7 +95,6 @@ export default function Home() {
     try {
       localStorage.setItem('apionix-app-state', JSON.stringify(appState));
     } catch (error) {
-      console.error('Failed to save to localStorage:', error);
             toast.error("Failed to save to localStorage", {
           style: {
             backgroundColor: "rgba(18, 18, 18, 0.8)",
@@ -180,7 +172,6 @@ export default function Home() {
         ]);
       }
     } catch (error) {
-      console.error('Failed to load from localStorage:', error);
             toast.error("Failed to load from localStorage", {
           style: {
             backgroundColor: "rgba(18, 18, 18, 0.8)",
@@ -473,7 +464,6 @@ const handleHello = async () => {
   try {
     new URL(url);
   } catch (error) {
-    console.error("Invalid URL:", error);
                 toast.error("Invalid URL", {
           style: {
             backgroundColor: "rgba(18, 18, 18, 0.8)",
@@ -592,22 +582,21 @@ const handleHello = async () => {
     setApiResponse(responseData);
 
   } catch (error) {
-    console.error("Request failed:", error);
                 toast.error("Request failed", {
-          style: {
-            backgroundColor: "rgba(18, 18, 18, 0.8)",
-            backdropFilter: "blur(5px)",
-            color: "#ffffff",
-            borderRadius: "10px",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
-            padding: "8px 12px",
-            fontSize: "12px",
-            fontWeight: "500"
-          },
-          icon: "✓",
-          duration: 2000
-        });
+                 style: {
+                    backgroundColor: "rgba(18, 18, 18, 0.8)",
+                    backdropFilter: "blur(5px)",
+                    color: "#ffffff",
+                    borderRadius: "10px",
+                    border: "1px solid rgba(255, 255, 255, 0.1)",
+                    boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
+                    padding: "8px 12px",
+                    fontSize: "12px",
+                    fontWeight: "500"
+                  },
+                  icon: "✗",
+                  duration: 3000
+                });
     
     const errorResponse = {
       error: "Request failed",
@@ -1244,7 +1233,7 @@ const formatJsonResponse = (data: any): string => {
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) {
-                              console.log("File selected:", file.name);
+                              
                                     toast.success("File Selected: " + file.name, {
           style: {
             backgroundColor: "rgba(18, 18, 18, 0.8)",
@@ -1318,11 +1307,7 @@ const formatJsonResponse = (data: any): string => {
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) {
-                              console.log(
-                                "File selected for upload:",
-                                file.name
-                              );
-                                          toast.success("File Selected: " + file.name, {
+                              toast.success("File Selected: " + file.name, {
           style: {
             backgroundColor: "rgba(18, 18, 18, 0.8)",
             backdropFilter: "blur(5px)",
@@ -1503,7 +1488,7 @@ const formatJsonResponse = (data: any): string => {
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) {
-                              console.log("File selected:", file.name);
+            
                                           toast.success("File Selected: " + file.name, {
           style: {
             backgroundColor: "rgba(18, 18, 18, 0.8)",
@@ -1577,10 +1562,6 @@ const formatJsonResponse = (data: any): string => {
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) {
-                              console.log(
-                                "File selected for upload:",
-                                file.name
-                              );
                                           toast.success("File Selected For Upload: " + file.name, {
           style: {
             backgroundColor: "rgba(18, 18, 18, 0.8)",
@@ -1878,10 +1859,10 @@ const formatJsonResponse = (data: any): string => {
         <div className="bg-black/20 p-2 sm:p-3 rounded-md overflow-x-auto">
           <div className="flex items-center justify-between mb-1">
             <p 
-              className="text-xs font-extrabold"
+              className="text-xs font-bold"
               style={{ color: getStatusColor(responseStatus) }}
             >
-              HTTP/1.1 {responseStatus ? `${responseStatus} ${getStatusText(responseStatus)}` : 'Connection Failed'}
+              HTTP/1.1 {responseStatus ? `${responseStatus} ${getStatusText(responseStatus)}` : <span className='ml-2 text-gray-400'>No Response Data Available</span>}
             </p>
             {responseTime > 0 && (
               <span className="text-white/40 text-[10px]">
@@ -2026,9 +2007,9 @@ const formatJsonResponse = (data: any): string => {
         ) : (
           <div 
             className="w-full h-80 bg-black/20 backdrop-blur-md p-3 rounded-md overflow-auto text-white/80 text-xs flex items-center justify-center"
-            style={{
-              fontFamily: "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
-            }}
+            // style={{
+            //   fontFamily: "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
+            // }}
           >
             <div className="text-white/40 text-center">
               {isLoading ? (
