@@ -1,19 +1,42 @@
-'use client';
+"use client";
 
-import { ChevronsRight, CodeXml, AlertCircle, CheckCircle, Lightbulb, ChevronsUpDown, Plus, X, Trash2, KeyRound, Eye, EyeClosed, GripVertical, GlobeLock, Loader, LoaderCircle, Layers } from 'lucide-react';
-import { useEffect, useState } from 'react';
-import { Panel, PanelGroup, PanelResizeHandle } from 'react-resizable-panels';
-import { Toaster, toast } from "sonner"
+import {
+  ChevronsRight,
+  CodeXml,
+  AlertCircle,
+  CheckCircle,
+  Lightbulb,
+  ChevronsUpDown,
+  Plus,
+  X,
+  Trash2,
+  KeyRound,
+  Eye,
+  EyeClosed,
+  GripVertical,
+  GlobeLock,
+  Loader,
+  LoaderCircle,
+  Layers,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
+import { Toaster, toast } from "sonner";
 
 declare global {
   interface Window {
     electron: {
       saveData: any;
       getSystemInfo: any;
-      showMessageBox(arg0: { type: string; title: string; message: string; buttons: string[]; }): unknown;
+      showMessageBox(arg0: {
+        type: string;
+        title: string;
+        message: string;
+        buttons: string[];
+      }): unknown;
       sendMessage: (msg: string) => void;
       onMessage: (callback: (msg: string) => void) => void;
-    }
+    };
   }
 }
 
@@ -25,7 +48,7 @@ interface JsonError {
 }
 
 interface JsonSuggestion {
-  type: 'format' | 'fix' | 'complete';
+  type: "format" | "fix" | "complete";
   description: string;
   correctedJson: string;
 }
@@ -38,7 +61,6 @@ interface Tab {
   bodyData: string;
   isActive: boolean;
 }
-
 
 export default function Home() {
   const [msg, setMsg] = useState("");
@@ -58,22 +80,23 @@ export default function Home() {
   const [activeResponseTab, setActiveResponseTab] = useState("Response");
   const [tabs, setTabs] = useState<Tab[]>([
     {
-      id: '1',
-      url: 'api.tronix.in/api/demos',
-      method: 'POST',
-      name: 'api.tronix.in/api/demos',
-      bodyData: '',
-      isActive: true
-    }
+      id: "1",
+      url: "api.tronix.in/api/demos",
+      method: "POST",
+      name: "api.tronix.in/api/demos",
+      bodyData: "",
+      isActive: true,
+    },
   ]);
-  const [activeTabId, setActiveTabId] = useState('1');
+  const [activeTabId, setActiveTabId] = useState("1");
   const [isLoaded, setIsLoaded] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [apiResponse, setApiResponse] = useState<any>(null);
   const [responseStatus, setResponseStatus] = useState<number | null>(null);
   const [responseTime, setResponseTime] = useState<number>(0);
-  const [responseHeaders, setResponseHeaders] = useState<Record<string, string>>({});
-
+  const [responseHeaders, setResponseHeaders] = useState<
+    Record<string, string>
+  >({});
 
   const saveToLocalStorage = () => {
     if (!isLoaded) return;
@@ -89,33 +112,33 @@ export default function Home() {
       activeTabId,
       isExpanded,
       isResponseExpanded,
-      showToken
+      showToken,
     };
 
     try {
-      localStorage.setItem('apionix-app-state', JSON.stringify(appState));
+      localStorage.setItem("apionix-app-state", JSON.stringify(appState));
     } catch (error) {
-            toast.error("Failed to save to localStorage", {
-          style: {
-            backgroundColor: "rgba(18, 18, 18, 0.8)",
-            backdropFilter: "blur(5px)",
-            color: "#ffffff",
-            borderRadius: "10px",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
-            padding: "8px 12px",
-            fontSize: "12px",
-            fontWeight: "500"
-          },
-          icon: "✗",
-          duration: 2000
-        });
+      toast.error("Failed to save to localStorage", {
+        style: {
+          backgroundColor: "rgba(18, 18, 18, 0.8)",
+          backdropFilter: "blur(5px)",
+          color: "#ffffff",
+          borderRadius: "10px",
+          border: "1px solid rgba(255, 255, 255, 0.1)",
+          boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
+          padding: "8px 12px",
+          fontSize: "12px",
+          fontWeight: "500",
+        },
+        icon: "✗",
+        duration: 2000,
+      });
     }
   };
 
   const loadFromLocalStorage = () => {
     try {
-      const savedState = localStorage.getItem('apionix-app-state');
+      const savedState = localStorage.getItem("apionix-app-state");
       if (savedState) {
         const appState = JSON.parse(savedState);
 
@@ -125,7 +148,7 @@ export default function Home() {
         setAuthToken(appState.authToken || "");
         setActiveRequestTab(appState.activeRequestTab || "Body");
         setActiveResponseTab(appState.activeResponseTab || "Response");
-        setActiveTabId(appState.activeTabId || '1');
+        setActiveTabId(appState.activeTabId || "1");
         setIsExpanded(appState.isExpanded || false);
         setIsResponseExpanded(appState.isResponseExpanded || false);
         setIsResponseBodyExpanded(appState.isResponseBodyExpanded || false);
@@ -145,57 +168,57 @@ export default function Home() {
         } else {
           setTabs([
             {
-              id: '1',
-              url: 'api.tronix.in/api/demos',
-              method: 'POST',
-              name: 'api.tronix.in/api/demos',
-              bodyData: '',
-              isActive: true
-            }
+              id: "1",
+              url: "api.tronix.in/api/demos",
+              method: "POST",
+              name: "api.tronix.in/api/demos",
+              bodyData: "",
+              isActive: true,
+            },
           ]);
         }
 
         if (appState.bodyData) {
-          const lines = appState.bodyData.split('\n').length;
+          const lines = appState.bodyData.split("\n").length;
           setRowCount(Math.max(1, lines));
         }
       } else {
         setTabs([
           {
-            id: '1',
-            url: 'api.tronix.in/api/demos',
-            method: 'POST',
-            name: 'api.tronix.in/api/demos',
-            bodyData: '',
-            isActive: true
-          }
+            id: "1",
+            url: "api.tronix.in/api/demos",
+            method: "POST",
+            name: "api.tronix.in/api/demos",
+            bodyData: "",
+            isActive: true,
+          },
         ]);
       }
     } catch (error) {
-            toast.error("Failed to load from localStorage", {
-          style: {
-            backgroundColor: "rgba(18, 18, 18, 0.8)",
-            backdropFilter: "blur(5px)",
-            color: "#ffffff",
-            borderRadius: "10px",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
-            padding: "8px 12px",
-            fontSize: "12px",
-            fontWeight: "500"
-          },
-          icon: "✗",
-          duration: 2000
-        });
+      toast.error("Failed to load from localStorage", {
+        style: {
+          backgroundColor: "rgba(18, 18, 18, 0.8)",
+          backdropFilter: "blur(5px)",
+          color: "#ffffff",
+          borderRadius: "10px",
+          border: "1px solid rgba(255, 255, 255, 0.1)",
+          boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
+          padding: "8px 12px",
+          fontSize: "12px",
+          fontWeight: "500",
+        },
+        icon: "✗",
+        duration: 2000,
+      });
       setTabs([
         {
-          id: '1',
-          url: 'api.tronix.in/api/demos',
-          method: 'POST',
-          name: 'api.tronix.in/api/demos',
-          bodyData: '',
-          isActive: true
-        }
+          id: "1",
+          url: "api.tronix.in/api/demos",
+          method: "POST",
+          name: "api.tronix.in/api/demos",
+          bodyData: "",
+          isActive: true,
+        },
       ]);
     } finally {
       setIsLoaded(true);
@@ -208,8 +231,20 @@ export default function Home() {
 
   useEffect(() => {
     saveToLocalStorage();
-  }, [msg, bodyData, selectedMethod, authToken, activeRequestTab, activeResponseTab, tabs, activeTabId, isExpanded, isResponseExpanded, showToken, isLoaded]);
-
+  }, [
+    msg,
+    bodyData,
+    selectedMethod,
+    authToken,
+    activeRequestTab,
+    activeResponseTab,
+    tabs,
+    activeTabId,
+    isExpanded,
+    isResponseExpanded,
+    showToken,
+    isLoaded,
+  ]);
 
   const httpMethods = [
     { name: "GET", color: "#73DC8C" },
@@ -218,10 +253,10 @@ export default function Home() {
     { name: "PATCH", color: "#50C7E3" },
     { name: "DELETE", color: "#FF6B6B" },
     { name: "HEAD", color: "#9B59B6" },
-    { name: "OPTIONS", color: "#95A5A6" }
+    { name: "OPTIONS", color: "#95A5A6" },
   ];
 
-  const activeTab = tabs.find(tab => tab.id === activeTabId);
+  const activeTab = tabs.find((tab) => tab.id === activeTabId);
 
   useEffect(() => {
     window.electron?.onMessage((data) => {
@@ -234,7 +269,7 @@ export default function Home() {
       setMsg(activeTab.url);
       setSelectedMethod(activeTab.method);
       setBodyData(activeTab.bodyData);
-      const lines = activeTab.bodyData.split('\n').length;
+      const lines = activeTab.bodyData.split("\n").length;
       setRowCount(Math.max(1, lines));
     }
   }, [activeTabId, activeTab]);
@@ -262,34 +297,32 @@ export default function Home() {
   };
 
   const updateActiveTab = (updates: Partial<Tab>) => {
-    setTabs(prevTabs =>
-      prevTabs.map(tab =>
-        tab.id === activeTabId
-          ? { ...tab, ...updates }
-          : tab
+    setTabs((prevTabs) =>
+      prevTabs.map((tab) =>
+        tab.id === activeTabId ? { ...tab, ...updates } : tab
       )
     );
   };
 
   const handleUrlChange = (url: string) => {
     setMsg(url);
-    updateActiveTab({ url, name: url || 'New Request' });
+    updateActiveTab({ url, name: url || "New Request" });
   };
 
   const addNewTab = () => {
     const newTabId = Date.now().toString();
     const newTab: Tab = {
       id: newTabId,
-      url: '',
-      method: 'GET',
-      name: 'New Request',
-      bodyData: '',
-      isActive: false
+      url: "",
+      method: "GET",
+      name: "New Request",
+      bodyData: "",
+      isActive: false,
     };
 
-    setTabs(prevTabs => [
-      ...prevTabs.map(tab => ({ ...tab, isActive: false })),
-      { ...newTab, isActive: true }
+    setTabs((prevTabs) => [
+      ...prevTabs.map((tab) => ({ ...tab, isActive: false })),
+      { ...newTab, isActive: true },
     ]);
     setActiveTabId(newTabId);
   };
@@ -299,8 +332,8 @@ export default function Home() {
 
     if (tabs.length === 1) return;
 
-    const tabIndex = tabs.findIndex(tab => tab.id === tabId);
-    const newTabs = tabs.filter(tab => tab.id !== tabId);
+    const tabIndex = tabs.findIndex((tab) => tab.id === tabId);
+    const newTabs = tabs.filter((tab) => tab.id !== tabId);
 
     if (tabId === activeTabId) {
       const newActiveIndex = tabIndex > 0 ? tabIndex - 1 : 0;
@@ -317,39 +350,39 @@ export default function Home() {
         url: msg,
         bodyData,
         method: selectedMethod,
-        name: msg || 'New Request'
+        name: msg || "New Request",
       });
     }
 
-    setTabs(prevTabs =>
-      prevTabs.map(tab => ({
+    setTabs((prevTabs) =>
+      prevTabs.map((tab) => ({
         ...tab,
-        isActive: tab.id === tabId
+        isActive: tab.id === tabId,
       }))
     );
     setActiveTabId(tabId);
 
-    const newActiveTab = tabs.find(tab => tab.id === tabId);
+    const newActiveTab = tabs.find((tab) => tab.id === tabId);
     if (newActiveTab) {
-      const lines = newActiveTab.bodyData.split('\n').length;
+      const lines = newActiveTab.bodyData.split("\n").length;
       setRowCount(Math.max(1, lines));
     }
   };
 
   const getMethodColor = (method: string) => {
-    return httpMethods.find(m => m.name === method)?.color || "#73DC8C";
+    return httpMethods.find((m) => m.name === method)?.color || "#73DC8C";
   };
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      if (!target.closest('.method-dropdown')) {
+      if (!target.closest(".method-dropdown")) {
         setShowMethodDropdown(false);
       }
     };
 
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
   const validateAndSuggestJson = (text: string) => {
@@ -367,32 +400,36 @@ export default function Home() {
       const formatted = JSON.stringify(JSON.parse(text), null, 2);
       if (formatted !== text) {
         suggestions.push({
-          type: 'format',
-          description: 'Format JSON with proper indentation',
-          correctedJson: formatted
+          type: "format",
+          description: "Format JSON with proper indentation",
+          correctedJson: formatted,
         });
       }
     } catch (error: any) {
       const errorMessage = error.message;
-      let line = 1, col = 1;
+      let line = 1,
+        col = 1;
       const positionMatch = errorMessage.match(/position (\d+)/);
       if (positionMatch) {
         const position = parseInt(positionMatch[1]);
         const textBeforeError = text.substring(0, position);
         line = (textBeforeError.match(/\n/g) || []).length + 1;
-        col = position - textBeforeError.lastIndexOf('\n');
+        col = position - textBeforeError.lastIndexOf("\n");
       }
 
-      let suggestion = '';
+      let suggestion = "";
       let correctedJson = text;
 
-      if (errorMessage.includes('Unexpected token') || errorMessage.includes('Expected')) {
+      if (
+        errorMessage.includes("Unexpected token") ||
+        errorMessage.includes("Expected")
+      ) {
         const fixes = [
           { pattern: /(\w+)(\s*):/g, replacement: '"$1"$2:' },
           { pattern: /'/g, replacement: '"' },
-          { pattern: /,(\s*[}\]])/g, replacement: '$1' },
-          { pattern: /}(\s*){/g, replacement: '},$1{' },
-          { pattern: /](\s*)\[/g, replacement: '],$1[' },
+          { pattern: /,(\s*[}\]])/g, replacement: "$1" },
+          { pattern: /}(\s*){/g, replacement: "},$1{" },
+          { pattern: /](\s*)\[/g, replacement: "],$1[" },
           { pattern: /"(\s*)"(?=\s*[^\s,}\]])/g, replacement: '"$1",' },
         ];
 
@@ -401,7 +438,7 @@ export default function Home() {
           try {
             JSON.parse(fixedText);
             correctedJson = fixedText;
-            suggestion = 'Auto-fix common JSON syntax errors';
+            suggestion = "Auto-fix common JSON syntax errors";
             break;
           } catch {
             continue;
@@ -413,18 +450,20 @@ export default function Home() {
 
       if (correctedJson !== text) {
         suggestions.push({
-          type: 'fix',
-          description: suggestion || 'Fix JSON syntax errors',
-          correctedJson
+          type: "fix",
+          description: suggestion || "Fix JSON syntax errors",
+          correctedJson,
         });
       }
 
-      if (text.trim().endsWith('{') || text.trim().endsWith('[')) {
-        const completed = text.trim().endsWith('{') ? text + '\n}' : text + '\n]';
+      if (text.trim().endsWith("{") || text.trim().endsWith("[")) {
+        const completed = text.trim().endsWith("{")
+          ? text + "\n}"
+          : text + "\n]";
         suggestions.push({
-          type: 'complete',
-          description: 'Complete JSON structure',
-          correctedJson: completed
+          type: "complete",
+          description: "Complete JSON structure",
+          correctedJson: completed,
         });
       }
     }
@@ -435,7 +474,7 @@ export default function Home() {
 
   const applySuggestion = (suggestion: JsonSuggestion) => {
     setBodyData(suggestion.correctedJson);
-    const lines = suggestion.correctedJson.split('\n').length;
+    const lines = suggestion.correctedJson.split("\n").length;
     setRowCount(Math.max(1, lines));
     validateAndSuggestJson(suggestion.correctedJson);
     setShowSuggestions(false);
@@ -444,262 +483,292 @@ export default function Home() {
 
   const handleBodyDataChange = (value: string) => {
     setBodyData(value);
-    const lines = value.split('\n').length;
+    const lines = value.split("\n").length;
     setRowCount(Math.max(1, lines));
     validateAndSuggestJson(value);
     updateActiveTab({ bodyData: value });
   };
-//hii
-const handleHello = async () => {
-  if (!msg || msg.trim() === '') {
-    return; 
-  }
-
-  let url = msg.trim();
-
-  if (!url.startsWith('http://') && !url.startsWith('https://')) {
-    url = 'https://' + url;
-  }
-
-  try {
-    new URL(url);
-  } catch (error) {
-                toast.error("Invalid URL", {
-          style: {
-            backgroundColor: "rgba(18, 18, 18, 0.8)",
-            backdropFilter: "blur(5px)",
-            color: "#ffffff",
-            borderRadius: "10px",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
-            padding: "8px 12px",
-            fontSize: "12px",
-            fontWeight: "500"
-          },
-          icon: "✗",
-          duration: 2000
-        });
-    
-    const errorResponse = {
-      error: "Invalid URL",
-      message: "Please enter a valid URL",
-      details: "The URL format is invalid. Please check and try again.",
-      timestamp: new Date().toISOString(),
-      url: msg
-    };
-
-    setApiResponse(errorResponse);
-    setResponseStatus(0);
-    setResponseHeaders({
-      'Connection': 'failed',
-      'Status': '0 Invalid URL',
-      'Error': 'Invalid URL format',
-      'Date': new Date().toUTCString()
-    });
-    return;
-  }
-
-  setIsLoading(true);
-  setApiResponse(null);
-  setResponseStatus(null);
-  setResponseTime(0);
-  setResponseHeaders({});
-
-  const startTime = Date.now();
-
-  try {
-    const requestHeaders: Record<string, string> = {
-      'User-Agent': 'APIONIX/1.0',
-      'Accept': 'application/json, text/plain, */*',
-      'Accept-Language': 'en-US,en;q=0.9',
-      'Cache-Control': 'no-cache',
-    };
-
-    if (['POST', 'PUT', 'PATCH'].includes(selectedMethod)) {
-      if (bodyData.trim()) {
-        try {
-          JSON.parse(bodyData);
-          requestHeaders['Content-Type'] = 'application/json';
-        } catch {
-          if (bodyData.includes('Content-Disposition: form-data')) {
-            requestHeaders['Content-Type'] = 'multipart/form-data';
-          } else {
-            requestHeaders['Content-Type'] = 'application/x-www-form-urlencoded';
-          }
-        }
-      } else {
-        requestHeaders['Content-Type'] = 'application/json';
-      }
+  //hii
+  const handleHello = async () => {
+    if (!msg || msg.trim() === "") {
+      return;
     }
 
-    if (authToken) {
-      requestHeaders['Authorization'] = `Bearer ${authToken}`;
+    let url = msg.trim();
+
+    if (!url.startsWith("http://") && !url.startsWith("https://")) {
+      url = "https://" + url;
     }
 
-    const requestOptions: RequestInit = {
-      method: selectedMethod,
-      headers: requestHeaders,
-      mode: 'cors',
-      credentials: 'omit',
-    };
-
-    if (['POST', 'PUT', 'PATCH'].includes(selectedMethod) && bodyData.trim()) {
-      requestOptions.body = bodyData;
-    }
-
-    const response = await fetch(url, requestOptions);
-    const endTime = Date.now();
-    
-    setResponseTime(endTime - startTime);
-    setResponseStatus(response.status);
-
-    const headers: Record<string, string> = {};
-    response.headers.forEach((value, key) => {
-      headers[key] = value;
-    });
-
-    headers['Status'] = `${response.status} ${response.statusText}`;
-    headers['Version'] = 'HTTP/1.1';
-    
-    setResponseHeaders(headers);
-
-    const contentType = response.headers.get('content-type');
-    let responseData;
-
-    if (contentType?.includes('application/json')) {
-      responseData = await response.json();
-    } else if (contentType?.includes('text/')) {
-      responseData = await response.text();
-    } else {
-      const text = await response.text();
-      try {
-        responseData = JSON.parse(text);
-      } catch {
-        responseData = text;
-      }
-    }
-
-    setApiResponse(responseData);
-
-  } catch (error) {
-                toast.error("Request failed", {
-                 style: {
-                    backgroundColor: "rgba(18, 18, 18, 0.8)",
-                    backdropFilter: "blur(5px)",
-                    color: "#ffffff",
-                    borderRadius: "10px",
-                    border: "1px solid rgba(255, 255, 255, 0.1)",
-                    boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
-                    padding: "8px 12px",
-                    fontSize: "12px",
-                    fontWeight: "500"
-                  },
-                  icon: "✗",
-                  duration: 3000
-                });
-    
-    const errorResponse = {
-      error: "Request failed",
-      message: error instanceof Error ? error.message : "Unknown error",
-      details: "Failed to connect to the server. Please check the URL and network connectivity.",
-      timestamp: new Date().toISOString(),
-      url: msg
-    };
-
-    setApiResponse(errorResponse);
-    setResponseStatus(0);
-    setResponseTime(Date.now() - startTime);
-
-    setResponseHeaders({
-      'Connection': 'failed',
-      'Status': '0 Connection Failed',
-      'Error': error instanceof Error ? error.message : 'Network Error',
-      'Date': new Date().toUTCString()
-    });
-    
-  } finally {
-    setIsLoading(false);
-  }
-};
-
-const isValidUrl = (url: string): boolean => {
-  if (!url || url.trim() === '') return false;
-  
-  try {
-    const testUrl = url.startsWith('http://') || url.startsWith('https://') 
-      ? url 
-      : 'https://' + url;
-    
-    new URL(testUrl);
-    return true;
-  } catch {
-    return false;
-  }
-};
-
-const formatJsonResponse = (data: any): string => {
-  if (typeof data === 'string') {
     try {
-      data = JSON.parse(data);
-    } catch {
-      return `<span style="color: #ffffff80">${data.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>`;
+      new URL(url);
+    } catch (error) {
+      toast.error("Invalid URL", {
+        style: {
+          backgroundColor: "rgba(18, 18, 18, 0.8)",
+          backdropFilter: "blur(5px)",
+          color: "#ffffff",
+          borderRadius: "10px",
+          border: "1px solid rgba(255, 255, 255, 0.1)",
+          boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
+          padding: "8px 12px",
+          fontSize: "12px",
+          fontWeight: "500",
+        },
+        icon: "✗",
+        duration: 2000,
+      });
+
+      const errorResponse = {
+        error: "Invalid URL",
+        message: "Please enter a valid URL",
+        details: "The URL format is invalid. Please check and try again.",
+        timestamp: new Date().toISOString(),
+        url: msg,
+      };
+
+      setApiResponse(errorResponse);
+      setResponseStatus(0);
+      setResponseHeaders({
+        Connection: "failed",
+        Status: "0 Invalid URL",
+        Error: "Invalid URL format",
+        Date: new Date().toUTCString(),
+      });
+      return;
     }
-  }
-  const jsonString = JSON.stringify(data, null, 2);
-  
-  let formatted = jsonString
 
-    .replace(/"([^"]+)"(\s*):/g, '<span style="color: #e06c75">"$1"</span>$2<span style="color: #61afef">:</span>')
+    setIsLoading(true);
+    setApiResponse(null);
+    setResponseStatus(null);
+    setResponseTime(0);
+    setResponseHeaders({});
 
-    .replace(/:\s*"([^"]*)"/g, ': <span style="color: #98c379">"$1"</span>')
+    const startTime = Date.now();
 
-    .replace(/:\s*(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g, ': <span style="color: #d19a66">$1</span>')
+    try {
+      const requestHeaders: Record<string, string> = {
+        "User-Agent": "APIONIX/1.0",
+        Accept: "application/json, text/plain, */*",
+        "Accept-Language": "en-US,en;q=0.9",
+        "Cache-Control": "no-cache",
+      };
 
-    .replace(/:\s*(true|false)(?=\s*[,\}\]])/g, ': <span style="color: #56b6c2">$1</span>')
+      if (["POST", "PUT", "PATCH"].includes(selectedMethod)) {
+        if (bodyData.trim()) {
+          try {
+            JSON.parse(bodyData);
+            requestHeaders["Content-Type"] = "application/json";
+          } catch {
+            if (bodyData.includes("Content-Disposition: form-data")) {
+              requestHeaders["Content-Type"] = "multipart/form-data";
+            } else {
+              requestHeaders["Content-Type"] =
+                "application/x-www-form-urlencoded";
+            }
+          }
+        } else {
+          requestHeaders["Content-Type"] = "application/json";
+        }
+      }
 
-    .replace(/:\s*(null)(?=\s*[,\}\]])/g, ': <span style="color: #c678dd">$1</span>')
+      if (authToken) {
+        requestHeaders["Authorization"] = `Bearer ${authToken}`;
+      }
 
-    .replace(/([{}[\]])/g, '<span style="color: #61afef">$1</span>')
+      const requestOptions: RequestInit = {
+        method: selectedMethod,
+        headers: requestHeaders,
+        mode: "cors",
+        credentials: "omit",
+      };
 
-    .replace(/,(?=\s*[\n\r])/g, '<span style="color: #61afef">,</span>')
+      if (
+        ["POST", "PUT", "PATCH"].includes(selectedMethod) &&
+        bodyData.trim()
+      ) {
+        requestOptions.body = bodyData;
+      }
 
-    .replace(/(\[\s*)"([^"]*)"(?=\s*[,\]])/g, '$1<span style="color: #98c379">"$2"</span>')
+      const response = await fetch(url, requestOptions);
+      const endTime = Date.now();
 
-    .replace(/(\[\s*)(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)(?=\s*[,\]])/g, '$1<span style="color: #d19a66">$2</span>')
+      setResponseTime(endTime - startTime);
+      setResponseStatus(response.status);
 
-    .replace(/(\[\s*)(true|false)(?=\s*[,\]])/g, '$1<span style="color: #56b6c2">$2</span>')
+      const headers: Record<string, string> = {};
+      response.headers.forEach((value, key) => {
+        headers[key] = value;
+      });
 
-    .replace(/(\[\s*)(null)(?=\s*[,\]])/g, '$1<span style="color: #c678dd">$2</span>');
+      headers["Status"] = `${response.status} ${response.statusText}`;
+      headers["Version"] = "HTTP/1.1";
 
-  return formatted;
-};
+      setResponseHeaders(headers);
+
+      const contentType = response.headers.get("content-type");
+      let responseData;
+
+      if (contentType?.includes("application/json")) {
+        responseData = await response.json();
+      } else if (contentType?.includes("text/")) {
+        responseData = await response.text();
+      } else {
+        const text = await response.text();
+        try {
+          responseData = JSON.parse(text);
+        } catch {
+          responseData = text;
+        }
+      }
+
+      setApiResponse(responseData);
+    } catch (error) {
+      toast.error("Request failed", {
+        style: {
+          backgroundColor: "rgba(18, 18, 18, 0.8)",
+          backdropFilter: "blur(5px)",
+          color: "#ffffff",
+          borderRadius: "10px",
+          border: "1px solid rgba(255, 255, 255, 0.1)",
+          boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
+          padding: "8px 12px",
+          fontSize: "12px",
+          fontWeight: "500",
+        },
+        icon: "✗",
+        duration: 3000,
+      });
+
+      const errorResponse = {
+        error: "Request failed",
+        message: error instanceof Error ? error.message : "Unknown error",
+        details:
+          "Failed to connect to the server. Please check the URL and network connectivity.",
+        timestamp: new Date().toISOString(),
+        url: msg,
+      };
+
+      setApiResponse(errorResponse);
+      setResponseStatus(0);
+      setResponseTime(Date.now() - startTime);
+
+      setResponseHeaders({
+        Connection: "failed",
+        Status: "0 Connection Failed",
+        Error: error instanceof Error ? error.message : "Network Error",
+        Date: new Date().toUTCString(),
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const isValidUrl = (url: string): boolean => {
+    if (!url || url.trim() === "") return false;
+
+    try {
+      const testUrl =
+        url.startsWith("http://") || url.startsWith("https://")
+          ? url
+          : "https://" + url;
+
+      new URL(testUrl);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const formatJsonResponse = (data: any): string => {
+    if (typeof data === "string") {
+      try {
+        data = JSON.parse(data);
+      } catch {
+        return `<span style="color: #ffffff80">${data
+          .replace(/</g, "&lt;")
+          .replace(/>/g, "&gt;")}</span>`;
+      }
+    }
+    const jsonString = JSON.stringify(data, null, 2);
+
+    let formatted = jsonString
+
+      .replace(
+        /"([^"]+)"(\s*):/g,
+        '<span style="color: #e06c75">"$1"</span>$2<span style="color: #61afef">:</span>'
+      )
+
+      .replace(/:\s*"([^"]*)"/g, ': <span style="color: #98c379">"$1"</span>')
+
+      .replace(
+        /:\s*(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g,
+        ': <span style="color: #d19a66">$1</span>'
+      )
+
+      .replace(
+        /:\s*(true|false)(?=\s*[,\}\]])/g,
+        ': <span style="color: #56b6c2">$1</span>'
+      )
+
+      .replace(
+        /:\s*(null)(?=\s*[,\}\]])/g,
+        ': <span style="color: #c678dd">$1</span>'
+      )
+
+      .replace(/([{}[\]])/g, '<span style="color: #61afef">$1</span>')
+
+      .replace(/,(?=\s*[\n\r])/g, '<span style="color: #61afef">,</span>')
+
+      .replace(
+        /(\[\s*)"([^"]*)"(?=\s*[,\]])/g,
+        '$1<span style="color: #98c379">"$2"</span>'
+      )
+
+      .replace(
+        /(\[\s*)(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)(?=\s*[,\]])/g,
+        '$1<span style="color: #d19a66">$2</span>'
+      )
+
+      .replace(
+        /(\[\s*)(true|false)(?=\s*[,\]])/g,
+        '$1<span style="color: #56b6c2">$2</span>'
+      )
+
+      .replace(
+        /(\[\s*)(null)(?=\s*[,\]])/g,
+        '$1<span style="color: #c678dd">$2</span>'
+      );
+
+    return formatted;
+  };
   const getStatusColor = (status: number | null): string => {
-    if (!status) return '#ef4444';
-    if (status >= 200 && status < 300) return '#22c55e';
-    if (status >= 300 && status < 400) return '#f59e0b';
-    if (status >= 400 && status < 500) return '#ef4444';
-    if (status >= 500) return '#dc2626';
-    return '#6b7280';
+    if (!status) return "#ef4444";
+    if (status >= 200 && status < 300) return "#22c55e";
+    if (status >= 300 && status < 400) return "#f59e0b";
+    if (status >= 400 && status < 500) return "#ef4444";
+    if (status >= 500) return "#dc2626";
+    return "#6b7280";
   };
 
   const getStatusText = (status: number | null): string => {
-    if (!status) return 'Connection Failed';
-    if (status === 200) return 'OK';
-    if (status === 201) return 'Created';
-    if (status === 204) return 'No Content';
-    if (status === 400) return 'Bad Request';
-    if (status === 401) return 'Unauthorized';
-    if (status === 403) return 'Forbidden';
-    if (status === 404) return 'Not Found';
-    if (status === 500) return 'Internal Server Error';
-    return 'Unknown';
+    if (!status) return "Connection Failed";
+    if (status === 200) return "OK";
+    if (status === 201) return "Created";
+    if (status === 204) return "No Content";
+    if (status === 400) return "Bad Request";
+    if (status === 401) return "Unauthorized";
+    if (status === 403) return "Forbidden";
+    if (status === 404) return "Not Found";
+    if (status === 500) return "Internal Server Error";
+    return "Unknown";
   };
 
   const handleResponseExpand = () => {
     setIsResponseExpanded(!isResponseExpanded);
   };
 
-    const handleResponseBodyExpand = () => {
+  const handleResponseBodyExpand = () => {
     setIsResponseBodyExpanded(!isResponseBodyExpanded);
   };
 
@@ -708,22 +777,42 @@ const formatJsonResponse = (data: any): string => {
     try {
       JSON.parse(text);
       let formatted = text;
-      formatted = formatted.replace(/:\s*"([^"]*)"/g, ': <span style="color: #73DC8C">"$1"</span>');
-      formatted = formatted.replace(/"([^"]+)"(\s*):/g, '<span style="color: #FA9BFA">"$1"</span>$2<span style="color: #FA9BFA">:</span>');
-      formatted = formatted.replace(/:\s*(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g, ': <span style="color: #73DC8C">$1</span>');
-      formatted = formatted.replace(/:\s*(true|false|null)(?=\s*[,}\]])/g, ': <span style="color: #73DC8C">$1</span>');
-      formatted = formatted.replace(/([{}[\]])/g, '<span style="color: #FA9BFA">$1</span>');
-      formatted = formatted.replace(/,(?=\s*["\]}])/g, '<span style="color: #FA9BFA">,</span>');
+      formatted = formatted.replace(
+        /:\s*"([^"]*)"/g,
+        ': <span style="color: #73DC8C">"$1"</span>'
+      );
+      formatted = formatted.replace(
+        /"([^"]+)"(\s*):/g,
+        '<span style="color: #FA9BFA">"$1"</span>$2<span style="color: #FA9BFA">:</span>'
+      );
+      formatted = formatted.replace(
+        /:\s*(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g,
+        ': <span style="color: #73DC8C">$1</span>'
+      );
+      formatted = formatted.replace(
+        /:\s*(true|false|null)(?=\s*[,}\]])/g,
+        ': <span style="color: #73DC8C">$1</span>'
+      );
+      formatted = formatted.replace(
+        /([{}[\]])/g,
+        '<span style="color: #FA9BFA">$1</span>'
+      );
+      formatted = formatted.replace(
+        /,(?=\s*["\]}])/g,
+        '<span style="color: #FA9BFA">,</span>'
+      );
       return formatted;
     } catch {
-      return `<span style="color: #ffffff80">${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}</span>`;
+      return `<span style="color: #ffffff80">${text
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")}</span>`;
     }
   };
 
   if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center gap-1 justify-center bg-[#191515]">
-        <Loader className='animate-spin' size={14} />
+        <Loader className="animate-spin" size={14} />
         <div className="text-[#3a9c66] text-sm">Loading APIONIX...</div>
       </div>
     );
@@ -731,9 +820,7 @@ const formatJsonResponse = (data: any): string => {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-start bg-[#191515] p-2">
-            <Toaster
-        position="top-center"
-      />
+      <Toaster position="top-center" />
       {/* <h1 className="text-3xl text-white font-medium mb-2">ElectronJS</h1> */}
       <div className="w-full mb-1">
         <div className="flex items-center">
@@ -1233,22 +1320,21 @@ const formatJsonResponse = (data: any): string => {
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) {
-                              
-                                    toast.success("File Selected: " + file.name, {
-          style: {
-            backgroundColor: "rgba(18, 18, 18, 0.8)",
-            backdropFilter: "blur(5px)",
-            color: "#ffffff",
-            borderRadius: "10px",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
-            padding: "8px 12px",
-            fontSize: "12px",
-            fontWeight: "500"
-          },
-          icon: "✓",
-          duration: 2000
-        });
+                              toast.success("File Selected: " + file.name, {
+                                style: {
+                                  backgroundColor: "rgba(18, 18, 18, 0.8)",
+                                  backdropFilter: "blur(5px)",
+                                  color: "#ffffff",
+                                  borderRadius: "10px",
+                                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                                  boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
+                                  padding: "8px 12px",
+                                  fontSize: "12px",
+                                  fontWeight: "500",
+                                },
+                                icon: "✓",
+                                duration: 2000,
+                              });
                             }
                           }}
                         />
@@ -1308,20 +1394,20 @@ const formatJsonResponse = (data: any): string => {
                             const file = e.target.files?.[0];
                             if (file) {
                               toast.success("File Selected: " + file.name, {
-          style: {
-            backgroundColor: "rgba(18, 18, 18, 0.8)",
-            backdropFilter: "blur(5px)",
-            color: "#ffffff",
-            borderRadius: "10px",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
-            padding: "8px 12px",
-            fontSize: "12px",
-            fontWeight: "500"
-          },
-          icon: "✓",
-          duration: 2000
-        });
+                                style: {
+                                  backgroundColor: "rgba(18, 18, 18, 0.8)",
+                                  backdropFilter: "blur(5px)",
+                                  color: "#ffffff",
+                                  borderRadius: "10px",
+                                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                                  boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
+                                  padding: "8px 12px",
+                                  fontSize: "12px",
+                                  fontWeight: "500",
+                                },
+                                icon: "✓",
+                                duration: 2000,
+                              });
                             }
                           }}
                         />
@@ -1488,22 +1574,21 @@ const formatJsonResponse = (data: any): string => {
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) {
-            
-                                          toast.success("File Selected: " + file.name, {
-          style: {
-            backgroundColor: "rgba(18, 18, 18, 0.8)",
-            backdropFilter: "blur(5px)",
-            color: "#ffffff",
-            borderRadius: "10px",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
-            padding: "8px 12px",
-            fontSize: "12px",
-            fontWeight: "500"
-          },
-          icon: "✓",
-          duration: 2000
-        });
+                              toast.success("File Selected: " + file.name, {
+                                style: {
+                                  backgroundColor: "rgba(18, 18, 18, 0.8)",
+                                  backdropFilter: "blur(5px)",
+                                  color: "#ffffff",
+                                  borderRadius: "10px",
+                                  border: "1px solid rgba(255, 255, 255, 0.1)",
+                                  boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
+                                  padding: "8px 12px",
+                                  fontSize: "12px",
+                                  fontWeight: "500",
+                                },
+                                icon: "✓",
+                                duration: 2000,
+                              });
                             }
                           }}
                         />
@@ -1562,21 +1647,25 @@ const formatJsonResponse = (data: any): string => {
                           onChange={(e) => {
                             const file = e.target.files?.[0];
                             if (file) {
-                                          toast.success("File Selected For Upload: " + file.name, {
-          style: {
-            backgroundColor: "rgba(18, 18, 18, 0.8)",
-            backdropFilter: "blur(5px)",
-            color: "#ffffff",
-            borderRadius: "10px",
-            border: "1px solid rgba(255, 255, 255, 0.1)",
-            boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
-            padding: "8px 12px",
-            fontSize: "12px",
-            fontWeight: "500"
-          },
-          icon: "✓",
-          duration: 2000
-        });
+                              toast.success(
+                                "File Selected For Upload: " + file.name,
+                                {
+                                  style: {
+                                    backgroundColor: "rgba(18, 18, 18, 0.8)",
+                                    backdropFilter: "blur(5px)",
+                                    color: "#ffffff",
+                                    borderRadius: "10px",
+                                    border:
+                                      "1px solid rgba(255, 255, 255, 0.1)",
+                                    boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
+                                    padding: "8px 12px",
+                                    fontSize: "12px",
+                                    fontWeight: "500",
+                                  },
+                                  icon: "✓",
+                                  duration: 2000,
+                                }
+                              );
                             }
                           }}
                         />
@@ -1702,23 +1791,37 @@ const formatJsonResponse = (data: any): string => {
                               </span>
                               <span>
                                 {(() => {
-                                  if (['POST', 'PUT', 'PATCH'].includes(selectedMethod) && bodyData) {
+                                  if (
+                                    ["POST", "PUT", "PATCH"].includes(
+                                      selectedMethod
+                                    ) &&
+                                    bodyData
+                                  ) {
                                     try {
                                       JSON.parse(bodyData);
-                                      return 'application/json';
+                                      return "application/json";
                                     } catch {
-                                      if (bodyData.includes('Content-Disposition: form-data') || 
-                                          bodyData.includes('------WebKitFormBoundary')) {
-                                        return 'multipart/form-data';
-                                      } else if (bodyData.includes('=') && !bodyData.includes('{')) {
-                                        return 'application/x-www-form-urlencoded';
+                                      if (
+                                        bodyData.includes(
+                                          "Content-Disposition: form-data"
+                                        ) ||
+                                        bodyData.includes(
+                                          "------WebKitFormBoundary"
+                                        )
+                                      ) {
+                                        return "multipart/form-data";
+                                      } else if (
+                                        bodyData.includes("=") &&
+                                        !bodyData.includes("{")
+                                      ) {
+                                        return "application/x-www-form-urlencoded";
                                       }
-                                      return 'text/plain';
+                                      return "text/plain";
                                     }
-                                  } else if (selectedMethod === 'GET') {
-                                    return 'application/json';
+                                  } else if (selectedMethod === "GET") {
+                                    return "application/json";
                                   }
-                                  return 'application/json';
+                                  return "application/json";
                                 })()}
                               </span>
                             </div>
@@ -1726,11 +1829,12 @@ const formatJsonResponse = (data: any): string => {
                               <span className="text-[#4B78E6]">Host</span>
                               <span>
                                 {msg
-                                  ? msg.startsWith('http://') || msg.startsWith('https://')
+                                  ? msg.startsWith("http://") ||
+                                    msg.startsWith("https://")
                                     ? new URL(msg).host
-                                    : msg.includes('/')
-                                      ? msg.split('/')[0]
-                                      : msg
+                                    : msg.includes("/")
+                                    ? msg.split("/")[0]
+                                    : msg
                                   : "api.tronix.in"}
                               </span>
                             </div>
@@ -1740,42 +1844,65 @@ const formatJsonResponse = (data: any): string => {
                             </div>
                             {msg && (
                               <>
-                              <div className="grid grid-cols-2 gap-2">
-                                <span className="text-[#4B78E6]">Path</span>
-                                <span>
-                                {(() => {
-                                  try {
-                                  const url = msg.startsWith('http://') || msg.startsWith('https://')
-                                    ? new URL(msg).pathname
-                                    : '/' + (msg.includes('/') ? msg.split('/').slice(1).join('/') : '');
-                                  return url || '/';
-                                  } catch {
-                                  return '/';
-                                  }
-                                })()}
-                                </span>
-                              </div>
-                              {msg.includes('?') && (
                                 <div className="grid grid-cols-2 gap-2">
-                                <span className="text-[#4B78E6]">Query Params</span>
-                                <div>
-                                  {(() => {
-                                  try {
-                                    const urlObj = new URL(msg.startsWith('http') ? msg : `https://${msg}`);
-                                    return Array.from(urlObj.searchParams.entries()).map(([key, value], i) => (
-                                    <div key={i} className="text-xs">
-                                      <span className="text-yellow-300">{key}</span>
-                                      <span className="text-white/50"> = </span>
-                                      <span className="text-green-300">{value}</span>
+                                  <span className="text-[#4B78E6]">Path</span>
+                                  <span>
+                                    {(() => {
+                                      try {
+                                        const url =
+                                          msg.startsWith("http://") ||
+                                          msg.startsWith("https://")
+                                            ? new URL(msg).pathname
+                                            : "/" +
+                                              (msg.includes("/")
+                                                ? msg
+                                                    .split("/")
+                                                    .slice(1)
+                                                    .join("/")
+                                                : "");
+                                        return url || "/";
+                                      } catch {
+                                        return "/";
+                                      }
+                                    })()}
+                                  </span>
+                                </div>
+                                {msg.includes("?") && (
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <span className="text-[#4B78E6]">
+                                      Query Params
+                                    </span>
+                                    <div>
+                                      {(() => {
+                                        try {
+                                          const urlObj = new URL(
+                                            msg.startsWith("http")
+                                              ? msg
+                                              : `https://${msg}`
+                                          );
+                                          return Array.from(
+                                            urlObj.searchParams.entries()
+                                          ).map(([key, value], i) => (
+                                            <div key={i} className="text-xs">
+                                              <span className="text-yellow-300">
+                                                {key}
+                                              </span>
+                                              <span className="text-white/50">
+                                                {" "}
+                                                ={" "}
+                                              </span>
+                                              <span className="text-green-300">
+                                                {value}
+                                              </span>
+                                            </div>
+                                          ));
+                                        } catch {
+                                          return null;
+                                        }
+                                      })()}
                                     </div>
-                                    ));
-                                  } catch {
-                                    return null;
-                                  }
-                                  })()}
-                                </div>
-                                </div>
-                              )}
+                                  </div>
+                                )}
                               </>
                             )}
                             {authToken && (
@@ -1784,7 +1911,10 @@ const formatJsonResponse = (data: any): string => {
                                   Authorization
                                 </span>
                                 <span>
-                                  Bearer <span className="text-[#789b28]">{authToken.substring(0, 40)}...</span>
+                                  Bearer{" "}
+                                  <span className="text-[#789b28]">
+                                    {authToken.substring(0, 40)}...
+                                  </span>
                                 </span>
                               </div>
                             )}
@@ -1796,15 +1926,18 @@ const formatJsonResponse = (data: any): string => {
                                 <p className="text-[#4B78E6] text-xs mb-1">
                                   Request Body:
                                 </p>
-                                  <pre 
-                                    className="text-xs font-mono mt-2 whitespace-pre-wrap break-words max-w-full"
-                                    style={{
-                                      fontFamily: "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace"
-                                    }}
-                                    dangerouslySetInnerHTML={{
-                                      __html: bodyData ? formatJsonText(bodyData) : '<span class="text-gray-400">No request body</span>'
-                                    }}
-                                  />
+                                <pre
+                                  className="text-xs font-mono mt-2 whitespace-pre-wrap break-words max-w-full"
+                                  style={{
+                                    fontFamily:
+                                      "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
+                                  }}
+                                  dangerouslySetInnerHTML={{
+                                    __html: bodyData
+                                      ? formatJsonText(bodyData)
+                                      : '<span class="text-gray-400">No request body</span>',
+                                  }}
+                                />
                               </div>
                             </>
                           )}
@@ -1815,218 +1948,258 @@ const formatJsonResponse = (data: any): string => {
                 )}
 
                 {activeResponseTab === "Response" && (
-  <div>
-    <div
-      className={`
+                  <div>
+                    <div
+                      className={`
         overflow-hidden rounded-md -mt-1
         transition-all duration-300 ease-in-out
         ${isResponseExpanded ? "max-h-96" : "max-h-12"}
       `}
-    >
-      <div className="hover:bg-black/10 flex gap-1 justify-start items-center text-white/50 text-xs px-2 py-1">
-        <button
-          onClick={handleResponseExpand}
-          className={`
+                    >
+                      <div className="hover:bg-black/10 flex gap-1 justify-start items-center text-white/50 text-xs px-2 py-1">
+                        <button
+                          onClick={handleResponseExpand}
+                          className={`
             bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-gray-600/20 p-1 
             flex justify-center items-center text-white rounded-md
             transition-transform duration-300 ease-in-out
             ${isResponseExpanded ? "rotate-90" : "rotate-0"}
           `}
-        >
-          <ChevronsRight size={14} />
-        </button>
+                        >
+                          <ChevronsRight size={14} />
+                        </button>
 
-        <h2 
-          className="text-[13px]"
-          style={{ color: getStatusColor(responseStatus) }}
-        >
-          {responseStatus ? `${responseStatus} ${getStatusText(responseStatus)}` : 'No Response'}
-        </h2>
-        {responseTime > 0 && (
-          <span className="text-white/40 text-[10px] ml-auto">
-            {responseTime}ms
-          </span>
-        )}
-      </div>
+                        <h2
+                          className="text-[13px]"
+                          style={{ color: getStatusColor(responseStatus) }}
+                        >
+                          {responseStatus
+                            ? `${responseStatus} ${getStatusText(
+                                responseStatus
+                              )}`
+                            : "No Response"}
+                        </h2>
+                        {responseTime > 0 && (
+                          <span className="text-white/40 text-[10px] ml-auto">
+                            {responseTime}ms
+                          </span>
+                        )}
+                      </div>
 
-      <div
-        className={`
+                      <div
+                        className={`
         pb-2 text-white/50 text-xs space-y-2
         transition-opacity duration-300 ease-in-out
         ${isResponseExpanded ? "opacity-100" : "opacity-0"}
       `}
-      >
-        <div className="bg-black/20 p-2 sm:p-3 rounded-md overflow-x-auto">
-          <div className="flex items-center justify-between mb-1">
-            <p 
-              className="text-xs font-bold"
-              style={{ color: getStatusColor(responseStatus) }}
-            >
-              HTTP/1.1 {responseStatus ? `${responseStatus} ${getStatusText(responseStatus)}` : <span className='ml-2 text-gray-400'>No Response Data Available</span>}
-            </p>
-            {responseTime > 0 && (
-              <span className="text-white/40 text-[10px]">
-                {responseTime}ms
-              </span>
-            )}
-          </div>
-          <div className="border-t border-gray-600/10"></div>
-          
-          <div className="space-y-2 text-white/60 mt-1 min-w-[300px]">
-            {Object.keys(responseHeaders).length > 0 ? (
-              <>
+                      >
+                        <div className="bg-black/20 p-2 sm:p-3 rounded-md overflow-x-auto">
+                          <div className="flex items-center justify-between mb-1">
+                            <p
+                              className="text-xs font-bold"
+                              style={{ color: getStatusColor(responseStatus) }}
+                            >
+                              HTTP/1.1{" "}
+                              {responseStatus ? (
+                                `${responseStatus} ${getStatusText(
+                                  responseStatus
+                                )}`
+                              ) : (
+                                <span className="ml-2 text-gray-400">
+                                  No Response Data Available
+                                </span>
+                              )}
+                            </p>
+                            {responseTime > 0 && (
+                              <span className="text-white/40 text-[10px]">
+                                {responseTime}ms
+                              </span>
+                            )}
+                          </div>
+                          <div className="border-t border-gray-600/10"></div>
 
-                {Object.entries(responseHeaders).map(([key, value]) => (
-                  <div key={key} className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                    <span className="text-[#4B78E6] text-xs">
-                      {key.split('-').map(word => 
-                        word.charAt(0).toUpperCase() + word.slice(1)
-                      ).join('-')}
-                    </span>
-                    <span className="text-xs break-all ml-4 sm:ml-0">
-                      {value}
-                    </span>
-                  </div>
-                ))}
+                          <div className="space-y-2 text-white/60 mt-1 min-w-[300px]">
+                            {Object.keys(responseHeaders).length > 0 ? (
+                              <>
+                                {Object.entries(responseHeaders).map(
+                                  ([key, value]) => (
+                                    <div
+                                      key={key}
+                                      className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2"
+                                    >
+                                      <span className="text-[#4B78E6] text-xs">
+                                        {key
+                                          .split("-")
+                                          .map(
+                                            (word) =>
+                                              word.charAt(0).toUpperCase() +
+                                              word.slice(1)
+                                          )
+                                          .join("-")}
+                                      </span>
+                                      <span className="text-xs break-all ml-4 sm:ml-0">
+                                        {value}
+                                      </span>
+                                    </div>
+                                  )
+                                )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                  <span className="text-[#4B78E6] text-xs">
-                    Content-Length
-                  </span>
-                  <span className="text-xs break-all ml-4 sm:ml-0">
-                    {responseHeaders['content-length'] || 
-                     responseHeaders['Content-Length'] || 
-                     (apiResponse ? JSON.stringify(apiResponse).length + ' bytes' : 'Unknown')}
-                  </span>
-                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
+                                  <span className="text-[#4B78E6] text-xs">
+                                    Content-Length
+                                  </span>
+                                  <span className="text-xs break-all ml-4 sm:ml-0">
+                                    {responseHeaders["content-length"] ||
+                                      responseHeaders["Content-Length"] ||
+                                      (apiResponse
+                                        ? JSON.stringify(apiResponse).length +
+                                          " bytes"
+                                        : "Unknown")}
+                                  </span>
+                                </div>
 
-                {apiResponse && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                    <span className="text-[#4B78E6] text-xs">
-                      Response Size
-                    </span>
-                    <span className="text-xs break-all ml-4 sm:ml-0">
-                      {(JSON.stringify(apiResponse).length / 1024).toFixed(2)} KB
-                    </span>
-                  </div>
-                )}
-              </>
-            ) : (
-              <>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                  <span className="text-[#4B78E6] text-xs">
-                    Access-Control-Allow-Origin
-                  </span>
-                  <span className="text-xs break-all ml-4 sm:ml-0">
-                    *
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                  <span className="text-[#4B78E6] text-xs">
-                    Connection
-                  </span>
-                  <span className="text-xs break-all ml-4 sm:ml-0">
-                    {responseStatus ? 'keep-alive' : 'No response headers available'}
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                  <span className="text-[#4B78E6] text-xs">
-                    Content-Type
-                  </span>
-                  <span className="text-xs break-all ml-4 sm:ml-0">
-                    application/json; charset=utf-8
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                  <span className="text-[#4B78E6] text-xs">
-                    Date
-                  </span>
-                  <span className="text-xs break-all ml-4 sm:ml-0">
-                    {new Date().toUTCString()}
-                  </span>
-                </div>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                  <span className="text-[#4B78E6] text-xs">
-                    Server
-                  </span>
-                  <span className="text-xs break-all ml-4 sm:ml-0">
-                    nginx/1.24.0 (Ubuntu)
-                  </span>
-                </div>
-              </>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+                                {apiResponse && (
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
+                                    <span className="text-[#4B78E6] text-xs">
+                                      Response Size
+                                    </span>
+                                    <span className="text-xs break-all ml-4 sm:ml-0">
+                                      {(
+                                        JSON.stringify(apiResponse).length /
+                                        1024
+                                      ).toFixed(2)}{" "}
+                                      KB
+                                    </span>
+                                  </div>
+                                )}
+                              </>
+                            ) : (
+                              <>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
+                                  <span className="text-[#4B78E6] text-xs">
+                                    Access-Control-Allow-Origin
+                                  </span>
+                                  <span className="text-xs break-all ml-4 sm:ml-0">
+                                    *
+                                  </span>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
+                                  <span className="text-[#4B78E6] text-xs">
+                                    Connection
+                                  </span>
+                                  <span className="text-xs break-all ml-4 sm:ml-0">
+                                    {responseStatus
+                                      ? "keep-alive"
+                                      : "No response headers available"}
+                                  </span>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
+                                  <span className="text-[#4B78E6] text-xs">
+                                    Content-Type
+                                  </span>
+                                  <span className="text-xs break-all ml-4 sm:ml-0">
+                                    application/json; charset=utf-8
+                                  </span>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
+                                  <span className="text-[#4B78E6] text-xs">
+                                    Date
+                                  </span>
+                                  <span className="text-xs break-all ml-4 sm:ml-0">
+                                    {new Date().toUTCString()}
+                                  </span>
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
+                                  <span className="text-[#4B78E6] text-xs">
+                                    Server
+                                  </span>
+                                  <span className="text-xs break-all ml-4 sm:ml-0">
+                                    nginx/1.24.0 (Ubuntu)
+                                  </span>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
 
-    <div className="">
-      <div
-        className={`
+                    <div className="">
+                      <div
+                        className={`
         overflow-hidden rounded-md -mt-1
         transition-all duration-300 ease-in-out
         ${isResponseBodyExpanded ? "max-h-96" : "max-h-28"}
       `}
-      >
-        <div className="bg-black/10 flex gap-1 justify-start items-center text-white/50 text-xs px-2 py-1">
-          <button
-            onClick={handleResponseBodyExpand}
-            className={`
+                      >
+                        <div className="bg-black/10 flex gap-1 justify-start items-center text-white/50 text-xs px-2 py-1">
+                          <button
+                            onClick={handleResponseBodyExpand}
+                            className={`
             bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-gray-600/20 p-1 
             flex justify-center items-center text-white rounded-md
             transition-transform duration-300 ease-in-out
             ${isResponseBodyExpanded ? "rotate-90" : "rotate-0"}
           `}
-          >
-            <ChevronsRight size={14} />
-          </button>
-          <h3 className="text-[#73DC8C] text-xs font-medium">
-            Response Body
-          </h3>
-          {apiResponse && (
-            <span className="text-white/40 text-[10px] ml-auto">
-              {typeof apiResponse === 'object' ? 'JSON' : 'TEXT'}
-            </span>
-          )}
-        </div>
-        
-        {apiResponse ? (
-          <div 
-            className="w-full h-80 bg-black/20 backdrop-blur-md p-3 rounded-md overflow-auto text-white/80 text-xs"
-            style={{
-              fontFamily: "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
-            }}
-          >
-            <pre 
-              className="whitespace-pre-wrap break-words"
-              dangerouslySetInnerHTML={{
-                __html: formatJsonResponse(apiResponse)
-              }}
-            />
-          </div>
-        ) : (
-          <div 
-            className="w-full h-80 bg-black/20 backdrop-blur-md p-3 rounded-md overflow-auto text-white/80 text-xs flex items-center justify-center"
-            // style={{
-            //   fontFamily: "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
-            // }}
-          >
-            <div className="text-white/40 text-center">
-              {isLoading ? (
-                <div className="flex items-center gap-2">
-                  <LoaderCircle className="animate-spin" size={16} />
-                  <span>Sending request...</span>
-                </div>
-              ) : (
-                <span>No response data available. Send a request to see the response.</span>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  </div>
-)}
+                          >
+                            <ChevronsRight size={14} />
+                          </button>
+                          <h3 className="text-[#73DC8C] text-xs font-medium">
+                            Response Body
+                          </h3>
+                          {apiResponse && (
+                            <span className="text-white/40 text-[10px] ml-auto">
+                              {typeof apiResponse === "object"
+                                ? "JSON"
+                                : "TEXT"}
+                            </span>
+                          )}
+                        </div>
+
+                        {apiResponse ? (
+                          <div
+                            className="w-full h-80 bg-black/20 backdrop-blur-md p-3 rounded-md overflow-auto text-white/80 text-xs"
+                            style={{
+                              fontFamily:
+                                "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
+                            }}
+                          >
+                            <pre
+                              className="whitespace-pre-wrap break-words"
+                              dangerouslySetInnerHTML={{
+                                __html: formatJsonResponse(apiResponse),
+                              }}
+                            />
+                          </div>
+                        ) : (
+                          <div
+                            className="w-full h-80 bg-black/20 backdrop-blur-md p-3 rounded-md overflow-auto text-white/80 text-xs flex items-center justify-center"
+                            // style={{
+                            //   fontFamily: "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
+                            // }}
+                          >
+                            <div className="text-white/40 text-center">
+                              {isLoading ? (
+                                <div className="flex items-center gap-2">
+                                  <LoaderCircle
+                                    className="animate-spin"
+                                    size={16}
+                                  />
+                                  <span>Sending request...</span>
+                                </div>
+                              ) : (
+                                <span>
+                                  No response data available. Send a request to
+                                  see the response.
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* {activeResponseTab === "Response" && (
                   <div>
@@ -2208,8 +2381,6 @@ const formatJsonResponse = (data: any): string => {
                     </div>
                   </div>
                 )} */}
-
-
               </div>
             </div>
           </Panel>
