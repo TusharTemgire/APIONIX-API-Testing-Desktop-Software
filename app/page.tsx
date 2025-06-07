@@ -107,7 +107,6 @@ export default function Home() {
     }
   };
 
-
   const loadFromLocalStorage = () => {
     try {
       const savedState = localStorage.getItem('apionix-app-state');
