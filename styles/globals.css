@@ -90,3 +90,13 @@
     @apply bg-background text-foreground;
   }
 }
+
+
+/* Add this to your global CSS */
+.draggable {
+  -webkit-app-region: drag;
+}
+
+.no-drag {
+  -webkit-app-region: no-drag;
+}
