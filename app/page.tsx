@@ -811,7 +811,7 @@ export default function Home() {
 
   if (!isLoaded) {
     return (
-      <div className="min-h-screen flex items-center gap-1 justify-center bg-[#191515]">
+      <div className="min-h-svh flex items-center gap-1 justify-center bg-[#191515]">
         <Loader className="animate-spin" size={14} />
         <div className="text-[#3a9c66] text-sm">Loading APIONIX...</div>
       </div>
@@ -819,7 +819,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start bg-[#191515] p-2">
+    <div className="h-svh flex flex-col items-center justify-start bg-[#191515] p-2">
       <Toaster position="top-center" />
       {/* <h1 className="text-3xl text-white font-medium mb-2">ElectronJS</h1> */}
       <div className="w-full mb-1">
@@ -953,7 +953,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="w-full h-[calc(100vh-200px)]">
+      <div className="w-full  min-h-0 h-full overflow-hidden">
         <PanelGroup direction="horizontal">
           <Panel defaultSize={50} minSize={30}>
             <div className="bg-[#1C1818] w-full h-full p-2 border border-gray-600/20 rounded-lg">
@@ -1197,7 +1197,7 @@ export default function Home() {
               )}
 
               {activeRequestTab === "Params" && (
-                <div className="min-h-screen overflow-y-auto">
+                <div className="h-full overflow-y-auto">
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-1 ">
                       <div className="flex items-center gap-1">
@@ -1451,7 +1451,7 @@ export default function Home() {
               )}
 
               {activeRequestTab === "Headers" && (
-                <div className="min-h-screen overflow-y-auto">
+                <div className="h-full overflow-y-auto">
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-1 ">
                       <div className="flex items-center gap-1">
@@ -1714,7 +1714,7 @@ export default function Home() {
 
           <Panel defaultSize={50} minSize={30}>
             <div className="bg-[#201C1C] w-full h-full p-2 border border-gray-600/20 rounded-lg">
-              <div className="flex items-center justify-start gap-1 mb-1.5">
+              <div className="flex items-center justify-start gap-1">
                 <button
                   onClick={() => handleActiveResponseTabChange("Request")}
                   className={`hover:bg-black/10 border border-gray-500/20 flex gap-1 justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${
@@ -1739,7 +1739,7 @@ export default function Home() {
                 </button>
               </div>
 
-              <div className="">
+          <div className="h-full flex flex-col">
                 {activeResponseTab === "Request" && (
                   <div>
                     <div
@@ -1948,10 +1948,10 @@ export default function Home() {
                 )}
 
                 {activeResponseTab === "Response" && (
-                  <div>
+                  <div className="h-full flex flex-col pb-4">
                     <div
                       className={`
-        overflow-hidden rounded-md -mt-1
+        overflow-hidden rounded-md -mt-1 flex-shrink-0
         transition-all duration-300 ease-in-out
         ${isResponseExpanded ? "max-h-96" : "max-h-12"}
       `}
@@ -2124,15 +2124,9 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className="">
-                      <div
-                        className={`
-        overflow-hidden rounded-md -mt-1
-        transition-all duration-300 ease-in-out
-        ${isResponseBodyExpanded ? "max-h-96" : "max-h-28"}
-      `}
-                      >
-                        <div className="bg-black/10 flex gap-1 justify-start items-center text-white/50 text-xs px-2 py-1">
+                    <div className="flex-1 min-h-0 overflow-hidden pb-1">
+                      <div className="h-full overflow-hidden rounded-md -mt-1 flex flex-col">
+                        <div className="bg-black/10 flex gap-1 justify-start items-center text-white/50 text-xs px-2 py-1 flex-shrink-0">
                           <button
                             onClick={handleResponseBodyExpand}
                             className={`
@@ -2158,26 +2152,21 @@ export default function Home() {
 
                         {apiResponse ? (
                           <div
-                            className="w-full h-80 bg-black/20 backdrop-blur-md p-3 rounded-md overflow-auto text-white/80 text-xs"
+                            className="flex-1 w-full bg-black/20 backdrop-blur-md rounded-md overflow-auto text-white/80 text-xs"
                             style={{
                               fontFamily:
                                 "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
                             }}
                           >
                             <pre
-                              className="whitespace-pre-wrap break-words"
+                              className="whitespace-pre-wrap p-3 break-words"
                               dangerouslySetInnerHTML={{
                                 __html: formatJsonResponse(apiResponse),
                               }}
                             />
                           </div>
                         ) : (
-                          <div
-                            className="w-full h-80 bg-black/20 backdrop-blur-md p-3 rounded-md overflow-auto text-white/80 text-xs flex items-center justify-center"
-                            // style={{
-                            //   fontFamily: "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
-                            // }}
-                          >
+                          <div className="flex-1 w-full bg-black/20 backdrop-blur-md p-3 rounded-md overflow-auto text-white/80 text-xs flex items-center justify-center">
                             <div className="text-white/40 text-center">
                               {isLoading ? (
                                 <div className="flex items-center gap-2">
@@ -2200,192 +2189,11 @@ export default function Home() {
                     </div>
                   </div>
                 )}
-
-                {/* {activeResponseTab === "Response" && (
-                  <div>
-                    <div
-                      className={`
-                        overflow-hidden rounded-md -mt-1
-                        transition-all duration-300 ease-in-out
-                        ${isResponseExpanded ? "max-h-96" : "max-h-12"}
-                      `}
-                    >
-                      <div className="hover:bg-black/10 flex gap-1 justify-start items-center text-white/50 text-xs px-2 py-1">
-                        <button
-                          onClick={handleResponseExpand}
-                          className={`
-                            bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-gray-600/20 p-1 
-                            flex justify-center items-center text-white rounded-md
-                            transition-transform duration-300 ease-in-out
-                            ${isResponseExpanded ? "rotate-90" : "rotate-0"}
-                          `}
-                        >
-                          <ChevronsRight size={14} />
-                        </button>
-
-                        <h2 className="text-[#73DC8C] text-[13px]">200 OK</h2>
-                      </div>
-
-                      <div
-                        className={`
-                        pb-2 text-white/50 text-xs space-y-2
-                        transition-opacity duration-300 ease-in-out
-                        ${isResponseExpanded ? "opacity-100" : "opacity-0"}
-                      `}
-                      >
-                        <div className="bg-black/20 p-2 sm:p-3 rounded-md overflow-x-auto">
-                          <div className="flex items-center justify-end">
-                            <p className="text-[#73DC8C] text-xs font-extrabold mb-1">
-                              HTTP/1.1 200 OK
-                            </p>
-                            <span className="text-white/40 text-[10px] ml-auto">
-                              200ms
-                            </span>
-                          </div>
-                          <div className="border-t border-gray-600/10"></div>
-                          <div className="space-y-2 text-white/60 mt-1 min-w-[300px] ">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                              <span className="text-[#4B78E6] text-xs">
-                                Access-Control-Allow-Origin
-                              </span>
-                                <span className="text-xs break-all ml-4 sm:ml-0">
-                                {responseHeaders['access-control-allow-origin'] || 
-                                 responseHeaders['Access-Control-Allow-Origin'] || '*'}
-                                </span>
-                            </div>
-                            {Object.keys(responseHeaders).length > 0 ? (
-                              Object.entries(responseHeaders).map(([key, value], index) => (
-                                <div key={index} className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                                  <span className="text-[#4B78E6] text-xs">
-                                    {key}
-                                  </span>
-                                  <span className="text-xs break-all ml-4 sm:ml-0">
-                                    {value}
-                                  </span>
-                                </div>
-                              ))
-                            ) : (
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                                <span className="text-[#4B78E6] text-xs">
-                                  Connection
-                                </span>
-                                <span className="text-xs break-all ml-4 sm:ml-0">
-                                  {responseStatus ? 'close' : 'No response headers available'}
-                                </span>
-                              </div>
-                            )}
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                              <span className="text-[#4B78E6] text-xs">
-                                Content-Length
-                              </span>
-                              <span className="text-xs break-all ml-4 sm:ml-0">
-                                2
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                              <span className="text-[#4B78E6] text-xs">
-                                Content-Type
-                              </span>
-                              <span className="text-xs break-all ml-4 sm:ml-0">
-                                application/json; charset=utf-8
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                              <span className="text-[#4B78E6] text-xs">
-                              Date
-                              </span>
-                              <span className="text-xs break-all ml-4 sm:ml-0">
-                              {responseHeaders['date'] || 
-                               responseHeaders['Date'] || 
-                               new Date().toUTCString()}
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                              <span className="text-[#4B78E6] text-xs">
-                                Etag
-                              </span>
-                              <span className="text-xs break-all ml-4 sm:ml-0">
-                                {responseHeaders['etag'] || 
-                                 responseHeaders['Etag'] || 
-                                 responseHeaders['ETag'] || 
-                                 (responseStatus ? 'W/"2-l9Fw4VUO7kr8CvBlt4zaMCqXZ0w"' : 'No ETag available')}
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                              <span className="text-[#4B78E6] text-xs">
-                                Server
-                              </span>
-                              <span className="text-xs break-all ml-4 sm:ml-0">
-                                nginx/1.24.0 (Ubuntu)
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                              <span className="text-[#4B78E6] text-xs">
-                                Set-Cookie
-                              </span>
-                              <span className="text-xs break-all ml-4 sm:ml-0">
-                                connect.sid=s%3A2jkIfL-OH0Qrxph37ZL8qMvw9EgAcwXX.crDNns9zlgPrCc9pO4n%2B%2B5V7m7O6NRYyEbW1qitXTxs;
-                                Path=/; HttpOnly
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                              <span className="text-[#4B78E6] text-xs">
-                                X-Powered-By
-                              </span>
-                              <span className="text-xs break-all ml-4 sm:ml-0">
-                                Express
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="">
-                      <div
-                        className={`
-                        overflow-hidden rounded-md -mt-1
-                        transition-all duration-300 ease-in-out
-                        ${isResponseBodyExpanded ? "max-h-96" : "max-h-28"}
-                      `}
-                      >
-                        <div className="bg-black/10 flex gap-1 justify-start items-center text-white/50 text-xs px-2 py-1">
-                          <button
-                            onClick={handleResponseBodyExpand}
-                            className={`
-                            bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-gray-600/20 p-1 
-                            flex justify-center items-center text-white rounded-md
-                            transition-transform duration-300 ease-in-out
-                            ${isResponseBodyExpanded ? "rotate-90" : "rotate-0"}
-                          `}
-                          >
-                            <ChevronsRight size={14} />
-                          </button>
-                          <h3 className="text-[#73DC8C] text-xs font-medium mb-1">
-                            Response Body
-                          </h3>
-                        </div>
-                        <textarea
-                          className="w-full h-80 bg-black/20 backdrop-blur-md p-2 rounded-md overflow-x-auto text-white/80 text-xs whitespace-pre-wrap break-words outline-none resize-none"
-                          style={{
-                            fontFamily:
-                              "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
-                          }}
-                           value="{}"
-                          onChange={(e) => {
-                            console.log("Response body changed:", e.target.value);
-                          }}
-                          readOnly
-                        />
-                      </div>
-                    </div>
-                  </div>
-                )} */}
               </div>
             </div>
           </Panel>
         </PanelGroup>
-        <div className="flex justify-center items-center mt-2">
+        {/* <div className="flex justify-center items-center mt-2">
           <div className="bg-[#201C1C] w-full p-3 rounded-lg shadow-md border border-gray-600/20">
             <div className="flex items-start gap-3">
               <div className="bg-[#1a1a1a] p-2 rounded-lg border border-gray-600/20">
@@ -2421,7 +2229,7 @@ export default function Home() {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
       </div>
     </div>
   );
