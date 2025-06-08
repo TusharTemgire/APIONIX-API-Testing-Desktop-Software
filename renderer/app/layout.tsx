@@ -2,7 +2,7 @@ import type React from "react"
 import type { Metadata, Viewport } from "next"
 import { Space_Grotesk } from "next/font/google"
 import "./globals.css"
-import { ThemeProvider } from "@/components/theme-provider"
+import { ThemeProvider } from "../components/theme-provider"
 import TitleBar from '../components/TitleBar'
 const tronixfont = Space_Grotesk({ subsets: ["latin"] })
 
@@ -53,7 +53,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className={tronixfont.className}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-           <TitleBar />
+
           {children}
         </ThemeProvider>
       </body>

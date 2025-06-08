@@ -22,6 +22,7 @@ import {
 import { useEffect, useState } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { Toaster, toast } from "sonner";
+import TitleBar from "../components/TitleBar";
 
 declare global {
   interface Window {
@@ -258,11 +259,11 @@ export default function Home() {
 
   const activeTab = tabs.find((tab) => tab.id === activeTabId);
 
-  useEffect(() => {
-    window.electron?.onMessage((data) => {
-      setMsg(data);
-    });
-  }, []);
+  // useEffect(() => {
+  //   window.electron?.onMessage((data) => {
+  //     setMsg(data);
+  //   });
+  // }, []);
 
   useEffect(() => {
     if (activeTab) {
@@ -820,6 +821,11 @@ export default function Home() {
 
   return (
     <div className="h-svh flex flex-col items-center justify-start bg-[#191515] p-2">
+      <div className="pb-2 w-full">
+
+        <TitleBar />
+      </div>
+
       <Toaster position="top-center" />
       {/* <h1 className="text-3xl text-white font-medium mb-2">ElectronJS</h1> */}
       <div className="w-full mb-1">
@@ -914,12 +920,12 @@ export default function Home() {
           value={msg}
           onChange={(e) => handleUrlChange(e.target.value)}
           onMouseEnter={(e) =>
-            ((e.target as HTMLInputElement).placeholder =
-              "Enter API URL, e.g., https://api.example.com")
+          ((e.target as HTMLInputElement).placeholder =
+            "Enter API URL, e.g., https://api.example.com")
           }
           onMouseLeave={(e) =>
-            ((e.target as HTMLInputElement).placeholder =
-              "https://api.example.com")
+          ((e.target as HTMLInputElement).placeholder =
+            "https://api.example.com")
           }
         />
         <div className="flex gap-1.5">
@@ -929,11 +935,10 @@ export default function Home() {
             className={`
             flex justify-center items-center text-black text-xs px-2 py-1 rounded-md shadow-[0_0_5px_rgba(115,220,140,0.2)]
             transition-all duration-200
-            ${
-              isLoading || !isValidUrl(msg)
+            ${isLoading || !isValidUrl(msg)
                 ? "bg-[#5ea372] cursor-not-allowed"
                 : "bg-[#73DC8C] hover:bg-[#66c97f]"
-            }
+              }
           `}
           >
             {isLoading ? (
@@ -960,41 +965,37 @@ export default function Home() {
               <div className="flex items-center justify-start gap-1 mb-3">
                 <button
                   onClick={() => handleActiveRequestTabChange("Params")}
-                  className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${
-                    activeRequestTab === "Params"
-                      ? "bg-black/5 text-white border-gray-500/20"
-                      : "bg-black/20 hover:bg-black/5 text-white/50"
-                  }`}
+                  className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeRequestTab === "Params"
+                    ? "bg-black/5 text-white border-gray-500/20"
+                    : "bg-black/20 hover:bg-black/5 text-white/50"
+                    }`}
                 >
                   Params
                 </button>
                 <button
                   onClick={() => handleActiveRequestTabChange("Headers")}
-                  className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${
-                    activeRequestTab === "Headers"
-                      ? "bg-black/5 text-white border-gray-500/20"
-                      : "bg-black/20 hover:bg-black/5 text-white/50"
-                  }`}
+                  className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeRequestTab === "Headers"
+                    ? "bg-black/5 text-white border-gray-500/20"
+                    : "bg-black/20 hover:bg-black/5 text-white/50"
+                    }`}
                 >
                   Headers
                 </button>
                 <button
                   onClick={() => handleActiveRequestTabChange("Auth")}
-                  className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${
-                    activeRequestTab === "Auth"
-                      ? "bg-black/5 text-white border-gray-500/20"
-                      : "bg-black/20 hover:bg-black/5 text-white/50"
-                  }`}
+                  className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeRequestTab === "Auth"
+                    ? "bg-black/5 text-white border-gray-500/20"
+                    : "bg-black/20 hover:bg-black/5 text-white/50"
+                    }`}
                 >
                   Auth
                 </button>
                 <button
                   onClick={() => handleActiveRequestTabChange("Body")}
-                  className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${
-                    activeRequestTab === "Body"
-                      ? "bg-black/5 text-white border-gray-500/20"
-                      : "bg-black/20 hover:bg-black/5 text-white/50"
-                  }`}
+                  className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeRequestTab === "Body"
+                    ? "bg-black/5 text-white border-gray-500/20"
+                    : "bg-black/20 hover:bg-black/5 text-white/50"
+                    }`}
                 >
                   Body
                 </button>
@@ -1007,11 +1008,10 @@ export default function Home() {
                         <CheckCircle size={14} className="text-green-400" />
                       )}
                       <span
-                        className={`text-xs ${
-                          jsonErrors.length > 0
-                            ? "text-red-400"
-                            : "text-green-400"
-                        }`}
+                        className={`text-xs ${jsonErrors.length > 0
+                          ? "text-red-400"
+                          : "text-green-400"
+                          }`}
                       >
                         {jsonErrors.length > 0 ? "Invalid JSON" : "Valid JSON"}
                       </span>
@@ -1138,11 +1138,10 @@ export default function Home() {
                       {Array.from({ length: rowCount }, (_, i) => (
                         <div
                           key={i + 1}
-                          className={`h-[1.4em] flex items-center justify-center leading-none ${
-                            jsonErrors.some((error) => error.line === i + 1)
-                              ? "text-red-400 bg-red-900/20"
-                              : ""
-                          }`}
+                          className={`h-[1.4em] flex items-center justify-center leading-none ${jsonErrors.some((error) => error.line === i + 1)
+                            ? "text-red-400 bg-red-900/20"
+                            : ""
+                            }`}
                         >
                           {i + 1}
                         </div>
@@ -1717,29 +1716,27 @@ export default function Home() {
               <div className="flex items-center justify-start gap-1">
                 <button
                   onClick={() => handleActiveResponseTabChange("Request")}
-                  className={`hover:bg-black/10 border border-gray-500/20 flex gap-1 justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${
-                    activeResponseTab === "Request"
-                      ? "bg-black/5 text-white border-gray-500/20"
-                      : "text-white/50"
-                  }`}
+                  className={`hover:bg-black/10 border border-gray-500/20 flex gap-1 justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeResponseTab === "Request"
+                    ? "bg-black/5 text-white border-gray-500/20"
+                    : "text-white/50"
+                    }`}
                 >
                   Request
                   <h2 className="text-[#73DC8C] text-xs">{selectedMethod}</h2>
                 </button>
                 <button
                   onClick={() => handleActiveResponseTabChange("Response")}
-                  className={`hover:bg-black/10 border border-gray-500/20 flex gap-1 justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${
-                    activeResponseTab === "Response"
-                      ? "bg-black/5 text-white border-gray-500/20"
-                      : "text-white/50"
-                  }`}
+                  className={`hover:bg-black/10 border border-gray-500/20 flex gap-1 justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeResponseTab === "Response"
+                    ? "bg-black/5 text-white border-gray-500/20"
+                    : "text-white/50"
+                    }`}
                 >
                   Response
                   <h2 className="text-[#73DC8C] text-xs">200</h2>
                 </button>
               </div>
 
-          <div className="h-full flex flex-col">
+              <div className="h-full flex flex-col">
                 {activeResponseTab === "Request" && (
                   <div>
                     <div
@@ -1833,8 +1830,8 @@ export default function Home() {
                                     msg.startsWith("https://")
                                     ? new URL(msg).host
                                     : msg.includes("/")
-                                    ? msg.split("/")[0]
-                                    : msg
+                                      ? msg.split("/")[0]
+                                      : msg
                                   : "api.tronix.in"}
                               </span>
                             </div>
@@ -1851,15 +1848,15 @@ export default function Home() {
                                       try {
                                         const url =
                                           msg.startsWith("http://") ||
-                                          msg.startsWith("https://")
+                                            msg.startsWith("https://")
                                             ? new URL(msg).pathname
                                             : "/" +
-                                              (msg.includes("/")
-                                                ? msg
-                                                    .split("/")
-                                                    .slice(1)
-                                                    .join("/")
-                                                : "");
+                                            (msg.includes("/")
+                                              ? msg
+                                                .split("/")
+                                                .slice(1)
+                                                .join("/")
+                                              : "");
                                         return url || "/";
                                       } catch {
                                         return "/";
@@ -1975,8 +1972,8 @@ export default function Home() {
                         >
                           {responseStatus
                             ? `${responseStatus} ${getStatusText(
-                                responseStatus
-                              )}`
+                              responseStatus
+                            )}`
                             : "No Response"}
                         </h2>
                         {responseTime > 0 && (
@@ -2053,7 +2050,7 @@ export default function Home() {
                                       responseHeaders["Content-Length"] ||
                                       (apiResponse
                                         ? JSON.stringify(apiResponse).length +
-                                          " bytes"
+                                        " bytes"
                                         : "Unknown")}
                                   </span>
                                 </div>

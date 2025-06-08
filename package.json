@@ -13,10 +13,11 @@
     "start": "cross-env NODE_ENV=production electron .",
     "start:win": "set NODE_ENV=production && electron .",
     "package": "npm run build && cross-env NODE_ENV=production electron-builder build --publish=never",
-    "package:mac": "npm run build && cross-env NODE_ENV=production electron-builder build --mac --publish=never",
-    "package:win": "npm run build && cross-env NODE_ENV=production electron-builder build --win --publish=never",
-    "package:linux": "npm run build && cross-env NODE_ENV=production electron-builder build --linux --publish=never",
-    "postinstall": "electron-builder install-app-deps"
+    "postinstall": "npx npm-force-resolutions"
+  },
+  "resolutions": {
+    "glob": "^10.3.10",
+    "inflight": "npm:@isaacs/inflight@^1.0.7"
   },
   "build": {
     "appId": "com.tetrax.apionix",
@@ -31,7 +32,7 @@
       "output": "dist"
     },
     "mac": {
-      "category": "public.app-category.developer-tools",
+      "category": "public.app.category.developer-tools",
       "target": ["dmg", "zip"]
     },
     "win": {
@@ -103,6 +104,7 @@
     "electron": "^28.2.8",
     "electron-builder": "^24.13.3",
     "next": "15.2.4",
+    "npm-force-resolutions": "^0.0.10",
     "postcss": "^8.5.4",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
