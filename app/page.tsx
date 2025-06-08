@@ -60,6 +60,8 @@ interface Tab {
   name: string;
   bodyData: string;
   isActive: boolean;
+  authToken?: string; // Add auth token to each tab
+  authType?: "bearer" | "basic" | "api-key"; // Add auth type
 }
 
 export default function Home() {
@@ -97,6 +99,12 @@ export default function Home() {
   const [responseHeaders, setResponseHeaders] = useState<
     Record<string, string>
   >({});
+  const [authType, setAuthType] = useState<"bearer" | "basic" | "api-key">("bearer");
+  const [basicAuthUsername, setBasicAuthUsername] = useState("");
+  const [basicAuthPassword, setBasicAuthPassword] = useState("");
+  const [apiKeyName, setApiKeyName] = useState("X-API-Key");
+  const [apiKeyValue, setApiKeyValue] = useState("");
+
 
   const saveToLocalStorage = () => {
     if (!isLoaded) return;
@@ -106,6 +114,11 @@ export default function Home() {
       bodyData,
       selectedMethod,
       authToken,
+      authType,
+      basicAuthUsername,
+      basicAuthPassword,
+      apiKeyName,
+      apiKeyValue,
       activeRequestTab,
       activeResponseTab,
       tabs,
@@ -162,6 +175,11 @@ export default function Home() {
         setResponseStatus(appState.responseStatus || null);
         setResponseTime(appState.responseTime || 0);
         setResponseHeaders(appState.responseHeaders || {});
+        setAuthType(appState.authType || "bearer");
+        setBasicAuthUsername(appState.basicAuthUsername || "");
+        setBasicAuthPassword(appState.basicAuthPassword || "");
+        setApiKeyName(appState.apiKeyName || "X-API-Key");
+        setApiKeyValue(appState.apiKeyValue || "");
 
         if (appState.tabs && appState.tabs.length > 0) {
           setTabs(appState.tabs);
@@ -269,10 +287,36 @@ export default function Home() {
       setMsg(activeTab.url);
       setSelectedMethod(activeTab.method);
       setBodyData(activeTab.bodyData);
+      setAuthToken(activeTab.authToken || "");
+      setAuthType(activeTab.authType || "bearer");
       const lines = activeTab.bodyData.split("\n").length;
       setRowCount(Math.max(1, lines));
     }
   }, [activeTabId, activeTab]);
+
+  const generateAuthHeader = (): string | null => {
+    switch (authType) {
+      case "bearer":
+        return authToken ? `Bearer ${authToken}` : null;
+      case "basic":
+        if (basicAuthUsername && basicAuthPassword) {
+          const credentials = btoa(`${basicAuthUsername}:${basicAuthPassword}`);
+          return `Basic ${credentials}`;
+        }
+        return null;
+      case "api-key":
+        return null; // API key goes in custom header
+      default:
+        return null;
+    }
+  };
+
+  const getApiKeyHeader = (): { [key: string]: string } | null => {
+    if (authType === "api-key" && apiKeyName && apiKeyValue) {
+      return { [apiKeyName]: apiKeyValue };
+    }
+    return null;
+  };
 
   const handleMethodSelect = (method: string) => {
     setSelectedMethod(method);
@@ -303,6 +347,18 @@ export default function Home() {
       )
     );
   };
+
+  const updateActiveTabAuth = () => {
+    updateActiveTab({
+      authToken,
+      authType,
+    });
+  };
+
+  useEffect(() => {
+    updateActiveTabAuth();
+  }, [authToken, authType]);
+
 
   const handleUrlChange = (url: string) => {
     setMsg(url);
@@ -563,14 +619,26 @@ export default function Home() {
             if (bodyData.includes("Content-Disposition: form-data")) {
               requestHeaders["Content-Type"] = "multipart/form-data";
             } else {
-              requestHeaders["Content-Type"] =
-                "application/x-www-form-urlencoded";
+              requestHeaders["Content-Type"] = "application/x-www-form-urlencoded";
             }
           }
         } else {
           requestHeaders["Content-Type"] = "application/json";
         }
       }
+
+            // Add Authorization header
+      const authHeader = generateAuthHeader();
+      if (authHeader) {
+        requestHeaders["Authorization"] = authHeader;
+      }
+
+      // Add API key header if applicable
+      const apiKeyHeader = getApiKeyHeader();
+      if (apiKeyHeader) {
+        Object.assign(requestHeaders, apiKeyHeader);
+      }
+
 
       if (authToken) {
         requestHeaders["Authorization"] = `Bearer ${authToken}`;
@@ -583,10 +651,7 @@ export default function Home() {
         credentials: "omit",
       };
 
-      if (
-        ["POST", "PUT", "PATCH"].includes(selectedMethod) &&
-        bodyData.trim()
-      ) {
+      if (["POST", "PUT", "PATCH"].includes(selectedMethod) && bodyData.trim()) {
         requestOptions.body = bodyData;
       }
 
@@ -811,7 +876,7 @@ export default function Home() {
 
   if (!isLoaded) {
     return (
-      <div className="min-h-screen flex items-center gap-1 justify-center bg-[#191515]">
+      <div className="min-h-svh flex items-center gap-1 justify-center bg-[#191515]">
         <Loader className="animate-spin" size={14} />
         <div className="text-[#3a9c66] text-sm">Loading APIONIX...</div>
       </div>
@@ -819,7 +884,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-start bg-[#191515] p-2">
+    <div className="h-svh flex flex-col items-center justify-start bg-[#191515] p-2">
       <Toaster position="top-center" />
       {/* <h1 className="text-3xl text-white font-medium mb-2">ElectronJS</h1> */}
       <div className="w-full mb-1">
@@ -953,7 +1018,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="w-full h-[calc(100vh-200px)]">
+      <div className="w-full min-h-0 h-full overflow-hidden">
         <PanelGroup direction="horizontal">
           <Panel defaultSize={50} minSize={30}>
             <div className="bg-[#1C1818] w-full h-full p-2 border border-gray-600/20 rounded-lg">
@@ -1037,7 +1102,7 @@ export default function Home() {
               </div>
 
               {activeRequestTab === "Auth" && (
-                <div className="h-[calc(100%-60px)]">
+                <div className="h-auto mb-2">
                   <div className="flex items-center gap-2 border rounded-lg hover:border-[#4B78E6]/50 border-gray-600/20 px-2 py-1 mt-2">
                     <KeyRound className="text-white/50" size={14} />
                     <input
@@ -1063,6 +1128,188 @@ export default function Home() {
                         />
                       )}
                     </button>
+                  </div>
+                </div>
+              )}
+
+              {activeRequestTab === "Auth" && (
+                <div className="h-auto mb-2 mt-4">
+                  {/* Auth Type Selection */}
+                  <div className="mb-4">
+                    <label className="text-white/70 text-xs mb-1 block">Authentication Type</label>
+                    <div className="flex gap-1">
+                      {[
+                        { value: "bearer", label: "Bearer Token" },
+                        { value: "basic", label: "Basic Auth" },
+                        { value: "api-key", label: "API Key" }
+                      ].map((type) => (
+                        <button
+                          key={type.value}
+                          onClick={() => setAuthType(type.value as any)}
+                          className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${authType === type.value
+                      ? "bg-black/5 text-[#73DC8C] border-gray-500/20"
+                      : "bg-black/20 hover:bg-black/5 text-white/50"
+                            }`}
+                        >
+                          {type.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Bearer Token */}
+                  {authType === "bearer" && (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-white/70 text-xs mb-1 block">Bearer Token</label>
+                        <div className="flex items-center gap-2 border rounded-lg hover:border-[#4B78E6]/50 border-gray-600/20 px-2 py-1">
+                          <KeyRound className="text-white/50" size={14} />
+                          <input
+                            type={showToken ? "text" : "password"}
+                            placeholder="Enter your bearer token"
+                            className="flex-1 bg-transparent placeholder:text-white/40 text-white text-xs outline-none"
+                            value={authToken}
+                            onChange={(e) => setAuthToken(e.target.value)}
+                          />
+                          <button
+                            onClick={() => setShowToken(!showToken)}
+                            className="p-1 hover:bg-white/10 rounded transition-colors duration-200"
+                          >
+                            {showToken ? (
+                              <Eye className="text-white/50 hover:text-white/70" size={14} />
+                            ) : (
+                              <EyeClosed className="text-white/50 hover:text-white/70" size={14} />
+                            )}
+                          </button>
+                        </div>
+                        <p className="text-white/40 text-xs mt-1">
+                          Token will be sent as: Authorization: Bearer {authToken ? "●●●●●●●●" : "[token]"}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Basic Authentication */}
+                  {authType === "basic" && (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-white/70 text-xs mb-1 block">Username</label>
+                        <div className="flex items-center gap-2 border rounded-lg hover:border-[#4B78E6]/50 border-gray-600/20 px-2 py-1">
+                          <KeyRound className="text-white/50" size={14} />
+                          <input
+                            type="text"
+                            placeholder="Enter username"
+                            className="flex-1 bg-transparent placeholder:text-white/40 text-white text-xs outline-none"
+                            value={basicAuthUsername}
+                            onChange={(e) => setBasicAuthUsername(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-white/70 text-xs mb-1 block">Password</label>
+                        <div className="flex items-center gap-2 border rounded-lg hover:border-[#4B78E6]/50 border-gray-600/20 px-2 py-1">
+                          <KeyRound className="text-white/50" size={14} />
+                          <input
+                            type={showToken ? "text" : "password"}
+                            placeholder="Enter password"
+                            className="flex-1 bg-transparent placeholder:text-white/40 text-white text-xs outline-none"
+                            value={basicAuthPassword}
+                            onChange={(e) => setBasicAuthPassword(e.target.value)}
+                          />
+                          <button
+                            onClick={() => setShowToken(!showToken)}
+                            className="p-1 hover:bg-white/10 rounded transition-colors duration-200"
+                          >
+                            {showToken ? (
+                              <Eye className="text-white/50 hover:text-white/70" size={14} />
+                            ) : (
+                              <EyeClosed className="text-white/50 hover:text-white/70" size={14} />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      {basicAuthUsername && basicAuthPassword && (
+                        <p className="text-white/40 text-xs">
+                          Credentials will be sent as: Authorization: Basic {btoa(`${basicAuthUsername}:${basicAuthPassword}`).substring(0, 12)}...
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* API Key */}
+                  {authType === "api-key" && (
+                    <div className="space-y-3">
+                      <div>
+                        <label className="text-white/70 text-xs mb-1 block">Header Name</label>
+                        <div className="flex items-center gap-2 border rounded-lg hover:border-[#4B78E6]/50 border-gray-600/20 px-2 py-1">
+                          <KeyRound className="text-white/50" size={14} />
+                          <input
+                            type="text"
+                            placeholder="e.g., X-API-Key, Authorization"
+                            className="flex-1 bg-transparent placeholder:text-white/40 text-white text-xs outline-none"
+                            value={apiKeyName}
+                            onChange={(e) => setApiKeyName(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-white/70 text-xs mb-1 block">API Key Value</label>
+                        <div className="flex items-center gap-2 border rounded-lg hover:border-[#4B78E6]/50 border-gray-600/20 px-2 py-1">
+                          <KeyRound className="text-white/50" size={14} />
+                          <input
+                            type={showToken ? "text" : "password"}
+                            placeholder="Enter your API key"
+                            className="flex-1 bg-transparent placeholder:text-white/40 text-white text-xs outline-none"
+                            value={apiKeyValue}
+                            onChange={(e) => setApiKeyValue(e.target.value)}
+                          />
+                          <button
+                            onClick={() => setShowToken(!showToken)}
+                            className="p-1 hover:bg-white/10 rounded transition-colors duration-200"
+                          >
+                            {showToken ? (
+                              <Eye className="text-white/50 hover:text-white/70" size={14} />
+                            ) : (
+                              <EyeClosed className="text-white/50 hover:text-white/70" size={14} />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+                      {apiKeyName && apiKeyValue && (
+                        <p className="text-white/40 text-xs">
+                          Header will be sent as: {apiKeyName}: {apiKeyValue ? "●●●●●●●●" : "[value]"}
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* Auth Status */}
+                  <div className="mt-4 p-2 bg-black/20 rounded-lg border border-gray-600/20">
+                    <div className="flex items-center gap-2 mb-1">
+                      {(() => {
+                        const hasAuth =
+                          (authType === "bearer" && authToken) ||
+                          (authType === "basic" && basicAuthUsername && basicAuthPassword) ||
+                          (authType === "api-key" && apiKeyName && apiKeyValue);
+
+                        return hasAuth ? (
+                          <>
+                            <CheckCircle size={12} className="text-green-400" />
+                            <span className="text-green-400 text-xs">Authentication configured</span>
+                          </>
+                        ) : (
+                          <>
+                            <AlertCircle size={12} className="text-yellow-400" />
+                            <span className="text-yellow-400 text-xs">No authentication</span>
+                          </>
+                        );
+                      })()}
+                    </div>
+                    <p className="text-white/50 text-xs">
+                      {authType === "bearer" && "Bearer tokens are commonly used for OAuth 2.0 and JWT authentication."}
+                      {authType === "basic" && "Basic authentication sends credentials as base64-encoded username:password."}
+                      {authType === "api-key" && "API keys are sent as custom headers and vary by service provider."}
+                    </p>
                   </div>
                 </div>
               )}
@@ -1197,7 +1444,7 @@ export default function Home() {
               )}
 
               {activeRequestTab === "Params" && (
-                <div className="min-h-screen overflow-y-auto">
+                <div className="h-full overflow-y-auto">
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-1 ">
                       <div className="flex items-center gap-1">
@@ -1451,7 +1698,7 @@ export default function Home() {
               )}
 
               {activeRequestTab === "Headers" && (
-                <div className="min-h-screen overflow-y-auto">
+                <div className="h-full overflow-y-auto">
                   <div className="flex flex-col gap-1">
                     <div className="flex items-center gap-1 ">
                       <div className="flex items-center gap-1">
@@ -1739,14 +1986,14 @@ export default function Home() {
                 </button>
               </div>
 
-              <div className="">
+              <div className="h-full flex flex-col">
                 {activeResponseTab === "Request" && (
                   <div>
                     <div
                       className={`
                         overflow-hidden rounded-md -mt-1
                         transition-all duration-300 ease-in-out
-                        ${isExpanded ? "max-h-96" : "max-h-12"}
+                        ${isExpanded ? "max-h-auto" : "max-h-12"}
                       `}
                     >
                       <div className="hover:bg-black/10 flex gap-1 justify-start items-center text-white/50 text-xs px-2 py-1">
@@ -1948,10 +2195,10 @@ export default function Home() {
                 )}
 
                 {activeResponseTab === "Response" && (
-                  <div>
+                  <div className="h-full flex flex-col pb-4">
                     <div
                       className={`
-        overflow-hidden rounded-md -mt-1
+        overflow-hidden rounded-md -mt-1 flex-shrink-0
         transition-all duration-300 ease-in-out
         ${isResponseExpanded ? "max-h-96" : "max-h-12"}
       `}
@@ -2124,15 +2371,9 @@ export default function Home() {
                       </div>
                     </div>
 
-                    <div className="">
-                      <div
-                        className={`
-        overflow-hidden rounded-md -mt-1
-        transition-all duration-300 ease-in-out
-        ${isResponseBodyExpanded ? "max-h-96" : "max-h-28"}
-      `}
-                      >
-                        <div className="bg-black/10 flex gap-1 justify-start items-center text-white/50 text-xs px-2 py-1">
+                    <div className="flex-1 min-h-0 overflow-hidden pb-2">
+                    <div className="h-full overflow-hidden rounded-md -mt-1 flex flex-col">
+                    <div className="bg-black/10 flex gap-1 justify-start items-center text-white/50 text-xs px-2 py-1 flex-shrink-0">
                           <button
                             onClick={handleResponseBodyExpand}
                             className={`
@@ -2158,22 +2399,21 @@ export default function Home() {
 
                         {apiResponse ? (
                           <div
-                            className="w-full h-80 bg-black/20 backdrop-blur-md p-3 rounded-md overflow-auto text-white/80 text-xs"
+                            className="flex-1 w-full bg-black/20 backdrop-blur-md rounded-md overflow-auto text-white/80 text-xs"
                             style={{
                               fontFamily:
                                 "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
                             }}
                           >
                             <pre
-                              className="whitespace-pre-wrap break-words"
+                              className="whitespace-pre-wrap p-3 break-words"
                               dangerouslySetInnerHTML={{
                                 __html: formatJsonResponse(apiResponse),
                               }}
                             />
                           </div>
                         ) : (
-                          <div
-                            className="w-full h-80 bg-black/20 backdrop-blur-md p-3 rounded-md overflow-auto text-white/80 text-xs flex items-center justify-center"
+                          <div className="flex-1 w-full bg-black/20 backdrop-blur-md p-3 rounded-md overflow-auto text-white/80 text-xs flex items-center justify-center"
                             // style={{
                             //   fontFamily: "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
                             // }}
