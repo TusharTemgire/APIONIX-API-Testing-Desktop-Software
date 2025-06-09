@@ -1,160 +1,129 @@
-const { app, BrowserWindow, ipcMain, Menu, dialog } = require("electron")
-const path = require("path")
-const isDev = process.env.NODE_ENV === "development"
+// electron/main.js
+const { app, BrowserWindow, ipcMain } = require("electron");
+const path = require("path");
 
-let mainWindow
+// Development vs Production environment
+const isDev = process.env.NODE_ENV !== "production";
+console.log(`Running in ${isDev ? "development" : "production"} mode`);
 
-function createWindow() {
-  mainWindow = new BrowserWindow({
-    width: 1200,
-    height: 800,
-    minWidth: 800,
-    minHeight: 600,
-    webPreferences: {
-      nodeIntegration: false,
-      contextIsolation: true,
-      enableRemoteModule: false,
-      preload: path.join(__dirname, "preload.js"),
-    },
-    titleBarStyle: "default",
-    show: false,
-  })
+// Keep a global reference of the window object
+let mainWindow;
 
+function createMainWindow() {
+    // Create the browser window
+    mainWindow = new BrowserWindow({
+        width: 1280,
+        height: 800,
+        minWidth: 940,
+        minHeight: 600,
 
-  const startUrl = isDev ? "http://localhost:3000" : `file://${path.join(__dirname, "../.next/server/app/index.html")}`
+        webPreferences: {
+            nodeIntegration: false,
+            contextIsolation: true,
+            preload: path.join(__dirname, "preload.js"),
+        },
+        frame: false, // Remove default window frame for custom titlebar
+        backgroundColor: "#191515", // Match APIONIX dark theme background
+        show: false, // Don't show until loaded
+    });
 
-  mainWindow.loadURL(startUrl)
+    // Load the app
+    const startUrl = isDev ?
+        "http://localhost:3000" // Development server URL
+        :
+        `file://${path.join(__dirname, "../renderer/out/index.html")}`; // Production build path
 
-  mainWindow.once("ready-to-show", () => {
-    mainWindow.show()
+    console.log(`Loading URL: ${startUrl}`);
+    mainWindow.loadURL(startUrl);
 
-    if (isDev) {
-      mainWindow.webContents.openDevTools()
-    }
-  })
+    // Show window when ready
+    mainWindow.once("ready-to-show", () => {
+        mainWindow.show();
 
-  mainWindow.on("closed", () => {
-    mainWindow = null
-  })
+        // Open DevTools in development mode
+        if (isDev) {
+            mainWindow.webContents.openDevTools();
+        }
+    });
+
+    // Inform the renderer when window maximize/unmaximize state changes
+    mainWindow.on("maximize", () => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send("window-maximized", true);
+        }
+    });
+
+    mainWindow.on("unmaximize", () => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send("window-maximized", false);
+        }
+    });
 }
 
-app.whenReady().then(() => {
-  createWindow()
-  createMenu()
+// Set up IPC handlers for window control
+function setupIpcHandlers() {
+    // Window control handlers for custom titlebar
+    ipcMain.handle("window-minimize", () => {
+        if (mainWindow) {
+            mainWindow.minimize();
+            return true;
+        }
+        return false;
+    });
 
-  app.on("activate", () => {
-    if (BrowserWindow.getAllWindows().length === 0) {
-      createWindow()
-    }
-  })
-})
-
-app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit()
-  }
-})
-
-function createMenu() {
-  const template = [
-    {
-      label: "File",
-      submenu: [
-        {
-          label: "New",
-          accelerator: "CmdOrCtrl+N",
-          click: () => {
-            mainWindow.webContents.send("menu-new-file")
-          },
-        },
-        {
-          label: "Open",
-          accelerator: "CmdOrCtrl+O",
-          click: async () => {
-            const result = await dialog.showOpenDialog(mainWindow, {
-              properties: ["openFile"],
-              filters: [
-                { name: "Text Files", extensions: ["txt"] },
-                { name: "All Files", extensions: ["*"] },
-              ],
-            })
-
-            if (!result.canceled) {
-              mainWindow.webContents.send("menu-open-file", result.filePaths[0])
+    ipcMain.handle("window-maximize", () => {
+        if (mainWindow) {
+            if (mainWindow.isMaximized()) {
+                mainWindow.unmaximize();
+                return false; // Window is now unmaximized
+            } else {
+                mainWindow.maximize();
+                return true; // Window is now maximized
             }
-          },
-        },
-        { type: "separator" },
-        {
-          label: "Exit",
-          accelerator: process.platform === "darwin" ? "Cmd+Q" : "Ctrl+Q",
-          click: () => {
-            app.quit()
-          },
-        },
-      ],
-    },
-    {
-      label: "View",
-      submenu: [
-        { role: "reload" },
-        { role: "forceReload" },
-        { role: "toggleDevTools" },
-        { type: "separator" },
-        { role: "resetZoom" },
-        { role: "zoomIn" },
-        { role: "zoomOut" },
-        { type: "separator" },
-        { role: "togglefullscreen" },
-      ],
-    },
-    {
-      label: "Window",
-      submenu: [{ role: "minimize" }, { role: "close" }],
-    },
-  ]
+        }
+        return false;
+    });
 
-  const menu = Menu.buildFromTemplate(template)
-  Menu.setApplicationMenu(menu)
+    ipcMain.handle("window-close", () => {
+        if (mainWindow) {
+            mainWindow.close();
+            return true;
+        }
+        return false;
+    });
+
+    ipcMain.handle("window-is-maximized", () => {
+        if (mainWindow) {
+            return mainWindow.isMaximized();
+        }
+        return false;
+    });
+
+    // Basic message handler
+    ipcMain.handle("send-message", (event, message) => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            mainWindow.webContents.send("message", message);
+        }
+        return true;
+    });
 }
 
+// App lifecycle
+app.whenReady().then(() => {
+    createMainWindow();
+    setupIpcHandlers();
 
-ipcMain.handle("get-app-version", () => {
-  return app.getVersion()
-})
+    // Handle macOS app activation
+    app.on("activate", () => {
+        if (BrowserWindow.getAllWindows().length === 0) {
+            createMainWindow();
+        }
+    });
+});
 
-ipcMain.handle("get-platform", () => {
-  return process.platform
-})
-
-ipcMain.handle("show-message-box", async (event, options) => {
-  const result = await dialog.showMessageBox(mainWindow, options)
-  return result
-})
-
-ipcMain.handle("get-system-info", () => {
-  return {
-    platform: process.platform,
-    arch: process.arch,
-    version: process.version,
-    electronVersion: process.versions.electron,
-    chromeVersion: process.versions.chrome,
-  }
-})
-
-
-ipcMain.handle("save-data", async (event, data) => {
-
-  console.log("Saving data:", data)
-  return { success: true, message: "Data saved successfully" }
-})
-
-ipcMain.handle("load-data", async () => {
-  return {
-    lastOpened: new Date().toISOString(),
-    settings: {
-      theme: "light",
-      notifications: true,
-    },
-  }
-})
+// Quit the app when all windows are closed (except on macOS)
+app.on("window-all-closed", () => {
+    if (process.platform !== "darwin") {
+        app.quit();
+    }
+});

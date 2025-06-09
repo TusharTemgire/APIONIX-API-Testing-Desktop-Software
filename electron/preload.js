@@ -1,31 +1,30 @@
-const { contextBridge, ipcRenderer } = require("electron")
+// electron/preload.js
+const { contextBridge, ipcRenderer } = require('electron');
 
-// Expose protected methods that allow the renderer process to use
-// the ipcRenderer without exposing the entire object
-contextBridge.exposeInMainWorld("electronAPI", {
-  // App info
-  getAppVersion: () => ipcRenderer.invoke("get-app-version"),
-  getPlatform: () => ipcRenderer.invoke("get-platform"),
-  getSystemInfo: () => ipcRenderer.invoke("get-system-info"),
+// Expose only the necessary APIs
+contextBridge.exposeInMainWorld('electron', {
+    // Window control for custom titlebar
+    minimizeWindow: () => ipcRenderer.invoke('window-minimize'),
+    maximizeWindow: () => ipcRenderer.invoke('window-maximize'),
+    closeWindow: () => ipcRenderer.invoke('window-close'),
+    isWindowMaximized: () => ipcRenderer.invoke('window-is-maximized'),
 
-  // Dialog methods
-  showMessageBox: (options) => ipcRenderer.invoke("show-message-box", options),
+    // Basic message handling
+    sendMessage: (msg) => ipcRenderer.invoke('send-message', msg),
+    onMessage: (callback) => {
+        const listener = (_, message) => callback(message);
+        ipcRenderer.on('message', listener);
+        return () => {
+            ipcRenderer.removeListener('message', listener);
+        };
+    },
 
-  // Data methods
-  saveData: (data) => ipcRenderer.invoke("save-data", data),
-  loadData: () => ipcRenderer.invoke("load-data"),
-
-  // Menu event listeners
-  onMenuNewFile: (callback) => ipcRenderer.on("menu-new-file", callback),
-  onMenuOpenFile: (callback) => ipcRenderer.on("menu-open-file", callback),
-
-  // Remove listeners
-  removeAllListeners: (channel) => ipcRenderer.removeAllListeners(channel),
-})
-
-// Window controls
-contextBridge.exposeInMainWorld("windowAPI", {
-  minimize: () => ipcRenderer.invoke("window-minimize"),
-  maximize: () => ipcRenderer.invoke("window-maximize"),
-  close: () => ipcRenderer.invoke("window-close"),
-})
+    // Window maximize/unmaximize event
+    onWindowMaximizedChange: (callback) => {
+        const listener = (_, isMaximized) => callback(isMaximized);
+        ipcRenderer.on('window-maximized', listener);
+        return () => {
+            ipcRenderer.removeListener('window-maximized', listener);
+        };
+    }
+});

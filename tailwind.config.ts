@@ -2,10 +2,10 @@ import type { Config } from "tailwindcss"
 
 const config: Config = {
   content: [
-    "./pages/**/*.{js,ts,jsx,tsx,mdx}",
-    "./components/**/*.{js,ts,jsx,tsx,mdx}",
-    "./app/**/*.{js,ts,jsx,tsx,mdx}",
-    "*.{js,ts,jsx,tsx,mdx}",
+    "./renderer/pages/**/*.{js,ts,jsx,tsx,mdx}",
+    "./renderer/components/**/*.{js,ts,jsx,tsx,mdx}",
+    "./renderer/app/**/*.{js,ts,jsx,tsx,mdx}",
+    "./renderer/**/*.{js,ts,jsx,tsx,mdx}",
   ],
   theme: {
     extend: {
@@ -51,7 +51,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [],
+  plugins: [require("tailwindcss-animate")],
 }
 
 export default config
