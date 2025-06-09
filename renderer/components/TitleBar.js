@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from 'react';
 import { Minus, X, Square, Maximize2 } from 'lucide-react';
+import Image from 'next/image';
 
 export default function TitleBar() {
     const [isMaximized, setIsMaximized] = useState(false);
@@ -37,37 +38,43 @@ export default function TitleBar() {
         }
     };
 
-    return ( <
-        div className = "flex items-center w-full h-9 bg-[#201C1C] border-b rounded-lg border-gray-600/20 draggable" > { /* App Icon and Title */ } <
-        div className = "flex items-center pl-3 flex-1 draggable" >
-        <
-        div className = "w-4 h-4 bg-[#73DC8C] rounded-sm mr-2" > < /div> <
-        span className = "text-white/70 text-xs font-medium" > APIONIX < /span> < /
-        div >
+    return (
+        <div className="flex items-center w-full h-8 bg-[#201C1C] rounded-md draggable">
+            {/* App Icon and Title */}
+            <div className="flex items-center pl-4 flex-1 draggable">
+                <Image 
+                    src="/netflix-icon.png" 
+                    alt="APIONIX Icon" 
+                    width={20} 
+                    height={20} 
+                    className="mr-2 shadow-sm"
+                />
+                <span className="text-green-400 text-sm font-medium tracking-wide">APIONIX</span>
+            </div>
 
-        { /* Window Controls */ } <
-        div className = "flex items-center no-drag" >
-        <
-        button onClick = { handleMinimize }
-        className = "h-9 w-12 flex items-center justify-center text-white/50 hover:bg-white/10 transition-colors" >
-        <
-        Minus size = { 16 }
-        /> < /
-        button >
+            {/* Window Controls */}
+            <div className="flex items-center no-drag">
+                <button 
+                    onClick={handleMinimize}
+                    className="h-8 w-11 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#242424] transition-all duration-150"
+                >
+                    <Minus size={14} />
+                </button>
 
-        <
-        button onClick = { handleMaximize }
-        className = "h-9 w-12 flex items-center justify-center text-white/50 hover:bg-white/10 transition-colors" > { isMaximized ? < Square size = { 14 } /> : <Maximize2 size={14} / > } <
-        /button>
+                <button 
+                    onClick={handleMaximize}
+                    className="h-8 w-11 flex items-center justify-center text-gray-400 hover:text-white hover:bg-[#242424] transition-all duration-150"
+                >
+                    {isMaximized ? <Square size={12} /> : <Maximize2 size={12} />}
+                </button>
 
-        <
-        button onClick = { handleClose }
-        className = "h-9 w-12 flex items-center justify-center text-white/50 hover:bg-red-500/80 transition-colors" >
-        <
-        X size = { 18 }
-        /> < /
-        button > <
-        /div> < /
-        div >
+                <button 
+                    onClick={handleClose}
+                    className="h-8 w-11 flex items-center justify-center text-gray-400 hover:text-white hover:bg-red-500 transition-all duration-150"
+                >
+                    <X size={14} />
+                </button>
+            </div>
+        </div>
     );
 }

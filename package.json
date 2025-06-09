@@ -1,3 +1,4 @@
+
 {
     "name": "apionix-v2",
     "version": "0.1.0",
@@ -13,10 +14,11 @@
         "start": "cross-env NODE_ENV=production electron .",
         "start:win": "set NODE_ENV=production && electron .",
         "package": "npm run build && cross-env NODE_ENV=production electron-builder build --publish=never",
-        "postinstall": "npx npm-force-resolutions"
+        "postinstall": "npx npm-force-resolutions",
+        "icon": "/netflix-icon.ico"
     },
     "resolutions": {
-        "glob": "^10.3.10",
+        "glob": "^8.1.0",
         "inflight": "npm:@isaacs/inflight@^1.0.7"
     },
     "build": {
@@ -36,7 +38,8 @@
             "target": ["dmg", "zip"]
         },
         "win": {
-            "target": ["nsis", "portable"]
+            "target": ["nsis", "portable"],
+            "icon": "/netflix-icon.ico"
         },
         "linux": {
             "target": ["AppImage", "deb"],
