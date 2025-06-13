@@ -1595,7 +1595,7 @@ export default function Home() {
                         </label>
                       </div>
 
-                      <div className="mt-4 bg-black/20 rounded-lg p-2 border border-gray-600/20">
+                      <div className="mt-1 bg-black/20 rounded-lg p-2 border border-gray-600/20">
                         <p className="text-white/60 text-xs mb-1">
                           Common Headers:
                         </p>
