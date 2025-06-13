@@ -1145,7 +1145,7 @@ export default function Home() {
               )}
 
               {activeRequestTab === "Auth" && (
-                <div className="h-auto mb-2 mt-4">
+                <div className="h-screen overflow-y-auto mb-2 mt-4 [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none]">
                   {/* Auth Type Selection */}
                   <div className="mb-4">
                     <label className="text-white/70 text-xs mb-1 block">
