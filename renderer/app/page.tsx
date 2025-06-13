@@ -105,12 +105,13 @@ export default function Home() {
   const [responseHeaders, setResponseHeaders] = useState<
     Record<string, string>
   >({});
-  const [authType, setAuthType] = useState<"bearer" | "basic" | "api-key">("bearer");
+  const [authType, setAuthType] = useState<"bearer" | "basic" | "api-key">(
+    "bearer"
+  );
   const [basicAuthUsername, setBasicAuthUsername] = useState("");
   const [basicAuthPassword, setBasicAuthPassword] = useState("");
   const [apiKeyName, setApiKeyName] = useState("X-API-Key");
   const [apiKeyValue, setApiKeyValue] = useState("");
-
 
   const saveToLocalStorage = () => {
     if (!isLoaded) return;
@@ -364,7 +365,6 @@ export default function Home() {
   useEffect(() => {
     updateActiveTabAuth();
   }, [authToken, authType]);
-
 
   const handleUrlChange = (url: string) => {
     setMsg(url);
@@ -625,7 +625,8 @@ export default function Home() {
             if (bodyData.includes("Content-Disposition: form-data")) {
               requestHeaders["Content-Type"] = "multipart/form-data";
             } else {
-              requestHeaders["Content-Type"] = "application/x-www-form-urlencoded";
+              requestHeaders["Content-Type"] =
+                "application/x-www-form-urlencoded";
             }
           }
         } else {
@@ -633,7 +634,7 @@ export default function Home() {
         }
       }
 
-            // Add Authorization header
+      // Add Authorization header
       const authHeader = generateAuthHeader();
       if (authHeader) {
         requestHeaders["Authorization"] = authHeader;
@@ -644,7 +645,6 @@ export default function Home() {
       if (apiKeyHeader) {
         Object.assign(requestHeaders, apiKeyHeader);
       }
-
 
       if (authToken) {
         requestHeaders["Authorization"] = `Bearer ${authToken}`;
@@ -657,7 +657,10 @@ export default function Home() {
         credentials: "omit",
       };
 
-      if (["POST", "PUT", "PATCH"].includes(selectedMethod) && bodyData.trim()) {
+      if (
+        ["POST", "PUT", "PATCH"].includes(selectedMethod) &&
+        bodyData.trim()
+      ) {
         requestOptions.body = bodyData;
       }
 
@@ -890,8 +893,8 @@ export default function Home() {
   }
 
   return (
-    <div className="h-svh flex flex-col items-center justify-start bg-[#191515] p-2">      
-    <div className="pb-2 w-full">
+    <div className="h-svh flex flex-col items-center justify-start bg-[#191515] p-2">
+      <div className="pb-2 w-full">
         <TitleBar />
       </div>
       <Toaster position="top-center" />
@@ -1145,20 +1148,23 @@ export default function Home() {
                 <div className="h-auto mb-2 mt-4">
                   {/* Auth Type Selection */}
                   <div className="mb-4">
-                    <label className="text-white/70 text-xs mb-1 block">Authentication Type</label>
+                    <label className="text-white/70 text-xs mb-1 block">
+                      Authentication Type
+                    </label>
                     <div className="flex gap-1">
                       {[
                         { value: "bearer", label: "Bearer Token" },
                         { value: "basic", label: "Basic Auth" },
-                        { value: "api-key", label: "API Key" }
+                        { value: "api-key", label: "API Key" },
                       ].map((type) => (
                         <button
                           key={type.value}
                           onClick={() => setAuthType(type.value as any)}
-                          className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${authType === type.value
-                      ? "bg-black/5 text-[#73DC8C] border-gray-500/20"
-                      : "bg-black/20 hover:bg-black/5 text-white/50"
-                            }`}
+                          className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${
+                            authType === type.value
+                              ? "bg-black/5 text-[#73DC8C] border-gray-500/20"
+                              : "bg-black/20 hover:bg-black/5 text-white/50"
+                          }`}
                         >
                           {type.label}
                         </button>
@@ -1170,7 +1176,9 @@ export default function Home() {
                   {authType === "bearer" && (
                     <div className="space-y-3">
                       <div>
-                        <label className="text-white/70 text-xs mb-1 block">Bearer Token</label>
+                        <label className="text-white/70 text-xs mb-1 block">
+                          Bearer Token
+                        </label>
                         <div className="flex items-center gap-2 border rounded-lg hover:border-[#4B78E6]/50 border-gray-600/20 px-2 py-1">
                           <KeyRound className="text-white/50" size={14} />
                           <input
@@ -1185,14 +1193,21 @@ export default function Home() {
                             className="p-1 hover:bg-white/10 rounded transition-colors duration-200"
                           >
                             {showToken ? (
-                              <Eye className="text-white/50 hover:text-white/70" size={14} />
+                              <Eye
+                                className="text-white/50 hover:text-white/70"
+                                size={14}
+                              />
                             ) : (
-                              <EyeClosed className="text-white/50 hover:text-white/70" size={14} />
+                              <EyeClosed
+                                className="text-white/50 hover:text-white/70"
+                                size={14}
+                              />
                             )}
                           </button>
                         </div>
                         <p className="text-white/40 text-xs mt-1">
-                          Token will be sent as: Authorization: Bearer {authToken ? "●●●●●●●●" : "[token]"}
+                          Token will be sent as: Authorization: Bearer{" "}
+                          {authToken ? "●●●●●●●●" : "[token]"}
                         </p>
                       </div>
                     </div>
@@ -1202,7 +1217,9 @@ export default function Home() {
                   {authType === "basic" && (
                     <div className="space-y-3">
                       <div>
-                        <label className="text-white/70 text-xs mb-1 block">Username</label>
+                        <label className="text-white/70 text-xs mb-1 block">
+                          Username
+                        </label>
                         <div className="flex items-center gap-2 border rounded-lg hover:border-[#4B78E6]/50 border-gray-600/20 px-2 py-1">
                           <KeyRound className="text-white/50" size={14} />
                           <input
@@ -1210,12 +1227,16 @@ export default function Home() {
                             placeholder="Enter username"
                             className="flex-1 bg-transparent placeholder:text-white/40 text-white text-xs outline-none"
                             value={basicAuthUsername}
-                            onChange={(e) => setBasicAuthUsername(e.target.value)}
+                            onChange={(e) =>
+                              setBasicAuthUsername(e.target.value)
+                            }
                           />
                         </div>
                       </div>
                       <div>
-                        <label className="text-white/70 text-xs mb-1 block">Password</label>
+                        <label className="text-white/70 text-xs mb-1 block">
+                          Password
+                        </label>
                         <div className="flex items-center gap-2 border rounded-lg hover:border-[#4B78E6]/50 border-gray-600/20 px-2 py-1">
                           <KeyRound className="text-white/50" size={14} />
                           <input
@@ -1223,23 +1244,35 @@ export default function Home() {
                             placeholder="Enter password"
                             className="flex-1 bg-transparent placeholder:text-white/40 text-white text-xs outline-none"
                             value={basicAuthPassword}
-                            onChange={(e) => setBasicAuthPassword(e.target.value)}
+                            onChange={(e) =>
+                              setBasicAuthPassword(e.target.value)
+                            }
                           />
                           <button
                             onClick={() => setShowToken(!showToken)}
                             className="p-1 hover:bg-white/10 rounded transition-colors duration-200"
                           >
                             {showToken ? (
-                              <Eye className="text-white/50 hover:text-white/70" size={14} />
+                              <Eye
+                                className="text-white/50 hover:text-white/70"
+                                size={14}
+                              />
                             ) : (
-                              <EyeClosed className="text-white/50 hover:text-white/70" size={14} />
+                              <EyeClosed
+                                className="text-white/50 hover:text-white/70"
+                                size={14}
+                              />
                             )}
                           </button>
                         </div>
                       </div>
                       {basicAuthUsername && basicAuthPassword && (
                         <p className="text-white/40 text-xs">
-                          Credentials will be sent as: Authorization: Basic {btoa(`${basicAuthUsername}:${basicAuthPassword}`).substring(0, 12)}...
+                          Credentials will be sent as: Authorization: Basic{" "}
+                          {btoa(
+                            `${basicAuthUsername}:${basicAuthPassword}`
+                          ).substring(0, 12)}
+                          ...
                         </p>
                       )}
                     </div>
@@ -1249,7 +1282,9 @@ export default function Home() {
                   {authType === "api-key" && (
                     <div className="space-y-3">
                       <div>
-                        <label className="text-white/70 text-xs mb-1 block">Header Name</label>
+                        <label className="text-white/70 text-xs mb-1 block">
+                          Header Name
+                        </label>
                         <div className="flex items-center gap-2 border rounded-lg hover:border-[#4B78E6]/50 border-gray-600/20 px-2 py-1">
                           <KeyRound className="text-white/50" size={14} />
                           <input
@@ -1262,7 +1297,9 @@ export default function Home() {
                         </div>
                       </div>
                       <div>
-                        <label className="text-white/70 text-xs mb-1 block">API Key Value</label>
+                        <label className="text-white/70 text-xs mb-1 block">
+                          API Key Value
+                        </label>
                         <div className="flex items-center gap-2 border rounded-lg hover:border-[#4B78E6]/50 border-gray-600/20 px-2 py-1">
                           <KeyRound className="text-white/50" size={14} />
                           <input
@@ -1277,16 +1314,23 @@ export default function Home() {
                             className="p-1 hover:bg-white/10 rounded transition-colors duration-200"
                           >
                             {showToken ? (
-                              <Eye className="text-white/50 hover:text-white/70" size={14} />
+                              <Eye
+                                className="text-white/50 hover:text-white/70"
+                                size={14}
+                              />
                             ) : (
-                              <EyeClosed className="text-white/50 hover:text-white/70" size={14} />
+                              <EyeClosed
+                                className="text-white/50 hover:text-white/70"
+                                size={14}
+                              />
                             )}
                           </button>
                         </div>
                       </div>
                       {apiKeyName && apiKeyValue && (
                         <p className="text-white/40 text-xs">
-                          Header will be sent as: {apiKeyName}: {apiKeyValue ? "●●●●●●●●" : "[value]"}
+                          Header will be sent as: {apiKeyName}:{" "}
+                          {apiKeyValue ? "●●●●●●●●" : "[value]"}
                         </p>
                       )}
                     </div>
@@ -1298,183 +1342,196 @@ export default function Home() {
                       {(() => {
                         const hasAuth =
                           (authType === "bearer" && authToken) ||
-                          (authType === "basic" && basicAuthUsername && basicAuthPassword) ||
+                          (authType === "basic" &&
+                            basicAuthUsername &&
+                            basicAuthPassword) ||
                           (authType === "api-key" && apiKeyName && apiKeyValue);
 
                         return hasAuth ? (
                           <>
                             <CheckCircle size={12} className="text-green-400" />
-                            <span className="text-green-400 text-xs">Authentication configured</span>
+                            <span className="text-green-400 text-xs">
+                              Authentication configured
+                            </span>
                           </>
                         ) : (
                           <>
-                            <AlertCircle size={12} className="text-yellow-400" />
-                            <span className="text-yellow-400 text-xs">No authentication</span>
+                            <AlertCircle
+                              size={12}
+                              className="text-yellow-400"
+                            />
+                            <span className="text-yellow-400 text-xs">
+                              No authentication
+                            </span>
                           </>
                         );
                       })()}
                     </div>
                     <p className="text-white/50 text-xs">
-                      {authType === "bearer" && "Bearer tokens are commonly used for OAuth 2.0 and JWT authentication."}
-                      {authType === "basic" && "Basic authentication sends credentials as base64-encoded username:password."}
-                      {authType === "api-key" && "API keys are sent as custom headers and vary by service provider."}
+                      {authType === "bearer" &&
+                        "Bearer tokens are commonly used for OAuth 2.0 and JWT authentication."}
+                      {authType === "basic" &&
+                        "Basic authentication sends credentials as base64-encoded username:password."}
+                      {authType === "api-key" &&
+                        "API keys are sent as custom headers and vary by service provider."}
                     </p>
                   </div>
                   <div className="h-full overflow-y-auto mt-4">
-                  <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-1 ">
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="checkbox"
-                          defaultChecked
-                          className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
-                        />
-                        <GripVertical
-                          size={14}
-                          className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
-                        />
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Content-Type"
-                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
-                      />
-                      <input
-                        type="text"
-                        placeholder="application/json"
-                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
-                      />
-                      <button className="p-1 hover:bg-white/10 rounded transition-colors duration-200">
-                        <Trash2
-                          className="text-white/50 hover:text-white/70"
-                          size={14}
-                        />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="checkbox"
-                          defaultChecked
-                          className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
-                        />
-                        <GripVertical
-                          size={14}
-                          className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
-                        />
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Authorization"
-                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Bearer token"
-                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
-                      />
-                      <button className="p-1 hover:bg-white/10 rounded transition-colors duration-200">
-                        <Trash2
-                          className="text-white/50 hover:text-white/70"
-                          size={14}
-                        />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="checkbox"
-                          defaultChecked
-                          className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
-                        />
-                        <GripVertical
-                          size={14}
-                          className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
-                        />
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Accept"
-                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
-                      />
-                      <input
-                        type="text"
-                        placeholder="application/json"
-                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
-                      />
-                      <button className="p-1 hover:bg-white/10 rounded transition-colors duration-200">
-                        <Trash2
-                          className="text-white/50 hover:text-white/70"
-                          size={14}
-                        />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center gap-1 mt-1">
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="checkbox"
-                          defaultChecked
-                          className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
-                        />
-                        <GripVertical
-                          size={14}
-                          className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
-                        />
-                      </div>
-                      <input
-                        type="text"
-                        value="Content-Type"
-                        readOnly
-                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 text-white/70 text-xs outline-none px-2 py-1.5"
-                      />
-                      <div className="flex-1 relative">
+                    <div className="flex flex-col gap-1">
+                      <div className="flex items-center gap-1 ">
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="checkbox"
+                            defaultChecked
+                            className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
+                          />
+                          <GripVertical
+                            size={14}
+                            className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
+                          />
+                        </div>
                         <input
                           type="text"
-                          value="multipart/form-data"
-                          readOnly
-                          className="w-full bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 text-white/70 text-xs outline-none px-2 py-1.5"
+                          placeholder="Content-Type"
+                          className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
                         />
                         <input
-                          type="file"
-                          className="absolute inset-0 opacity-0 cursor-pointer"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              toast.success("File Selected: " + file.name, {
-                                style: {
-                                  backgroundColor: "rgba(18, 18, 18, 0.8)",
-                                  backdropFilter: "blur(5px)",
-                                  color: "#ffffff",
-                                  borderRadius: "10px",
-                                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                                  boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
-                                  padding: "8px 12px",
-                                  fontSize: "12px",
-                                  fontWeight: "500",
-                                },
-                                icon: "✓",
-                                duration: 2000,
-                              });
-                            }
-                          }}
+                          type="text"
+                          placeholder="application/json"
+                          className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
                         />
+                        <button className="p-1 hover:bg-white/10 rounded transition-colors duration-200">
+                          <Trash2
+                            className="text-white/50 hover:text-white/70"
+                            size={14}
+                          />
+                        </button>
                       </div>
-                      <button className="p-1 hover:bg-white/10 rounded transition-colors duration-200">
-                        <Trash2
-                          className="text-white/50 hover:text-white/70"
-                          size={14}
-                        />
-                      </button>
-                    </div>
 
-                    <button
-                      onClick={() => {
-                        const headerRow = document.createElement("div");
-                        headerRow.className = "flex items-center gap-1 mt-1";
-                        headerRow.innerHTML = `
+                      <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="checkbox"
+                            defaultChecked
+                            className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
+                          />
+                          <GripVertical
+                            size={14}
+                            className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
+                          />
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Authorization"
+                          className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
+                        />
+                        <input
+                          type="text"
+                          placeholder="Bearer token"
+                          className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
+                        />
+                        <button className="p-1 hover:bg-white/10 rounded transition-colors duration-200">
+                          <Trash2
+                            className="text-white/50 hover:text-white/70"
+                            size={14}
+                          />
+                        </button>
+                      </div>
+
+                      <div className="flex items-center gap-1">
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="checkbox"
+                            defaultChecked
+                            className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
+                          />
+                          <GripVertical
+                            size={14}
+                            className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
+                          />
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="Accept"
+                          className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
+                        />
+                        <input
+                          type="text"
+                          placeholder="application/json"
+                          className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
+                        />
+                        <button className="p-1 hover:bg-white/10 rounded transition-colors duration-200">
+                          <Trash2
+                            className="text-white/50 hover:text-white/70"
+                            size={14}
+                          />
+                        </button>
+                      </div>
+
+                      <div className="flex items-center gap-1 mt-1">
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="checkbox"
+                            defaultChecked
+                            className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
+                          />
+                          <GripVertical
+                            size={14}
+                            className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
+                          />
+                        </div>
+                        <input
+                          type="text"
+                          value="Content-Type"
+                          readOnly
+                          className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 text-white/70 text-xs outline-none px-2 py-1.5"
+                        />
+                        <div className="flex-1 relative">
+                          <input
+                            type="text"
+                            value="multipart/form-data"
+                            readOnly
+                            className="w-full bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 text-white/70 text-xs outline-none px-2 py-1.5"
+                          />
+                          <input
+                            type="file"
+                            className="absolute inset-0 opacity-0 cursor-pointer"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                toast.success("File Selected: " + file.name, {
+                                  style: {
+                                    backgroundColor: "rgba(18, 18, 18, 0.8)",
+                                    backdropFilter: "blur(5px)",
+                                    color: "#ffffff",
+                                    borderRadius: "10px",
+                                    border:
+                                      "1px solid rgba(255, 255, 255, 0.1)",
+                                    boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
+                                    padding: "8px 12px",
+                                    fontSize: "12px",
+                                    fontWeight: "500",
+                                  },
+                                  icon: "✓",
+                                  duration: 2000,
+                                });
+                              }
+                            }}
+                          />
+                        </div>
+                        <button className="p-1 hover:bg-white/10 rounded transition-colors duration-200">
+                          <Trash2
+                            className="text-white/50 hover:text-white/70"
+                            size={14}
+                          />
+                        </button>
+                      </div>
+
+                      <button
+                        onClick={() => {
+                          const headerRow = document.createElement("div");
+                          headerRow.className = "flex items-center gap-1 mt-1";
+                          headerRow.innerHTML = `
                           <div class="flex items-center gap-1">
                             <input type="checkbox" checked class="accent-[#DBDE52] h-3 w-3 cursor-pointer">
                             <svg class="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1490,87 +1547,88 @@ export default function Home() {
                           </button>
                         `;
 
-                        const addButton = document.querySelector(
-                          ".flex.items-center.gap-1\\.5.text-\\[\\#4B78E6\\]"
-                        );
-                        if (addButton && addButton.parentNode) {
-                          addButton.parentNode.insertBefore(
-                            headerRow,
-                            addButton
+                          const addButton = document.querySelector(
+                            ".flex.items-center.gap-1\\.5.text-\\[\\#4B78E6\\]"
                           );
-                        }
-                      }}
-                      className="flex items-center gap-1.5 text-[#4B78E6] text-xs border border-dashed border-gray-600/20 hover:border-[#4B78E6]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors"
-                    >
-                      <Plus size={12} />
-                      Add New Header
-                    </button>
+                          if (addButton && addButton.parentNode) {
+                            addButton.parentNode.insertBefore(
+                              headerRow,
+                              addButton
+                            );
+                          }
+                        }}
+                        className="flex items-center gap-1.5 text-[#4B78E6] text-xs border border-dashed border-gray-600/20 hover:border-[#4B78E6]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors"
+                      >
+                        <Plus size={12} />
+                        Add New Header
+                      </button>
 
-                    <div className="flex items-center gap-1.5 text-[#73DC8C] text-xs border border-dashed border-gray-600/20 hover:border-[#73DC8C]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors cursor-pointer">
-                      <Plus size={12} />
-                      <label className="flex-1 cursor-pointer">
-                        Add File Upload
-                        <input
-                          type="file"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              toast.success("File Selected: " + file.name, {
-                                style: {
-                                  backgroundColor: "rgba(18, 18, 18, 0.8)",
-                                  backdropFilter: "blur(5px)",
-                                  color: "#ffffff",
-                                  borderRadius: "10px",
-                                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                                  boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
-                                  padding: "8px 12px",
-                                  fontSize: "12px",
-                                  fontWeight: "500",
-                                },
-                                icon: "✓",
-                                duration: 2000,
-                              });
-                            }
-                          }}
-                        />
-                      </label>
-                    </div>
+                      <div className="flex items-center gap-1.5 text-[#73DC8C] text-xs border border-dashed border-gray-600/20 hover:border-[#73DC8C]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors cursor-pointer">
+                        <Plus size={12} />
+                        <label className="flex-1 cursor-pointer">
+                          Add File Upload
+                          <input
+                            type="file"
+                            className="hidden"
+                            onChange={(e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                toast.success("File Selected: " + file.name, {
+                                  style: {
+                                    backgroundColor: "rgba(18, 18, 18, 0.8)",
+                                    backdropFilter: "blur(5px)",
+                                    color: "#ffffff",
+                                    borderRadius: "10px",
+                                    border:
+                                      "1px solid rgba(255, 255, 255, 0.1)",
+                                    boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
+                                    padding: "8px 12px",
+                                    fontSize: "12px",
+                                    fontWeight: "500",
+                                  },
+                                  icon: "✓",
+                                  duration: 2000,
+                                });
+                              }
+                            }}
+                          />
+                        </label>
+                      </div>
 
-                    <div className="mt-4 bg-black/20 rounded-lg p-2 border border-gray-600/20">
-                      <p className="text-white/60 text-xs mb-1">
-                        Common Headers:
-                      </p>
-                      <div className="grid grid-cols-2 gap-1">
-                        <span className="text-[#4B78E6] text-xs">
-                          Content-Type
-                        </span>
-                        <span className="text-white/50 text-xs">
-                          application/json
-                        </span>
+                      <div className="mt-4 bg-black/20 rounded-lg p-2 border border-gray-600/20">
+                        <p className="text-white/60 text-xs mb-1">
+                          Common Headers:
+                        </p>
+                        <div className="grid grid-cols-2 gap-1">
+                          <span className="text-[#4B78E6] text-xs">
+                            Content-Type
+                          </span>
+                          <span className="text-white/50 text-xs">
+                            application/json
+                          </span>
 
-                        <span className="text-[#4B78E6] text-xs">Accept</span>
-                        <span className="text-white/50 text-xs">
-                          application/json
-                        </span>
+                          <span className="text-[#4B78E6] text-xs">Accept</span>
+                          <span className="text-white/50 text-xs">
+                            application/json
+                          </span>
 
-                        <span className="text-[#4B78E6] text-xs">
-                          Authorization
-                        </span>
-                        <span className="text-white/50 text-xs">
-                          Bearer token
-                        </span>
+                          <span className="text-[#4B78E6] text-xs">
+                            Authorization
+                          </span>
+                          <span className="text-white/50 text-xs">
+                            Bearer token
+                          </span>
 
-                        <span className="text-[#4B78E6] text-xs">
-                          Content-Type
-                        </span>
-                        <span className="text-white/50 text-xs">
-                          multipart/form-data
-                        </span>
+                          <span className="text-[#4B78E6] text-xs">
+                            Content-Type
+                          </span>
+                          <span className="text-white/50 text-xs">
+                            multipart/form-data
+                          </span>
+                        </div>
                       </div>
                     </div>
                   </div>
-                </div> 
                 </div>
               )}
 
@@ -2632,9 +2690,9 @@ export default function Home() {
                     </div>
 
                     <div className="flex-1 min-h-0 overflow-hidden pb-2">
-                    <div className="h-full overflow-hidden rounded-md -mt-1 flex flex-col">
-                    <div className="bg-black/10 flex gap-1 justify-start items-center text-white/50 text-xs px-2 py-1 flex-shrink-0">
-                          <button
+                      <div className="h-full overflow-hidden rounded-md -mt-1 flex flex-col">
+                        <div className="bg-black/10 flex gap-1 justify-start items-center text-white/50 text-xs px-2 py-1 flex-shrink-0">
+                          {/* <button
                             onClick={handleResponseBodyExpand}
                             className={`
             bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-gray-600/20 p-1 
@@ -2644,7 +2702,7 @@ export default function Home() {
           `}
                           >
                             <ChevronsRight size={14} />
-                          </button>
+                          </button> */}
                           <h3 className="text-[#73DC8C] text-xs font-medium">
                             Response Body
                           </h3>
@@ -2673,7 +2731,8 @@ export default function Home() {
                             />
                           </div>
                         ) : (
-                          <div className="flex-1 w-full bg-black/20 backdrop-blur-md p-3 rounded-md overflow-auto text-white/80 text-xs flex items-center justify-center"
+                          <div
+                            className="flex-1 w-full bg-black/20 backdrop-blur-md p-3 rounded-md overflow-auto text-white/80 text-xs flex items-center justify-center"
                             // style={{
                             //   fontFamily: "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
                             // }}
@@ -2893,17 +2952,36 @@ export default function Home() {
               </div>
               <div className="text-white/70 text-xs space-y-1 flex-1">
                 <p>
-                  <span className="text-[#73DC8C] font-medium">APIONIX</span> is a lightweight API
-                  testing tool designed for developers to quickly test and debug
-                  APIs without complex setups or configurations.
+                  <span className="text-[#73DC8C] font-medium">APIONIX</span> is
+                  a lightweight API testing tool designed for developers to
+                  quickly test and debug APIs without complex setups or
+                  configurations.
                 </p>
                 <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[10px] text-white/70">
-                  <span className="flex items-center"><span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>HTTP methods</span>
-                  <span className="flex items-center"><span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>JSON validation</span>
-                  <span className="flex items-center"><span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>Custom headers</span>
-                  <span className="flex items-center"><span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>Multi-tab</span>
-                  <span className="flex items-center"><span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>Environment vars</span>
-                  <span className="flex items-center"><span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>Response time</span>
+                  <span className="flex items-center">
+                    <span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>
+                    HTTP methods
+                  </span>
+                  <span className="flex items-center">
+                    <span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>
+                    JSON validation
+                  </span>
+                  <span className="flex items-center">
+                    <span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>
+                    Custom headers
+                  </span>
+                  <span className="flex items-center">
+                    <span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>
+                    Multi-tab
+                  </span>
+                  <span className="flex items-center">
+                    <span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>
+                    Environment vars
+                  </span>
+                  <span className="flex items-center">
+                    <span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>
+                    Response time
+                  </span>
                 </div>
                 <div className="flex justify-between items-center mt-2 pt-1 border-t border-gray-600/20">
                   <div className="text-white/40 text-[10px]">
