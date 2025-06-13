@@ -1563,7 +1563,7 @@ export default function Home() {
                         Add New Header
                       </button>
 
-                      <div className="flex items-center gap-1.5 text-[#73DC8C] text-xs border border-dashed border-gray-600/20 hover:border-[#73DC8C]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors cursor-pointer">
+                      <div className="flex items-center gap-1.5 text-[#73DC8C] text-xs border border-dashed border-green-600/20 hover:border-[#73DC8C]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors cursor-pointer">
                         <Plus size={12} />
                         <label className="flex-1 cursor-pointer">
                           Add File Upload
@@ -1595,7 +1595,7 @@ export default function Home() {
                         </label>
                       </div>
 
-                      <div className="mt-1 bg-black/20 rounded-lg p-2 border border-gray-600/20">
+                      {/* <div className="mt-1 bg-black/20 rounded-lg p-2 border border-gray-600/20">
                         <p className="text-white/60 text-xs mb-1">
                           Common Headers:
                         </p>
@@ -1626,7 +1626,82 @@ export default function Home() {
                             multipart/form-data
                           </span>
                         </div>
-                      </div>
+                      </div> */}
+
+              <div className="mt-1 bg-black/20 shadow-sm rounded-xl p-3 border border-gray-600/20">
+                <div className="flex items-center justify-between mb-2">
+                  <p className="text-white/70 text-xs font-medium">Common Headers</p>
+                </div>
+                
+                <div className="space-y-2">
+                  {/* Header category: Content Types */}
+                  <div>
+                    <p className="text-white/40 text-[10px] mb-1 border-b border-gray-600/10 pb-0.5">Content Types</p>
+                    <div className="grid grid-cols-2 gap-1">
+                      <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
+                        Content-Type
+                      </button>
+                      <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
+                        application/json
+                      </button>
+                      
+                      <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
+                        Content-Type
+                      </button>
+                      <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
+                        multipart/form-data
+                      </button>
+                      
+                      <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
+                        Accept
+                      </button>
+                      <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
+                        application/json
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Header category: Authentication */}
+                  <div>
+                    <p className="text-white/40 text-[10px] mb-1 border-b border-gray-600/10 pb-0.5">Authentication</p>
+                    <div className="grid grid-cols-2 gap-1">
+                      <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
+                        Authorization
+                      </button>
+                      <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
+                        Bearer {authToken ? "..." : "token"}
+                      </button>
+                      
+                      <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
+                        X-API-Key
+                      </button>
+                      <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
+                        your-api-key
+                      </button>
+                    </div>
+                  </div>
+                  
+                  {/* Header category: Caching */}
+                  <div>
+                    <p className="text-white/40 text-[10px] mb-1 border-b border-gray-600/10 pb-0.5">Caching & Control</p>
+                    <div className="grid grid-cols-2 gap-1">
+                      <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
+                        Cache-Control
+                      </button>
+                      <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
+                        no-cache, no-store
+                      </button>
+                      
+                      <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
+                        User-Agent
+                      </button>
+                      <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
+                        APIONIX/1.0
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              </div>
                     </div>
                   </div>
                 </div>
