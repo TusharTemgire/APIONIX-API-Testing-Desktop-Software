@@ -7,7 +7,7 @@ import TitleBar from '../components/TitleBar'
 const tronixfont = Space_Grotesk({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "APIONIX-v.2 - Advanced API Development Platform",
+  title: "APIONIX - Advanced API Development Platform",
   description: "Powerful desktop application for API development and testing built with Electron.js and Next.js. Streamline your workflow with APIONIX.",
   keywords: ["API development", "API testing", "desktop application", "Electron.js", "Next.js"],
   generator: "TRONIX",

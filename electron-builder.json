@@ -1,43 +1,35 @@
 {
-  "appId": "com.apionix.v2",
-  "productName": "APIONIX V2",
-  "directories": {
-    "output": "dist"
-  },
-  "files": ["electron/**/*", ".next/**/*", "public/**/*", "package.json"],
-  "extraResources": [
-    {
-      "from": ".next",
-      "to": ".next"
+    "appId": "com.apionix.v2",
+    "productName": "APIONIX",
+    "directories": {
+        "output": "dist"
+    },
+    "files": ["electron/**/*", ".next/**/*", "public/**/*", "package.json"],
+    "extraResources": [{
+        "from": ".next",
+        "to": ".next"
+    }],
+    "mac": {
+        "category": "public.app-category.productivity",
+        "target": [{
+            "target": "dmg",
+            "arch": ["x64", "arm64"]
+        }]
+    },
+    "win": {
+        "target": [{
+            "target": "nsis",
+            "arch": ["x64", "ia32"]
+        }]
+    },
+    "linux": {
+        "target": [{
+            "target": "AppImage",
+            "arch": ["x64"]
+        }]
+    },
+    "nsis": {
+        "oneClick": false,
+        "allowToChangeInstallationDirectory": true
     }
-  ],
-  "mac": {
-    "category": "public.app-category.productivity",
-    "target": [
-      {
-        "target": "dmg",
-        "arch": ["x64", "arm64"]
-      }
-    ]
-  },
-  "win": {
-    "target": [
-      {
-        "target": "nsis",
-        "arch": ["x64", "ia32"]
-      }
-    ]
-  },
-  "linux": {
-    "target": [
-      {
-        "target": "AppImage",
-        "arch": ["x64"]
-      }
-    ]
-  },
-  "nsis": {
-    "oneClick": false,
-    "allowToChangeInstallationDirectory": true
-  }
 }

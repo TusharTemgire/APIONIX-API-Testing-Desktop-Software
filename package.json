@@ -1,5 +1,5 @@
 {
-    "name": "apionix-v2",
+    "name": "apionix",
     "version": "0.1.0",
     "private": true,
     "description": "A desktop application built with Electron and Next.js",
@@ -14,7 +14,7 @@
         "start:win": "set NODE_ENV=production && electron .",
         "package": "npm run build && cross-env NODE_ENV=production electron-builder build --publish=never",
         "postinstall": "npx npm-force-resolutions",
-        "icon": "renderer/public/netflix-icon.png"
+        "icon": "renderer/public/tronix-icon.png"
     },
     "resolutions": {
         "glob": "^8.1.0",
@@ -38,7 +38,7 @@
         },
         "win": {
             "target": ["nsis", "portable"],
-            "icon": "renderer/public/netflix-icon.png"
+            "icon": "renderer/public/tronix-icon.png"
         },
         "linux": {
             "target": ["AppImage", "deb"],
