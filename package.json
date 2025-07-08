@@ -16,7 +16,7 @@
         "postinstall": "npx npm-force-resolutions",
         "icon": "renderer/public/tronix-icon.png"
     },
-    "resolutions": {
+    "overrides": {
         "glob": "^8.1.0",
         "inflight": "npm:@isaacs/inflight@^1.0.7"
     },
