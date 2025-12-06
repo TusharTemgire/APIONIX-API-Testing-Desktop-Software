@@ -957,7 +957,7 @@ export default function Home() {
         </div>
       </div>
       <div className="bg-[#1C1818] w-full p-1.5 border flex items-center justify-center border-gray-600/20 rounded-lg mb-2">
-        <div className="relative method-dropdown">
+        <div className="relative method-dropdown bg-white/5 rounded-[5px] mr-1">
           <button
             onClick={toggleMethodDropdown}
             className="hover:bg-white/5 flex justify-center gap-1 items-center text-xs px-2 py-1 rounded-md"
@@ -975,7 +975,7 @@ export default function Home() {
                 <button
                   key={method.name}
                   onClick={() => handleMethodSelect(method.name)}
-                  className="w-full px-3 py-1 font-medium text-xs hover:bg-white/5 first:rounded-t-md last:rounded-b-md transition-colors"
+                  className="w-full px-3 py-1 text-xs hover:bg-white/5 border-b border-gray-600/20 first:rounded-t-md last:rounded-b-md transition-colors"
                   style={{ color: method.color }}
                 >
                   {method.name}

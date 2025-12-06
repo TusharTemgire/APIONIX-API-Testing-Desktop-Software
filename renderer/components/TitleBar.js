@@ -49,7 +49,7 @@ export default function TitleBar() {
                     height={20} 
                     className="mr-2 shadow-sm"
                 /> */}
-                <div className="mr-1 px-1 py-0.5 border border-green-400/30 rounded-md shadow-sm">
+                <div className="mr-1 px-0.5 py-0.5 border border-green-400/20 rounded-md shadow-sm">
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <g clipPath="url(#clip0_4418_6503)">
                             <path opacity="0.4" d="M16.1599 10C16.1599 10 16.0099 11 12.9099 15C9.9999 18.77 14.2099 21.64 14.7099 21.97C14.7399 21.99 14.7699 21.99 14.8099 21.97C15.4899 21.55 23.0599 16.68 16.1599 10Z" stroke="#fff" strokeWidth="1.5" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" />
