@@ -1015,7 +1015,13 @@ export default function Home() {
           >
             {isLoading ? (
               <>
-                <LoaderCircle className="animate-spin mr-1" size={12} />
+              <div className="animate-spin mr-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
+                  fill="black" viewBox="0 0 24 24" >
+                  <path d="M12 18a2 2 0 1 0 0 4 2 2 0 1 0 0-4M12 2a2 2 0 1 0 0 4 2 2 0 1 0 0-4M7.76 19.07c-.78.78-2.05.78-2.83 0s-.78-2.05 0-2.83 2.05-.78 2.83 0 .78 2.05 0 2.83M19.07 7.76c-.78.78-2.05.78-2.83 0s-.78-2.05 0-2.83 2.05-.78 2.83 0 .78 2.05 0 2.83M4 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2M20 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2M4.93 7.76c-.78-.78-.78-2.05 0-2.83s2.05-.78 2.83 0 .78 2.05 0 2.83-2.05.78-2.83 0M16.24 19.07c-.78-.78-.78-2.05 0-2.83s2.05-.78 2.83 0 .78 2.05 0 2.83-2.05.78-2.83 0"></path>
+                </svg>
+                </div>
+                {/* <LoaderCircle className="animate-spin mr-1" size={12} /> */}
                 Sending
               </>
             ) : !isValidUrl(msg) ? (
