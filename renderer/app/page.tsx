@@ -66,8 +66,22 @@ interface Tab {
   name: string;
   bodyData: string;
   isActive: boolean;
-  authToken?: string; // Add auth token to each tab
-  authType?: "bearer" | "basic" | "api-key"; // Add auth type
+  authToken?: string;
+  authType?: "bearer" | "basic" | "api-key";
+  queryParams: KeyValueItem[];
+  headers: KeyValueItem[];
+  bodyType: "none" | "json" | "text" | "form-data" | "x-www-form-urlencoded" | "xml";
+  formData: KeyValueItem[];
+  urlEncodedData: KeyValueItem[];
+}
+
+interface KeyValueItem {
+  id: string;
+  key: string;
+  value: string;
+  isActive: boolean;
+  type?: "text" | "file";
+  file?: File;
 }
 
 export default function Home() {
@@ -94,6 +108,11 @@ export default function Home() {
       name: "api.tronix.in/api/demos",
       bodyData: "",
       isActive: true,
+      queryParams: [],
+      headers: [],
+      bodyType: "json",
+      formData: [],
+      urlEncodedData: [],
     },
   ]);
   const [activeTabId, setActiveTabId] = useState("1");
@@ -189,7 +208,18 @@ export default function Home() {
         setApiKeyValue(appState.apiKeyValue || "");
 
         if (appState.tabs && appState.tabs.length > 0) {
-          setTabs(appState.tabs);
+          // Migration: Ensure all tabs have the new properties
+          const robustTabs = appState.tabs.map((t: any) => ({
+            ...t,
+            queryParams: t.queryParams || [],
+            headers: t.headers || [],
+            bodyType: t.bodyType || "json",
+            formData: t.formData || [],
+            urlEncodedData: t.urlEncodedData || [],
+            authType: t.authType || "bearer",
+            authToken: t.authToken || ""
+          }));
+          setTabs(robustTabs);
         } else {
           setTabs([
             {
@@ -199,6 +229,11 @@ export default function Home() {
               name: "api.tronix.in/api/demos",
               bodyData: "",
               isActive: true,
+              queryParams: [],
+              headers: [],
+              bodyType: "json",
+              formData: [],
+              urlEncodedData: [],
             },
           ]);
         }
@@ -216,6 +251,11 @@ export default function Home() {
             name: "api.tronix.in/api/demos",
             bodyData: "",
             isActive: true,
+            queryParams: [],
+            headers: [],
+            bodyType: "json",
+            formData: [],
+            urlEncodedData: [],
           },
         ]);
       }
@@ -243,6 +283,11 @@ export default function Home() {
           name: "api.tronix.in/api/demos",
           bodyData: "",
           isActive: true,
+          queryParams: [],
+          headers: [],
+          bodyType: "json",
+          formData: [],
+          urlEncodedData: [],
         },
       ]);
     } finally {
@@ -296,7 +341,7 @@ export default function Home() {
       setBodyData(activeTab.bodyData);
       setAuthToken(activeTab.authToken || "");
       setAuthType(activeTab.authType || "bearer");
-      const lines = activeTab.bodyData.split("\n").length;
+      const lines = activeTab.bodyData ? activeTab.bodyData.split("\n").length : 1;
       setRowCount(Math.max(1, lines));
     }
   }, [activeTabId, activeTab]);
@@ -347,6 +392,7 @@ export default function Home() {
     setShowMethodDropdown(!showMethodDropdown);
   };
 
+  // Helper to update active tab state
   const updateActiveTab = (updates: Partial<Tab>) => {
     setTabs((prevTabs) =>
       prevTabs.map((tab) =>
@@ -355,21 +401,151 @@ export default function Home() {
     );
   };
 
-  const updateActiveTabAuth = () => {
+  // Sync URL to Query Params
+  useEffect(() => {
+    if (!activeTab || !msg) return;
+
+    try {
+      const urlObj = new URL(msg.startsWith("http") ? msg : `https://${msg}`);
+      const params: KeyValueItem[] = [];
+      urlObj.searchParams.forEach((value, key) => {
+        params.push({
+          id: Date.now().toString() + Math.random().toString(),
+          key,
+          value,
+          isActive: true,
+        });
+      });
+      // We don't want to overwrite if the user is typing in the params list, 
+      // but simpler for now: strict sync might be annoying. 
+      // Better strategy: "Parse URL params on blur" or just one-way binding for now?
+      // Postman updates params when URL changes.
+
+      // Basic check to avoid infinite loops or overwriting pending edits:
+      // Only update if the count implies a change or strict equality fails.
+      // For this MVP, let's just parse it when the URL string changes manually (handled in handleUrlChange)
+    } catch (e) {
+      // invalid url, ignore
+    }
+  }, [msg]);
+
+  const handleUrlChange = (url: string) => {
+    setMsg(url);
+
+    // Parse query params from URL
+    try {
+      if (url.includes('?')) {
+        const queryString = url.split('?')[1];
+        const params = new URLSearchParams(queryString);
+        const newParams: KeyValueItem[] = [];
+        params.forEach((value, key) => {
+          newParams.push({
+            id: Math.random().toString(36).substr(2, 9),
+            key,
+            value,
+            isActive: true
+          });
+        });
+        // Merge with existing to keep IDs if possible? simplified for now.
+        updateActiveTab({ url, name: url || "New Request", queryParams: newParams });
+      } else {
+        updateActiveTab({ url, name: url || "New Request", queryParams: [] });
+      }
+    } catch {
+      updateActiveTab({ url, name: url || "New Request" });
+    }
+  };
+
+  const updateUrlFromParams = (newParams: KeyValueItem[]) => {
+    try {
+      const baseUrl = msg.split('?')[0];
+      const queryParts = newParams
+        .filter(p => p.isActive && p.key)
+        .map(p => `${encodeURIComponent(p.key)}=${encodeURIComponent(p.value)}`)
+        .join('&');
+
+      const newUrl = queryParts ? `${baseUrl}?${queryParts}` : baseUrl;
+      setMsg(newUrl);
+      updateActiveTab({ queryParams: newParams, url: newUrl });
+    } catch {
+      // fallback
+      updateActiveTab({ queryParams: newParams });
+    }
+  };
+
+  const handleParamChange = (id: string, field: 'key' | 'value' | 'isActive', newValue: string | boolean) => {
+    const currentParams = activeTab?.queryParams || [];
+    const newParams = currentParams.map(p =>
+      p.id === id ? { ...p, [field]: newValue } : p
+    );
+    updateUrlFromParams(newParams);
+  };
+
+  const addParam = () => {
+    const newParams = [...(activeTab?.queryParams || []), {
+      id: Math.random().toString(36).substr(2, 9),
+      key: "",
+      value: "",
+      isActive: true
+    }];
+    updateUrlFromParams(newParams);
+  };
+
+  const removeParam = (id: string) => {
+    const newParams = (activeTab?.queryParams || []).filter(p => p.id !== id);
+    updateUrlFromParams(newParams);
+  };
+
+  const handleHeaderChange = (id: string, field: 'key' | 'value' | 'isActive', newValue: string | boolean) => {
+    const currentHeaders = activeTab?.headers || [];
+    const newHeaders = currentHeaders.map(h =>
+      h.id === id ? { ...h, [field]: newValue } : h
+    );
+    updateActiveTab({ headers: newHeaders });
+  };
+
+  const addHeader = () => {
+    const newHeaders = [...(activeTab?.headers || []), {
+      id: Math.random().toString(36).substr(2, 9),
+      key: "",
+      value: "",
+      isActive: true
+    }];
+    updateActiveTab({ headers: newHeaders });
+  };
+
+  const removeHeader = (id: string) => {
+    const newHeaders = (activeTab?.headers || []).filter(h => h.id !== id);
+    updateActiveTab({ headers: newHeaders });
+  };
+
+  const addFormData = () => {
+    const newData = [...(activeTab?.formData || []), {
+      id: Math.random().toString(36).substr(2, 9),
+      key: "",
+      value: "",
+      isActive: true,
+      type: "text" as const
+    }];
+    updateActiveTab({ formData: newData });
+  };
+
+  const addUrlEncoded = () => {
+    const newData = [...(activeTab?.urlEncodedData || []), {
+      id: Math.random().toString(36).substr(2, 9),
+      key: "",
+      value: "",
+      isActive: true
+    }];
+    updateActiveTab({ urlEncodedData: newData });
+  };
+
+  useEffect(() => {
     updateActiveTab({
       authToken,
       authType,
     });
-  };
-
-  useEffect(() => {
-    updateActiveTabAuth();
   }, [authToken, authType]);
-
-  const handleUrlChange = (url: string) => {
-    setMsg(url);
-    updateActiveTab({ url, name: url || "New Request" });
-  };
 
   const addNewTab = () => {
     const newTabId = Date.now().toString();
@@ -380,6 +556,11 @@ export default function Home() {
       name: "New Request",
       bodyData: "",
       isActive: false,
+      queryParams: [],
+      headers: [],
+      bodyType: "json",
+      formData: [],
+      urlEncodedData: [],
     };
 
     setTabs((prevTabs) => [
@@ -550,53 +731,19 @@ export default function Home() {
     validateAndSuggestJson(value);
     updateActiveTab({ bodyData: value });
   };
-  //hii
+  // Revised logic with full featured support
   const handleHello = async () => {
     if (!msg || msg.trim() === "") {
       return;
     }
 
     let url = msg.trim();
-
     if (!url.startsWith("http://") && !url.startsWith("https://")) {
       url = "https://" + url;
     }
 
-    try {
-      new URL(url);
-    } catch (error) {
-      toast.error("Invalid URL", {
-        style: {
-          backgroundColor: "rgba(18, 18, 18, 0.8)",
-          backdropFilter: "blur(5px)",
-          color: "#ffffff",
-          borderRadius: "10px",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
-          boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
-          padding: "8px 12px",
-          fontSize: "12px",
-          fontWeight: "500",
-        },
-        icon: "✗",
-        duration: 2000,
-      });
-
-      const errorResponse = {
-        error: "Invalid URL",
-        message: "Please enter a valid URL",
-        details: "The URL format is invalid. Please check and try again.",
-        timestamp: new Date().toISOString(),
-        url: msg,
-      };
-
-      setApiResponse(errorResponse);
-      setResponseStatus(0);
-      setResponseHeaders({
-        Connection: "failed",
-        Status: "0 Invalid URL",
-        Error: "Invalid URL format",
-        Date: new Date().toUTCString(),
-      });
+    if (!isValidUrl(url)) {
+      toast.error("Invalid URL");
       return;
     }
 
@@ -611,58 +758,64 @@ export default function Home() {
     try {
       const requestHeaders: Record<string, string> = {
         "User-Agent": "APIONIX/1.0",
-        Accept: "application/json, text/plain, */*",
+        "Accept": "*/*",
         "Accept-Language": "en-US,en;q=0.9",
         "Cache-Control": "no-cache",
       };
 
-      if (["POST", "PUT", "PATCH"].includes(selectedMethod)) {
-        if (bodyData.trim()) {
-          try {
-            JSON.parse(bodyData);
-            requestHeaders["Content-Type"] = "application/json";
-          } catch {
-            if (bodyData.includes("Content-Disposition: form-data")) {
-              requestHeaders["Content-Type"] = "multipart/form-data";
-            } else {
-              requestHeaders["Content-Type"] =
-                "application/x-www-form-urlencoded";
-            }
-          }
-        } else {
-          requestHeaders["Content-Type"] = "application/json";
-        }
-      }
+      // Add custom headers from state
+      activeTab?.headers
+        .filter(h => h.isActive && h.key)
+        .forEach(h => {
+          requestHeaders[h.key] = h.value;
+        });
 
-      // Add Authorization header
-      const authHeader = generateAuthHeader();
-      if (authHeader) {
-        requestHeaders["Authorization"] = authHeader;
-      }
-
-      // Add API key header if applicable
-      const apiKeyHeader = getApiKeyHeader();
-      if (apiKeyHeader) {
-        Object.assign(requestHeaders, apiKeyHeader);
-      }
-
-      if (authToken) {
-        requestHeaders["Authorization"] = `Bearer ${authToken}`;
-      }
-
+      // Handle Body Type
       const requestOptions: RequestInit = {
         method: selectedMethod,
-        headers: requestHeaders,
         mode: "cors",
         credentials: "omit",
       };
 
-      if (
-        ["POST", "PUT", "PATCH"].includes(selectedMethod) &&
-        bodyData.trim()
-      ) {
-        requestOptions.body = bodyData;
+      if (["POST", "PUT", "PATCH", "DELETE"].includes(selectedMethod)) {
+        if (activeTab?.bodyType === "json") {
+          requestHeaders["Content-Type"] = "application/json";
+          requestOptions.body = bodyData;
+        } else if (activeTab?.bodyType === "text") {
+          requestHeaders["Content-Type"] = "text/plain";
+          requestOptions.body = bodyData;
+        } else if (activeTab?.bodyType === "xml") {
+          requestHeaders["Content-Type"] = "application/xml";
+          requestOptions.body = bodyData;
+        } else if (activeTab?.bodyType === "x-www-form-urlencoded") {
+          requestHeaders["Content-Type"] = "application/x-www-form-urlencoded";
+          const urlParams = new URLSearchParams();
+          activeTab.urlEncodedData.filter(d => d.isActive && d.key).forEach(d => {
+            urlParams.append(d.key, d.value);
+          });
+          requestOptions.body = urlParams;
+        } else if (activeTab?.bodyType === "form-data") {
+          // Do not set Content-Type header for FormData, let browser set it with boundary
+          const formDataObj = new FormData();
+          activeTab.formData.filter(d => d.isActive && d.key).forEach(d => {
+            if (d.type === 'file' && d.file) {
+              formDataObj.append(d.key, d.file);
+            } else {
+              formDataObj.append(d.key, d.value);
+            }
+          });
+          requestOptions.body = formDataObj;
+        }
       }
+
+      // Add Authorization
+      const authHeader = generateAuthHeader();
+      if (authHeader) requestHeaders["Authorization"] = authHeader;
+
+      const apiKeyHeader = getApiKeyHeader();
+      if (apiKeyHeader) Object.assign(requestHeaders, apiKeyHeader);
+
+      requestOptions.headers = requestHeaders;
 
       const response = await fetch(url, requestOptions);
       const endTime = Date.now();
@@ -671,68 +824,30 @@ export default function Home() {
       setResponseStatus(response.status);
 
       const headers: Record<string, string> = {};
-      response.headers.forEach((value, key) => {
-        headers[key] = value;
-      });
-
+      response.headers.forEach((value, key) => headers[key] = value);
       headers["Status"] = `${response.status} ${response.statusText}`;
-      headers["Version"] = "HTTP/1.1";
-
       setResponseHeaders(headers);
 
       const contentType = response.headers.get("content-type");
       let responseData;
+      const text = await response.text();
 
-      if (contentType?.includes("application/json")) {
-        responseData = await response.json();
-      } else if (contentType?.includes("text/")) {
-        responseData = await response.text();
-      } else {
-        const text = await response.text();
-        try {
+      try {
+        if (contentType && contentType.includes("application/json")) {
           responseData = JSON.parse(text);
-        } catch {
+        } else {
           responseData = text;
         }
+      } catch {
+        responseData = text;
       }
-
       setApiResponse(responseData);
+
     } catch (error) {
-      toast.error("Request failed", {
-        style: {
-          backgroundColor: "rgba(18, 18, 18, 0.8)",
-          backdropFilter: "blur(5px)",
-          color: "#ffffff",
-          borderRadius: "10px",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
-          boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
-          padding: "8px 12px",
-          fontSize: "12px",
-          fontWeight: "500",
-        },
-        icon: "✗",
-        duration: 3000,
-      });
-
-      const errorResponse = {
-        error: "Request failed",
-        message: error instanceof Error ? error.message : "Unknown error",
-        details:
-          "Failed to connect to the server. Please check the URL and network connectivity.",
-        timestamp: new Date().toISOString(),
-        url: msg,
-      };
-
-      setApiResponse(errorResponse);
+      toast.error("Request failed: " + (error instanceof Error ? error.message : "Unknown error"));
+      setApiResponse({ error: "Network Error", details: error instanceof Error ? error.message : "Unknown" });
       setResponseStatus(0);
       setResponseTime(Date.now() - startTime);
-
-      setResponseHeaders({
-        Connection: "failed",
-        Status: "0 Connection Failed",
-        Error: error instanceof Error ? error.message : "Network Error",
-        Date: new Date().toUTCString(),
-      });
     } finally {
       setIsLoading(false);
     }
@@ -1007,12 +1122,12 @@ export default function Home() {
           value={msg}
           onChange={(e) => handleUrlChange(e.target.value)}
           onMouseEnter={(e) =>
-            ((e.target as HTMLInputElement).placeholder =
-              "Enter API URL, e.g., https://api.example.com")
+          ((e.target as HTMLInputElement).placeholder =
+            "Enter API URL, e.g., https://api.example.com")
           }
           onMouseLeave={(e) =>
-            ((e.target as HTMLInputElement).placeholder =
-              "https://api.example.com")
+          ((e.target as HTMLInputElement).placeholder =
+            "https://api.example.com")
           }
         />
         <div className="flex gap-1.5">
@@ -1022,20 +1137,19 @@ export default function Home() {
             className={`
             flex justify-center items-center text-black text-xs px-2 py-1 rounded-md shadow-[0_0_5px_rgba(115,220,140,0.2)]
             transition-all duration-200
-            ${
-              isLoading || !isValidUrl(msg)
+            ${isLoading || !isValidUrl(msg)
                 ? "bg-[#5ea372] cursor-not-allowed"
                 : "bg-[#73DC8C] hover:bg-[#66c97f]"
-            }
+              }
           `}
           >
             {isLoading ? (
               <>
-              <div className="animate-spin mr-1">
-                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
-                  fill="black" viewBox="0 0 24 24" >
-                  <path d="M12 18a2 2 0 1 0 0 4 2 2 0 1 0 0-4M12 2a2 2 0 1 0 0 4 2 2 0 1 0 0-4M7.76 19.07c-.78.78-2.05.78-2.83 0s-.78-2.05 0-2.83 2.05-.78 2.83 0 .78 2.05 0 2.83M19.07 7.76c-.78.78-2.05.78-2.83 0s-.78-2.05 0-2.83 2.05-.78 2.83 0 .78 2.05 0 2.83M4 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2M20 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2M4.93 7.76c-.78-.78-.78-2.05 0-2.83s2.05-.78 2.83 0 .78 2.05 0 2.83-2.05.78-2.83 0M16.24 19.07c-.78-.78-.78-2.05 0-2.83s2.05-.78 2.83 0 .78 2.05 0 2.83-2.05.78-2.83 0"></path>
-                </svg>
+                <div className="animate-spin mr-1">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
+                    fill="black" viewBox="0 0 24 24" >
+                    <path d="M12 18a2 2 0 1 0 0 4 2 2 0 1 0 0-4M12 2a2 2 0 1 0 0 4 2 2 0 1 0 0-4M7.76 19.07c-.78.78-2.05.78-2.83 0s-.78-2.05 0-2.83 2.05-.78 2.83 0 .78 2.05 0 2.83M19.07 7.76c-.78.78-2.05.78-2.83 0s-.78-2.05 0-2.83 2.05-.78 2.83 0 .78 2.05 0 2.83M4 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2M20 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2M4.93 7.76c-.78-.78-.78-2.05 0-2.83s2.05-.78 2.83 0 .78 2.05 0 2.83-2.05.78-2.83 0M16.24 19.07c-.78-.78-.78-2.05 0-2.83s2.05-.78 2.83 0 .78 2.05 0 2.83-2.05.78-2.83 0"></path>
+                  </svg>
                 </div>
                 {/* <LoaderCircle className="animate-spin mr-1" size={12} /> */}
                 Sending
@@ -1059,41 +1173,37 @@ export default function Home() {
               <div className="flex items-center justify-start gap-1 mb-3">
                 <button
                   onClick={() => handleActiveRequestTabChange("Params")}
-                  className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${
-                    activeRequestTab === "Params"
-                      ? "bg-black/5 text-white border-gray-500/20"
-                      : "bg-black/20 hover:bg-black/5 text-white/50"
-                  }`}
+                  className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeRequestTab === "Params"
+                    ? "bg-black/5 text-white border-gray-500/20"
+                    : "bg-black/20 hover:bg-black/5 text-white/50"
+                    }`}
                 >
                   Params
                 </button>
                 <button
                   onClick={() => handleActiveRequestTabChange("Headers")}
-                  className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${
-                    activeRequestTab === "Headers"
-                      ? "bg-black/5 text-white border-gray-500/20"
-                      : "bg-black/20 hover:bg-black/5 text-white/50"
-                  }`}
+                  className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeRequestTab === "Headers"
+                    ? "bg-black/5 text-white border-gray-500/20"
+                    : "bg-black/20 hover:bg-black/5 text-white/50"
+                    }`}
                 >
                   Headers
                 </button>
                 <button
                   onClick={() => handleActiveRequestTabChange("Auth")}
-                  className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${
-                    activeRequestTab === "Auth"
-                      ? "bg-black/5 text-white border-gray-500/20"
-                      : "bg-black/20 hover:bg-black/5 text-white/50"
-                  }`}
+                  className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeRequestTab === "Auth"
+                    ? "bg-black/5 text-white border-gray-500/20"
+                    : "bg-black/20 hover:bg-black/5 text-white/50"
+                    }`}
                 >
                   Auth
                 </button>
                 <button
                   onClick={() => handleActiveRequestTabChange("Body")}
-                  className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${
-                    activeRequestTab === "Body"
-                      ? "bg-black/5 text-white border-gray-500/20"
-                      : "bg-black/20 hover:bg-black/5 text-white/50"
-                  }`}
+                  className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeRequestTab === "Body"
+                    ? "bg-black/5 text-white border-gray-500/20"
+                    : "bg-black/20 hover:bg-black/5 text-white/50"
+                    }`}
                 >
                   Body
                 </button>
@@ -1106,11 +1216,10 @@ export default function Home() {
                         <CheckCircle size={14} className="text-green-400" />
                       )}
                       <span
-                        className={`text-xs ${
-                          jsonErrors.length > 0
-                            ? "text-red-400"
-                            : "text-green-400"
-                        }`}
+                        className={`text-xs ${jsonErrors.length > 0
+                          ? "text-red-400"
+                          : "text-green-400"
+                          }`}
                       >
                         {jsonErrors.length > 0 ? "Invalid JSON" : "Valid JSON"}
                       </span>
@@ -1181,11 +1290,10 @@ export default function Home() {
                         <button
                           key={type.value}
                           onClick={() => setAuthType(type.value as any)}
-                          className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${
-                            authType === type.value
-                              ? "bg-black/5 text-[#73DC8C] border-gray-500/20"
-                              : "bg-black/20 hover:bg-black/5 text-white/50"
-                          }`}
+                          className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${authType === type.value
+                            ? "bg-black/5 text-[#73DC8C] border-gray-500/20"
+                            : "bg-black/20 hover:bg-black/5 text-white/50"
+                            }`}
                         >
                           {type.label}
                         </button>
@@ -1649,464 +1757,447 @@ export default function Home() {
                         </div>
                       </div> */}
 
-              <div className="mt-1 bg-black/20 shadow-sm rounded-xl p-3 border border-gray-600/20">
-                <div className="flex items-center justify-between mb-2">
-                  <p className="text-white/70 text-xs font-medium">Common Headers</p>
-                </div>
-                
-                <div className="space-y-2">
-                  {/* Header category: Content Types */}
-                  <div>
-                    <p className="text-white/40 text-[10px] mb-1 border-b border-gray-600/10 pb-0.5">Content Types</p>
-                    <div className="grid grid-cols-2 gap-1">
-                      <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
-                        Content-Type
-                      </button>
-                      <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
-                        application/json
-                      </button>
-                      
-                      <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
-                        Content-Type
-                      </button>
-                      <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
-                        multipart/form-data
-                      </button>
-                      
-                      <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
-                        Accept
-                      </button>
-                      <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
-                        application/json
-                      </button>
-                    </div>
-                  </div>
-                  
-                  {/* Header category: Authentication */}
-                  <div>
-                    <p className="text-white/40 text-[10px] mb-1 border-b border-gray-600/10 pb-0.5">Authentication</p>
-                    <div className="grid grid-cols-2 gap-1">
-                      <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
-                        Authorization
-                      </button>
-                      <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
-                        Bearer {authToken ? "..." : "token"}
-                      </button>
-                      
-                      <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
-                        X-API-Key
-                      </button>
-                      <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
-                        your-api-key
-                      </button>
-                    </div>
-                  </div>
-                  
-                  {/* Header category: Caching */}
-                  <div>
-                    <p className="text-white/40 text-[10px] mb-1 border-b border-gray-600/10 pb-0.5">Caching & Control</p>
-                    <div className="grid grid-cols-2 gap-1">
-                      <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
-                        Cache-Control
-                      </button>
-                      <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
-                        no-cache, no-store
-                      </button>
-                      
-                      <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
-                        User-Agent
-                      </button>
-                      <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
-                        APIONIX/1.0
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </div>
+                      <div className="mt-1 bg-black/20 shadow-sm rounded-xl p-3 border border-gray-600/20">
+                        <div className="flex items-center justify-between mb-2">
+                          <p className="text-white/70 text-xs font-medium">Common Headers</p>
+                        </div>
+
+                        <div className="space-y-2">
+                          {/* Header category: Content Types */}
+                          <div>
+                            <p className="text-white/40 text-[10px] mb-1 border-b border-gray-600/10 pb-0.5">Content Types</p>
+                            <div className="grid grid-cols-2 gap-1">
+                              <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
+                                Content-Type
+                              </button>
+                              <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
+                                application/json
+                              </button>
+
+                              <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
+                                Content-Type
+                              </button>
+                              <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
+                                multipart/form-data
+                              </button>
+
+                              <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
+                                Accept
+                              </button>
+                              <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
+                                application/json
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Header category: Authentication */}
+                          <div>
+                            <p className="text-white/40 text-[10px] mb-1 border-b border-gray-600/10 pb-0.5">Authentication</p>
+                            <div className="grid grid-cols-2 gap-1">
+                              <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
+                                Authorization
+                              </button>
+                              <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
+                                Bearer {authToken ? "..." : "token"}
+                              </button>
+
+                              <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
+                                X-API-Key
+                              </button>
+                              <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
+                                your-api-key
+                              </button>
+                            </div>
+                          </div>
+
+                          {/* Header category: Caching */}
+                          <div>
+                            <p className="text-white/40 text-[10px] mb-1 border-b border-gray-600/10 pb-0.5">Caching & Control</p>
+                            <div className="grid grid-cols-2 gap-1">
+                              <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
+                                Cache-Control
+                              </button>
+                              <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
+                                no-cache, no-store
+                              </button>
+
+                              <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
+                                User-Agent
+                              </button>
+                              <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
+                                APIONIX/1.0
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
               )}
 
               {activeRequestTab === "Body" && (
-                <>
-                  {showSuggestions && jsonSuggestions.length > 0 && (
-                    <div className="mb-2 bg-black/30 border border-yellow-400/20 rounded-xl p-2">
-                      <div className="flex items-center gap-1.5 mb-1.5">
-                        <Lightbulb size={14} className="text-yellow-400" />
-                        <h3 className="text-yellow-400 text-xs font-medium">
-                          JSON Suggestions
-                        </h3>
-                      </div>
-                      <div className="space-y-1.5">
-                        {jsonSuggestions.map((suggestion, index) => (
-                          <div
-                            key={index}
-                            className="flex items-center justify-between bg-black/20 p-1.5 rounded border border-gray-600/20"
-                          >
-                            <div className="flex-1">
-                              <p className="text-white/80 text-xs">
-                                {suggestion.description}
-                              </p>
-                              <p className="text-white/50 text-[10px] capitalize">
-                                {suggestion.type}
-                              </p>
-                            </div>
-                            <button
-                              onClick={() => applySuggestion(suggestion)}
-                              className="bg-yellow-400 hover:bg-yellow-500 text-black text-[10px] px-2 py-0.5 rounded transition-colors"
+                <div className="flex flex-col h-full">
+                  <div className="flex items-center gap-2 mb-2 px-1">
+                    <div className="flex bg-black/20 p-1 rounded-lg border border-gray-600/20">
+                      {[
+                        { type: "none", label: "None" },
+                        { type: "json", label: "JSON" },
+                        { type: "text", label: "Text" },
+                        { type: "xml", label: "XML" },
+                        { type: "form-data", label: "Form Data" },
+                        { type: "x-www-form-urlencoded", label: "x-www-form-urlencoded" },
+                      ].map((t) => (
+                        <button
+                          key={t.type}
+                          onClick={() => updateActiveTab({ bodyType: t.type as any })}
+                          className={`text-[10px] px-2 py-1 rounded transition-colors ${activeTab?.bodyType === t.type
+                            ? "bg-[#73DC8C] text-black font-medium shadow-sm"
+                            : "text-white/50 hover:text-white hover:bg-white/5"
+                            }`}
+                        >
+                          {t.label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {(activeTab?.bodyType === "json" || activeTab?.bodyType === "text" || activeTab?.bodyType === "xml") && (
+                    <>
+                      {activeTab.bodyType === "json" && showSuggestions && jsonSuggestions.length > 0 && (
+                        <div className="mb-2 bg-black/30 border border-yellow-400/20 rounded-xl p-2">
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            <Lightbulb size={14} className="text-yellow-400" />
+                            <h3 className="text-yellow-400 text-xs font-medium">
+                              JSON Suggestions
+                            </h3>
+                          </div>
+                          <div className="space-y-1.5">
+                            {jsonSuggestions.map((suggestion, index) => (
+                              <div
+                                key={index}
+                                className="flex items-center justify-between bg-black/20 p-1.5 rounded border border-gray-600/20"
+                              >
+                                <div className="flex-1">
+                                  <p className="text-white/80 text-xs">
+                                    {suggestion.description}
+                                  </p>
+                                  <p className="text-white/50 text-[10px] capitalize">
+                                    {suggestion.type}
+                                  </p>
+                                </div>
+                                <button
+                                  onClick={() => applySuggestion(suggestion)}
+                                  className="bg-yellow-400 hover:bg-yellow-500 text-black text-[10px] px-2 py-0.5 rounded transition-colors"
+                                >
+                                  Apply
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+
+                      {activeTab.bodyType === "json" && jsonErrors.length > 0 && (
+                        <div className="mb-3 bg-red-900/20 border border-red-400/20 rounded-xl p-2">
+                          <div className="flex items-center gap-2 mb-1">
+                            <AlertCircle size={14} className="text-red-400" />
+                            <h3 className="text-red-400 text-xs font-medium">
+                              JSON Errors
+                            </h3>
+                          </div>
+                          <div className="space-y-1.5">
+                            {jsonErrors.map((error, index) => (
+                              <div
+                                key={index}
+                                className="bg-black/20 p-1.5 rounded border border-red-600/20"
+                              >
+                                <p className="text-red-300 text-xs">
+                                  Line {error.line}, Column {error.col}
+                                </p>
+                                <p className="text-white/80 text-xs">
+                                  {error.message}
+                                </p>
+                                {error.suggestion && (
+                                  <p className="text-yellow-300 text-xs mt-0.5">
+                                    💡 {error.suggestion}
+                                  </p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+
+                      <div className="relative h-full overflow-hidden">
+                        <div className="absolute left-0 top-0 w-8 h-full border-gray-600/20 flex flex-col text-white/30 text-xs font-mono pt-1">
+                          {Array.from({ length: rowCount }, (_, i) => (
+                            <div
+                              key={i + 1}
+                              className={`h-[1.4em] flex items-center justify-center leading-none ${jsonErrors.some((error) => error.line === i + 1)
+                                ? "text-red-400 bg-red-900/20"
+                                : ""
+                                }`}
                             >
-                              Apply
+                              {i + 1}
+                            </div>
+                          ))}
+                        </div>
+                        <div className="relative w-full h-full">
+                          <textarea
+                            className="absolute inset-0 w-full h-full bg-transparent placeholder:text-white/5 text-transparent text-xs outline-none pl-10 pr-2 py-1 resize-none font-mono z-10"
+                            placeholder={`Enter ${activeTab.bodyType} body data here...`}
+                            value={bodyData}
+                            onChange={(e) => handleBodyDataChange(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") {
+                                setRowCount((prev) => Math.min(prev + 1, 100));
+                              }
+                              if (e.key === "Backspace") {
+                                const textarea = e.target as HTMLTextAreaElement;
+                                const cursorPos = textarea.selectionStart;
+                                const textBefore = textarea.value.substring(
+                                  0,
+                                  cursorPos
+                                );
+                                if (cursorPos > 0 && textBefore.endsWith("\n")) {
+                                  setTimeout(() => {
+                                    const newLines =
+                                      textarea.value.split("\n").length;
+                                    setRowCount(Math.max(1, newLines));
+                                  }, 0);
+                                }
+                              }
+                            }}
+                            style={{
+                              lineHeight: "1.4",
+                              caretColor: "white",
+                            }}
+                          />
+                          <pre
+                            className="absolute inset-0 w-full h-full text-xs pl-10 pr-2 py-1 font-mono pointer-events-none overflow-hidden whitespace-pre-wrap"
+                            style={{
+                              lineHeight: "1.4",
+                              color: "#ffffff80",
+                            }}
+                            dangerouslySetInnerHTML={{
+                              __html: bodyData
+                                ? (activeTab.bodyType === "json" ? formatJsonText(bodyData) : bodyData.replace(/</g, "&lt;").replace(/>/g, "&gt;"))
+                                : '<span style="color: #ffffff40">Enter body data here...</span>',
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </>
+                  )}
+
+                  {activeTab?.bodyType === "form-data" && (
+                    <div className="h-full overflow-y-auto">
+                      <div className="flex flex-col gap-1">
+                        {activeTab.formData.map((item) => (
+                          <div key={item.id} className="flex items-center gap-1 group">
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="checkbox"
+                                checked={item.isActive}
+                                onChange={(e) => {
+                                  const newData = activeTab.formData.map(i => i.id === item.id ? { ...i, isActive: e.target.checked } : i);
+                                  updateActiveTab({ formData: newData });
+                                }}
+                                className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
+                              />
+                              <div className="relative">
+                                <select
+                                  value={item.type || 'text'}
+                                  onChange={(e) => {
+                                    const newData = activeTab.formData.map(i => i.id === item.id ? { ...i, type: e.target.value as any } : i);
+                                    updateActiveTab({ formData: newData });
+                                  }}
+                                  className="bg-transparent text-[10px] text-white/50 border-none outline-none appearance-none w-10 cursor-pointer"
+                                >
+                                  <option value="text" className="bg-[#1C1818]">Text</option>
+                                  <option value="file" className="bg-[#1C1818]">File</option>
+                                </select>
+                              </div>
+                            </div>
+                            <input
+                              type="text"
+                              placeholder="Key"
+                              value={item.key}
+                              onChange={(e) => {
+                                const newData = activeTab.formData.map(i => i.id === item.id ? { ...i, key: e.target.value } : i);
+                                updateActiveTab({ formData: newData });
+                              }}
+                              className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5 focus:border-[#4B78E6]"
+                            />
+                            {item.type === 'file' ? (
+                              <div className="flex-1 relative">
+                                <div className="w-full bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 text-white/70 text-xs px-2 py-1.5 truncate">
+                                  {item.file ? item.file.name : "Select File"}
+                                </div>
+                                <input
+                                  type="file"
+                                  className="absolute inset-0 opacity-0 cursor-pointer"
+                                  onChange={(e) => {
+                                    const file = e.target.files?.[0];
+                                    if (file) {
+                                      const newData = activeTab.formData.map(i => i.id === item.id ? { ...i, file: file, value: file.name } : i);
+                                      updateActiveTab({ formData: newData });
+                                    }
+                                  }}
+                                />
+                              </div>
+                            ) : (
+                              <input
+                                type="text"
+                                placeholder="Value"
+                                value={item.value}
+                                onChange={(e) => {
+                                  const newData = activeTab.formData.map(i => i.id === item.id ? { ...i, value: e.target.value } : i);
+                                  updateActiveTab({ formData: newData });
+                                }}
+                                className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5 focus:border-[#4B78E6]"
+                              />
+                            )}
+
+                            <button
+                              onClick={() => {
+                                const newData = activeTab.formData.filter(i => i.id !== item.id);
+                                updateActiveTab({ formData: newData });
+                              }}
+                              className="p-1 hover:bg-white/10 rounded transition-colors duration-200 opacity-0 group-hover:opacity-100"
+                            >
+                              <Trash2 size={14} className="text-white/50 hover:text-white/70" />
                             </button>
                           </div>
                         ))}
+                        <button
+                          onClick={addFormData}
+                          className="flex items-center gap-1.5 text-[#4B78E6] text-xs border border-dashed border-gray-600/20 hover:border-[#4B78E6]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors w-max"
+                        >
+                          <Plus size={12} />
+                          Add Form Data
+                        </button>
                       </div>
                     </div>
                   )}
 
-                  {jsonErrors.length > 0 && (
-                    <div className="mb-3 bg-red-900/20 border border-red-400/20 rounded-xl p-2">
-                      <div className="flex items-center gap-2 mb-1">
-                        <AlertCircle size={14} className="text-red-400" />
-                        <h3 className="text-red-400 text-xs font-medium">
-                          JSON Errors
-                        </h3>
-                      </div>
-                      <div className="space-y-1.5">
-                        {jsonErrors.map((error, index) => (
-                          <div
-                            key={index}
-                            className="bg-black/20 p-1.5 rounded border border-red-600/20"
-                          >
-                            <p className="text-red-300 text-xs">
-                              Line {error.line}, Column {error.col}
-                            </p>
-                            <p className="text-white/80 text-xs">
-                              {error.message}
-                            </p>
-                            {error.suggestion && (
-                              <p className="text-yellow-300 text-xs mt-0.5">
-                                💡 {error.suggestion}
-                              </p>
-                            )}
+                  {activeTab?.bodyType === "x-www-form-urlencoded" && (
+                    <div className="h-full overflow-y-auto">
+                      <div className="flex flex-col gap-1">
+                        {activeTab.urlEncodedData.map((item) => (
+                          <div key={item.id} className="flex items-center gap-1 group">
+                            <div className="flex items-center gap-1">
+                              <input
+                                type="checkbox"
+                                checked={item.isActive}
+                                onChange={(e) => {
+                                  const newData = activeTab.urlEncodedData.map(i => i.id === item.id ? { ...i, isActive: e.target.checked } : i);
+                                  updateActiveTab({ urlEncodedData: newData });
+                                }}
+                                className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
+                              />
+                              <GripVertical size={14} className="text-white/30" />
+                            </div>
+                            <input
+                              type="text"
+                              placeholder="Key"
+                              value={item.key}
+                              onChange={(e) => {
+                                const newData = activeTab.urlEncodedData.map(i => i.id === item.id ? { ...i, key: e.target.value } : i);
+                                updateActiveTab({ urlEncodedData: newData });
+                              }}
+                              className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5 focus:border-[#4B78E6]"
+                            />
+                            <input
+                              type="text"
+                              placeholder="Value"
+                              value={item.value}
+                              onChange={(e) => {
+                                const newData = activeTab.urlEncodedData.map(i => i.id === item.id ? { ...i, value: e.target.value } : i);
+                                updateActiveTab({ urlEncodedData: newData });
+                              }}
+                              className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5 focus:border-[#4B78E6]"
+                            />
+                            <button
+                              onClick={() => {
+                                const newData = activeTab.urlEncodedData.filter(i => i.id !== item.id);
+                                updateActiveTab({ urlEncodedData: newData });
+                              }}
+                              className="p-1 hover:bg-white/10 rounded transition-colors duration-200 opacity-0 group-hover:opacity-100"
+                            >
+                              <Trash2 size={14} className="text-white/50 hover:text-white/70" />
+                            </button>
                           </div>
                         ))}
+                        <button
+                          onClick={addUrlEncoded}
+                          className="flex items-center gap-1.5 text-[#4B78E6] text-xs border border-dashed border-gray-600/20 hover:border-[#4B78E6]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors w-max"
+                        >
+                          <Plus size={12} />
+                          Add Url Encoded Param
+                        </button>
                       </div>
                     </div>
                   )}
-                  <div className="relative h-[calc(100%-60px)]">
-                    <div className="absolute left-0 top-0 w-8 h-full border-gray-600/20 flex flex-col text-white/30 text-xs font-mono pt-1">
-                      {Array.from({ length: rowCount }, (_, i) => (
-                        <div
-                          key={i + 1}
-                          className={`h-[1.4em] flex items-center justify-center leading-none ${
-                            jsonErrors.some((error) => error.line === i + 1)
-                              ? "text-red-400 bg-red-900/20"
-                              : ""
-                          }`}
-                        >
-                          {i + 1}
-                        </div>
-                      ))}
+
+                  {activeTab?.bodyType === "none" && (
+                    <div className="flex items-center justify-center h-full text-white/30 text-xs">
+                      This request does not have a body
                     </div>
-                    <div className="relative w-full h-full">
-                      <textarea
-                        className="absolute inset-0 w-full h-full bg-transparent placeholder:text-white/5 text-transparent text-xs outline-none pl-10 pr-2 py-1 resize-none font-mono z-10"
-                        placeholder="Enter body data here..."
-                        value={bodyData}
-                        onChange={(e) => handleBodyDataChange(e.target.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            setRowCount((prev) => Math.min(prev + 1, 100));
-                          }
-                          if (e.key === "Backspace") {
-                            const textarea = e.target as HTMLTextAreaElement;
-                            const cursorPos = textarea.selectionStart;
-                            const textBefore = textarea.value.substring(
-                              0,
-                              cursorPos
-                            );
-                            if (cursorPos > 0 && textBefore.endsWith("\n")) {
-                              setTimeout(() => {
-                                const newLines =
-                                  textarea.value.split("\n").length;
-                                setRowCount(Math.max(1, newLines));
-                              }, 0);
-                            }
-                          }
-                        }}
-                        style={{
-                          lineHeight: "1.4",
-                          caretColor: "white",
-                        }}
-                      />
-                      <pre
-                        className="absolute inset-0 w-full h-full text-xs pl-10 pr-2 py-1 font-mono pointer-events-none overflow-hidden whitespace-pre-wrap"
-                        style={{
-                          lineHeight: "1.4",
-                          color: "#ffffff80",
-                        }}
-                        dangerouslySetInnerHTML={{
-                          __html: bodyData
-                            ? formatJsonText(bodyData)
-                            : '<span style="color: #ffffff40">Enter body data here...</span>',
-                        }}
-                      />
-                    </div>
-                  </div>
-                </>
+                  )}
+                </div>
               )}
 
               {activeRequestTab === "Params" && (
                 <div className="h-full overflow-y-auto">
                   <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-1 ">
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="checkbox"
-                          defaultChecked
-                          className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
-                        />
-                        <GripVertical
-                          size={14}
-                          className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
-                        />
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Content-Type"
-                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
-                      />
-                      <input
-                        type="text"
-                        placeholder="application/json"
-                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
-                      />
-                      <button className="p-1 hover:bg-white/10 rounded transition-colors duration-200">
-                        <Trash2
-                          className="text-white/50 hover:text-white/70"
-                          size={14}
-                        />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="checkbox"
-                          defaultChecked
-                          className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
-                        />
-                        <GripVertical
-                          size={14}
-                          className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
-                        />
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Authorization"
-                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Bearer token"
-                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
-                      />
-                      <button className="p-1 hover:bg-white/10 rounded transition-colors duration-200">
-                        <Trash2
-                          className="text-white/50 hover:text-white/70"
-                          size={14}
-                        />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="checkbox"
-                          defaultChecked
-                          className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
-                        />
-                        <GripVertical
-                          size={14}
-                          className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
-                        />
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Accept"
-                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
-                      />
-                      <input
-                        type="text"
-                        placeholder="application/json"
-                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
-                      />
-                      <button className="p-1 hover:bg-white/10 rounded transition-colors duration-200">
-                        <Trash2
-                          className="text-white/50 hover:text-white/70"
-                          size={14}
-                        />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center gap-1 mt-1">
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="checkbox"
-                          defaultChecked
-                          className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
-                        />
-                        <GripVertical
-                          size={14}
-                          className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
-                        />
-                      </div>
-                      <input
-                        type="text"
-                        value="Content-Type"
-                        readOnly
-                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 text-white/70 text-xs outline-none px-2 py-1.5"
-                      />
-                      <div className="flex-1 relative">
+                    {/* Render Query Params */}
+                    {activeTab?.queryParams.map((param) => (
+                      <div key={param.id} className="flex items-center gap-1 group">
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="checkbox"
+                            checked={param.isActive}
+                            onChange={(e) => handleParamChange(param.id, 'isActive', e.target.checked)}
+                            className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
+                          />
+                          <GripVertical
+                            size={14}
+                            className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
+                          />
+                        </div>
                         <input
                           type="text"
-                          value="multipart/form-data"
-                          readOnly
-                          className="w-full bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 text-white/70 text-xs outline-none px-2 py-1.5"
+                          placeholder="Key"
+                          value={param.key}
+                          onChange={(e) => handleParamChange(param.id, 'key', e.target.value)}
+                          className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5 focus:border-[#4B78E6]"
                         />
                         <input
-                          type="file"
-                          className="absolute inset-0 opacity-0 cursor-pointer"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              toast.success("File Selected: " + file.name, {
-                                style: {
-                                  backgroundColor: "rgba(18, 18, 18, 0.8)",
-                                  backdropFilter: "blur(5px)",
-                                  color: "#ffffff",
-                                  borderRadius: "10px",
-                                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                                  boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
-                                  padding: "8px 12px",
-                                  fontSize: "12px",
-                                  fontWeight: "500",
-                                },
-                                icon: "✓",
-                                duration: 2000,
-                              });
-                            }
-                          }}
+                          type="text"
+                          placeholder="Value"
+                          value={param.value}
+                          onChange={(e) => handleParamChange(param.id, 'value', e.target.value)}
+                          className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5 focus:border-[#4B78E6]"
                         />
+                        <button
+                          onClick={() => removeParam(param.id)}
+                          className="p-1 hover:bg-white/10 rounded transition-colors duration-200 opacity-0 group-hover:opacity-100"
+                        >
+                          <Trash2 size={14} className="text-white/50 hover:text-white/70" />
+                        </button>
                       </div>
-                      <button className="p-1 hover:bg-white/10 rounded transition-colors duration-200">
-                        <Trash2
-                          className="text-white/50 hover:text-white/70"
-                          size={14}
-                        />
-                      </button>
-                    </div>
+                    ))}
 
                     <button
-                      onClick={() => {
-                        const headerRow = document.createElement("div");
-                        headerRow.className = "flex items-center gap-1 mt-1";
-                        headerRow.innerHTML = `
-                          <div class="flex items-center gap-1">
-                            <input type="checkbox" checked class="accent-[#DBDE52] h-3 w-3 cursor-pointer">
-                            <svg class="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M9 6V8M9 12V14M9 18V20M15 6V8M15 12V14M15 18V20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                            </svg>
-                          </div>
-                          <input type="text" placeholder="Header name" class="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5">
-                          <input type="text" placeholder="Header value" class="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5">
-                          <button class="p-1 hover:bg-white/10 rounded transition-colors duration-200">
-                            <svg class="text-white/50 hover:text-white/70" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M3 6H5M5 6H21M5 6V20C5 20.5523 5.44772 21 6 21H18C18.5523 21 19 20.5523 19 20V6M8 6V4C8 3.44772 8.44772 3 9 3H15C15.5523 3 16 3.44772 16 4V6M10 11V17M14 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                            </svg>
-                          </button>
-                        `;
-
-                        const addButton = document.querySelector(
-                          ".flex.items-center.gap-1\\.5.text-\\[\\#4B78E6\\]"
-                        );
-                        if (addButton && addButton.parentNode) {
-                          addButton.parentNode.insertBefore(
-                            headerRow,
-                            addButton
-                          );
-                        }
-                      }}
-                      className="flex items-center gap-1.5 text-[#4B78E6] text-xs border border-dashed border-gray-600/20 hover:border-[#4B78E6]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors"
+                      onClick={addParam}
+                      className="flex items-center gap-1.5 text-[#4B78E6] text-xs border border-dashed border-gray-600/20 hover:border-[#4B78E6]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors w-max"
                     >
                       <Plus size={12} />
-                      Add New Header
+                      Add New Param
                     </button>
-
-                    <div className="flex items-center gap-1.5 text-[#73DC8C] text-xs border border-dashed border-gray-600/20 hover:border-[#73DC8C]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors cursor-pointer">
-                      <Plus size={12} />
-                      <label className="flex-1 cursor-pointer">
-                        Add File Upload
-                        <input
-                          type="file"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              toast.success("File Selected: " + file.name, {
-                                style: {
-                                  backgroundColor: "rgba(18, 18, 18, 0.8)",
-                                  backdropFilter: "blur(5px)",
-                                  color: "#ffffff",
-                                  borderRadius: "10px",
-                                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                                  boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
-                                  padding: "8px 12px",
-                                  fontSize: "12px",
-                                  fontWeight: "500",
-                                },
-                                icon: "✓",
-                                duration: 2000,
-                              });
-                            }
-                          }}
-                        />
-                      </label>
-                    </div>
-
-                    <div className="mt-4 bg-black/20 rounded-lg p-2 border border-gray-600/20">
-                      <p className="text-white/60 text-xs mb-1">
-                        Common Headers:
-                      </p>
-                      <div className="grid grid-cols-2 gap-1">
-                        <span className="text-[#4B78E6] text-xs">
-                          Content-Type
-                        </span>
-                        <span className="text-white/50 text-xs">
-                          application/json
-                        </span>
-
-                        <span className="text-[#4B78E6] text-xs">Accept</span>
-                        <span className="text-white/50 text-xs">
-                          application/json
-                        </span>
-
-                        <span className="text-[#4B78E6] text-xs">
-                          Authorization
-                        </span>
-                        <span className="text-white/50 text-xs">
-                          Bearer token
-                        </span>
-
-                        <span className="text-[#4B78E6] text-xs">
-                          Content-Type
-                        </span>
-                        <span className="text-white/50 text-xs">
-                          multipart/form-data
-                        </span>
-                      </div>
-                    </div>
                   </div>
                 </div>
               )}
@@ -2114,224 +2205,51 @@ export default function Home() {
               {activeRequestTab === "Headers" && (
                 <div className="h-full overflow-y-auto">
                   <div className="flex flex-col gap-1">
-                    <div className="flex items-center gap-1 ">
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="checkbox"
-                          defaultChecked
-                          className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
-                        />
-                        <GripVertical
-                          size={14}
-                          className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
-                        />
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Content-Type"
-                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
-                      />
-                      <input
-                        type="text"
-                        placeholder="application/json"
-                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
-                      />
-                      <button className="p-1 hover:bg-white/10 rounded transition-colors duration-200">
-                        <Trash2
-                          className="text-white/50 hover:text-white/70"
-                          size={14}
-                        />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="checkbox"
-                          defaultChecked
-                          className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
-                        />
-                        <GripVertical
-                          size={14}
-                          className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
-                        />
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Authorization"
-                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
-                      />
-                      <input
-                        type="text"
-                        placeholder="Bearer token"
-                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
-                      />
-                      <button className="p-1 hover:bg-white/10 rounded transition-colors duration-200">
-                        <Trash2
-                          className="text-white/50 hover:text-white/70"
-                          size={14}
-                        />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center gap-1">
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="checkbox"
-                          defaultChecked
-                          className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
-                        />
-                        <GripVertical
-                          size={14}
-                          className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
-                        />
-                      </div>
-                      <input
-                        type="text"
-                        placeholder="Accept"
-                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
-                      />
-                      <input
-                        type="text"
-                        placeholder="application/json"
-                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
-                      />
-                      <button className="p-1 hover:bg-white/10 rounded transition-colors duration-200">
-                        <Trash2
-                          className="text-white/50 hover:text-white/70"
-                          size={14}
-                        />
-                      </button>
-                    </div>
-
-                    <div className="flex items-center gap-1 mt-1">
-                      <div className="flex items-center gap-1">
-                        <input
-                          type="checkbox"
-                          defaultChecked
-                          className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
-                        />
-                        <GripVertical
-                          size={14}
-                          className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
-                        />
-                      </div>
-                      <input
-                        type="text"
-                        value="Content-Type"
-                        readOnly
-                        className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 text-white/70 text-xs outline-none px-2 py-1.5"
-                      />
-                      <div className="flex-1 relative">
+                    {/* Render Headers */}
+                    {activeTab?.headers.map((header) => (
+                      <div key={header.id} className="flex items-center gap-1 group">
+                        <div className="flex items-center gap-1">
+                          <input
+                            type="checkbox"
+                            checked={header.isActive}
+                            onChange={(e) => handleHeaderChange(header.id, 'isActive', e.target.checked)}
+                            className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
+                          />
+                          <GripVertical
+                            size={14}
+                            className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
+                          />
+                        </div>
                         <input
                           type="text"
-                          value="multipart/form-data"
-                          readOnly
-                          className="w-full bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 text-white/70 text-xs outline-none px-2 py-1.5"
+                          placeholder="Header"
+                          value={header.key}
+                          onChange={(e) => handleHeaderChange(header.id, 'key', e.target.value)}
+                          className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5 focus:border-[#4B78E6]"
                         />
                         <input
-                          type="file"
-                          className="absolute inset-0 opacity-0 cursor-pointer"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              toast.success("File Selected: " + file.name, {
-                                style: {
-                                  backgroundColor: "rgba(18, 18, 18, 0.8)",
-                                  backdropFilter: "blur(5px)",
-                                  color: "#ffffff",
-                                  borderRadius: "10px",
-                                  border: "1px solid rgba(255, 255, 255, 0.1)",
-                                  boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
-                                  padding: "8px 12px",
-                                  fontSize: "12px",
-                                  fontWeight: "500",
-                                },
-                                icon: "✓",
-                                duration: 2000,
-                              });
-                            }
-                          }}
+                          type="text"
+                          placeholder="Value"
+                          value={header.value}
+                          onChange={(e) => handleHeaderChange(header.id, 'value', e.target.value)}
+                          className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5 focus:border-[#4B78E6]"
                         />
+                        <button
+                          onClick={() => removeHeader(header.id)}
+                          className="p-1 hover:bg-white/10 rounded transition-colors duration-200 opacity-0 group-hover:opacity-100"
+                        >
+                          <Trash2 size={14} className="text-white/50 hover:text-white/70" />
+                        </button>
                       </div>
-                      <button className="p-1 hover:bg-white/10 rounded transition-colors duration-200">
-                        <Trash2
-                          className="text-white/50 hover:text-white/70"
-                          size={14}
-                        />
-                      </button>
-                    </div>
+                    ))}
 
                     <button
-                      onClick={() => {
-                        const headerRow = document.createElement("div");
-                        headerRow.className = "flex items-center gap-1 mt-1";
-                        headerRow.innerHTML = `
-                          <div class="flex items-center gap-1">
-                            <input type="checkbox" checked class="accent-[#DBDE52] h-3 w-3 cursor-pointer">
-                            <svg class="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M9 6V8M9 12V14M9 18V20M15 6V8M15 12V14M15 18V20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                            </svg>
-                          </div>
-                          <input type="text" placeholder="Header name" class="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5">
-                          <input type="text" placeholder="Header value" class="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5">
-                          <button class="p-1 hover:bg-white/10 rounded transition-colors duration-200">
-                            <svg class="text-white/50 hover:text-white/70" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                              <path d="M3 6H5M5 6H21M5 6V20C5 20.5523 5.44772 21 6 21H18C18.5523 21 19 20.5523 19 20V6M8 6V4C8 3.44772 8.44772 3 9 3H15C15.5523 3 16 3.44772 16 4V6M10 11V17M14 11V17" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"></path>
-                            </svg>
-                          </button>
-                        `;
-
-                        const addButton = document.querySelector(
-                          ".flex.items-center.gap-1\\.5.text-\\[\\#4B78E6\\]"
-                        );
-                        if (addButton && addButton.parentNode) {
-                          addButton.parentNode.insertBefore(
-                            headerRow,
-                            addButton
-                          );
-                        }
-                      }}
-                      className="flex items-center gap-1.5 text-[#4B78E6] text-xs border border-dashed border-gray-600/20 hover:border-[#4B78E6]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors"
+                      onClick={addHeader}
+                      className="flex items-center gap-1.5 text-[#4B78E6] text-xs border border-dashed border-gray-600/20 hover:border-[#4B78E6]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors w-max"
                     >
                       <Plus size={12} />
                       Add New Header
                     </button>
-
-                    <div className="flex items-center gap-1.5 text-[#73DC8C] text-xs border border-dashed border-gray-600/20 hover:border-[#73DC8C]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors cursor-pointer">
-                      <Plus size={12} />
-                      <label className="flex-1 cursor-pointer">
-                        Add File Upload
-                        <input
-                          type="file"
-                          className="hidden"
-                          onChange={(e) => {
-                            const file = e.target.files?.[0];
-                            if (file) {
-                              toast.success(
-                                "File Selected For Upload: " + file.name,
-                                {
-                                  style: {
-                                    backgroundColor: "rgba(18, 18, 18, 0.8)",
-                                    backdropFilter: "blur(5px)",
-                                    color: "#ffffff",
-                                    borderRadius: "10px",
-                                    border:
-                                      "1px solid rgba(255, 255, 255, 0.1)",
-                                    boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
-                                    padding: "8px 12px",
-                                    fontSize: "12px",
-                                    fontWeight: "500",
-                                  },
-                                  icon: "✓",
-                                  duration: 2000,
-                                }
-                              );
-                            }
-                          }}
-                        />
-                      </label>
-                    </div>
 
                     <div className="mt-4 bg-black/20 rounded-lg p-2 border border-gray-600/20">
                       <p className="text-white/60 text-xs mb-1">
@@ -2355,13 +2273,6 @@ export default function Home() {
                         </span>
                         <span className="text-white/50 text-xs">
                           Bearer token
-                        </span>
-
-                        <span className="text-[#4B78E6] text-xs">
-                          Content-Type
-                        </span>
-                        <span className="text-white/50 text-xs">
-                          multipart/form-data
                         </span>
                       </div>
                     </div>
@@ -2378,22 +2289,20 @@ export default function Home() {
               <div className="flex items-center justify-start gap-1 mb-1.5">
                 <button
                   onClick={() => handleActiveResponseTabChange("Request")}
-                  className={`hover:bg-black/10 border border-gray-500/20 flex gap-1 justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${
-                    activeResponseTab === "Request"
-                      ? "bg-black/5 text-white border-gray-500/20"
-                      : "text-white/50"
-                  }`}
+                  className={`hover:bg-black/10 border border-gray-500/20 flex gap-1 justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeResponseTab === "Request"
+                    ? "bg-black/5 text-white border-gray-500/20"
+                    : "text-white/50"
+                    }`}
                 >
                   Request
                   <h2 className="text-[#73DC8C] text-xs">{selectedMethod}</h2>
                 </button>
                 <button
                   onClick={() => handleActiveResponseTabChange("Response")}
-                  className={`hover:bg-black/10 border border-gray-500/20 flex gap-1 justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${
-                    activeResponseTab === "Response"
-                      ? "bg-black/5 text-white border-gray-500/20"
-                      : "text-white/50"
-                  }`}
+                  className={`hover:bg-black/10 border border-gray-500/20 flex gap-1 justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeResponseTab === "Response"
+                    ? "bg-black/5 text-white border-gray-500/20"
+                    : "text-white/50"
+                    }`}
                 >
                   Response
                   <h2 className="text-[#73DC8C] text-xs">200</h2>
@@ -2494,8 +2403,8 @@ export default function Home() {
                                     msg.startsWith("https://")
                                     ? new URL(msg).host
                                     : msg.includes("/")
-                                    ? msg.split("/")[0]
-                                    : msg
+                                      ? msg.split("/")[0]
+                                      : msg
                                   : "api.tronix.in"}
                               </span>
                             </div>
@@ -2512,15 +2421,15 @@ export default function Home() {
                                       try {
                                         const url =
                                           msg.startsWith("http://") ||
-                                          msg.startsWith("https://")
+                                            msg.startsWith("https://")
                                             ? new URL(msg).pathname
                                             : "/" +
-                                              (msg.includes("/")
-                                                ? msg
-                                                    .split("/")
-                                                    .slice(1)
-                                                    .join("/")
-                                                : "");
+                                            (msg.includes("/")
+                                              ? msg
+                                                .split("/")
+                                                .slice(1)
+                                                .join("/")
+                                              : "");
                                         return url || "/";
                                       } catch {
                                         return "/";
@@ -2636,8 +2545,8 @@ export default function Home() {
                         >
                           {responseStatus
                             ? `${responseStatus} ${getStatusText(
-                                responseStatus
-                              )}`
+                              responseStatus
+                            )}`
                             : "No Response"}
                         </h2>
                         {responseTime > 0 && (
@@ -2714,7 +2623,7 @@ export default function Home() {
                                       responseHeaders["Content-Length"] ||
                                       (apiResponse
                                         ? JSON.stringify(apiResponse).length +
-                                          " bytes"
+                                        " bytes"
                                         : "Unknown")}
                                   </span>
                                 </div>
@@ -2829,9 +2738,9 @@ export default function Home() {
                         ) : (
                           <div
                             className="flex-1 w-full bg-black/20 backdrop-blur-md p-3 rounded-md overflow-auto text-white/80 text-xs flex items-center justify-center"
-                            // style={{
-                            //   fontFamily: "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
-                            // }}
+                          // style={{
+                          //   fontFamily: "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
+                          // }}
                           >
                             <div className="text-white/40 text-center">
                               {isLoading ? (
