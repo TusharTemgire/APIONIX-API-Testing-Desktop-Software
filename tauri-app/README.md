@@ -8,10 +8,11 @@
 <br />
 
 <div align="center">
-  <img src="https://img.shields.io/badge/Tauri-2.0-FFC131?logo=tauri&logoColor=fff" alt="Tauri" />
+  <img src="https://img.shields.io/badge/Tauri-2.3-FFC131?logo=tauri&logoColor=fff" alt="Tauri" />
   <img src="https://img.shields.io/badge/Next.js-15-000000?logo=next.js&logoColor=fff" alt="Next.js" />
   <img src="https://img.shields.io/badge/TypeScript-5.0-3178C6?logo=typescript&logoColor=fff" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/Rust-1.70+-000000?logo=rust&logoColor=fff" alt="Rust" />
+  <img src="https://img.shields.io/badge/Rust-Stable-000000?logo=rust&logoColor=fff" alt="Rust" />
+  <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey" alt="Platform" />
 </div>
 
 <br />
@@ -19,6 +20,18 @@
 APIONIX is an advanced desktop application designed for developers who need maximum power without the bloat. Originally built on Electron, this project has been fully re-engineered with **Tauri**, combining the blistering compilation speed of a Rust backend with a stunning, fluid Next.js (React) front end. 
 
 Say goodbye to massive memory footprints and electron-based limitations. **Just pure API testing.**
+
+---
+
+## 📑 Table of Contents
+1. [Core Features](#-core-features)
+2. [Tech Stack & Architecture](#-tech-stack--architecture)
+3. [System Prerequisites](#-system-prerequisites)
+4. [Getting Started](#-getting-started)
+5. [Building for Production](#-building-for-production)
+6. [Troubleshooting](#%EF%B8%8F-troubleshooting)
+7. [Upcoming Roadmap](#-upcoming-roadmap)
+8. [Contributing](#-contributing)
 
 ---
 
@@ -96,7 +109,7 @@ Once your prerequisites are resolved, developing on APIONIX is seamless:
 
 ## 📦 Building for Production
 
-Need to distribute APIONIX to other developers? It only takes a single command to generate the `.exe` setup wizards!
+Need to distribute APIONIX to other developers? It only takes a single command to generate the `.exe` (or `.dmg` / `.AppImage`) setup wizards!
 
 ```bash
 npm run tauri:build
@@ -104,13 +117,32 @@ npm run tauri:build
 
 **What this macro executes under the hood:**
 1. It runs `next build` inside the `renderer/` directory, outputting a perfectly compressed, completely static React codebase.
-2. It runs `tauri build` inside the backend directory, ingesting the static HTML/JS files, safely embedding them into the Webview2 container, and compiling them natively based on your OS architecture.
+2. It runs `tauri build` inside the backend directory, ingesting the static HTML/JS files, safely embedding them into the Webview container, and compiling them natively based on your OS architecture.
 
 ### 📍 Where is my App Installer?
 If you are compiling on a Windows machine, navigate to:
 `tauri-app/src-tauri/target/release/bundle/nsis/`
 
 You will find a professionally packaged, redistributable `apionix_0.1.0_x64-setup.exe` setup wizard file waiting for you!
+
+---
+
+## ⚠️ Troubleshooting
+
+**Common Error:** `failed to run 'cargo metadata' command to get workspace directory`
+This occurs if the Rust Toolchain is either missing or not fully initialized on your system.
+
+**Solution for Windows:**
+1. Ensure Rust is installed via `rustup`.
+2. Open a new Terminal as Administrator and force the stable toolchain download by running:
+   ```powershell
+   rustup default stable
+   ```
+3. Ensure Cargo is in your system PATH by running:
+   ```powershell
+   $env:PATH += ";$env:USERPROFILE\.cargo\bin"
+   ```
+4. Restart your Terminal or VS Code and try `npm run dev` again!
 
 ---
 
