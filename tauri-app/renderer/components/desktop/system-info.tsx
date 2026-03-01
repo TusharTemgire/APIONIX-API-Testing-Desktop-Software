@@ -7,36 +7,37 @@ import { Badge } from "@/renderer/components/ui/badge"
 import { Separator } from "@/renderer/components/ui/separator"
 import { Monitor, Cpu, HardDrive, Wifi, RefreshCw } from "lucide-react"
 
+import { type, arch, version } from "@tauri-apps/plugin-os"
+
 interface SystemInfoProps {
-  isElectron: boolean
+  isTauri?: boolean
 }
 
 interface SystemData {
   platform: string
   arch: string
   version: string
-  electronVersion?: string
-  chromeVersion?: string
 }
 
-export function SystemInfo({ isElectron }: SystemInfoProps) {
+export function SystemInfo({ isTauri = true }: SystemInfoProps) {
   const [systemData, setSystemData] = useState<SystemData | null>(null)
   const [loading, setLoading] = useState(false)
 
   const loadSystemInfo = async () => {
     setLoading(true)
     try {
-      if (isElectron && window.electron) {
-        const data = await window.electron.getSystemInfo()
-        setSystemData(data)
+      if (isTauri) {
+        setSystemData({
+          platform: await type(),
+          arch: await arch(),
+          version: await version(),
+        })
       } else {
         // Web fallback
         setSystemData({
           platform: navigator.platform,
           arch: "unknown",
           version: "Web Browser",
-          electronVersion: "N/A",
-          chromeVersion: "N/A",
         })
       }
     } catch (error) {
@@ -48,7 +49,7 @@ export function SystemInfo({ isElectron }: SystemInfoProps) {
 
   useEffect(() => {
     loadSystemInfo()
-  }, [isElectron])
+  }, [isTauri])
 
   const systemItems = [
     {
@@ -65,16 +66,10 @@ export function SystemInfo({ isElectron }: SystemInfoProps) {
     },
     {
       icon: HardDrive,
-      label: "Node Version",
+      label: "OS Version",
       value: systemData?.version || "N/A",
       color: "bg-purple-500",
-    },
-    {
-      icon: Wifi,
-      label: "Electron Version",
-      value: systemData?.electronVersion || "N/A",
-      color: "bg-orange-500",
-    },
+    }
   ]
 
   return (
@@ -115,11 +110,10 @@ export function SystemInfo({ isElectron }: SystemInfoProps) {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Runtime Environment</h3>
             <div className="flex flex-wrap gap-2">
-              <Badge variant={isElectron ? "default" : "secondary"}>
-                {isElectron ? "Electron Desktop" : "Web Browser"}
+              <Badge variant={isTauri ? "default" : "secondary"}>
+                {isTauri ? "Tauri Desktop" : "Web Browser"}
               </Badge>
-              {systemData?.chromeVersion && <Badge variant="outline">Chrome {systemData.chromeVersion}</Badge>}
-              <Badge variant="outline">Next.js 14</Badge>
+              <Badge variant="outline">Next.js 15</Badge>
               <Badge variant="outline">React 18</Badge>
             </div>
           </div>

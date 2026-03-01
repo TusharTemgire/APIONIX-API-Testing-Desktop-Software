@@ -25,27 +25,7 @@ import { Toaster, toast } from "sonner";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import TitleBar from "../components/TitleBar";
 
-declare global {
-  interface Window {
-    electron: {
-      isWindowMaximized(): unknown;
-      onWindowMaximizedChange(arg0: (maximized: any) => void): unknown;
-      minimizeWindow(): unknown;
-      maximizeWindow(): unknown;
-      closeWindow(): unknown;
-      saveData: any;
-      getSystemInfo: any;
-      showMessageBox(arg0: {
-        type: string;
-        title: string;
-        message: string;
-        buttons: string[];
-      }): unknown;
-      sendMessage: (msg: string) => void;
-      onMessage: (callback: (msg: string) => void) => void;
-    };
-  }
-}
+
 
 interface JsonError {
   line: number;
@@ -344,9 +324,7 @@ export default function Home() {
   const activeTab = tabs.find((tab) => tab.id === activeTabId);
 
   useEffect(() => {
-    window.electron?.onMessage((data) => {
-      setMsg(data);
-    });
+    // legacy electron messaging removed for Tauri
   }, []);
 
   useEffect(() => {
@@ -1149,7 +1127,6 @@ export default function Home() {
         <TitleBar />
       </div>
       <Toaster position="top-center" />
-      {/* <h1 className="text-3xl text-white font-medium mb-2">ElectronJS</h1> */}
       <div className="w-full mb-1">
         <div className="flex items-center">
           <div className="flex-1 overflow-x-auto">

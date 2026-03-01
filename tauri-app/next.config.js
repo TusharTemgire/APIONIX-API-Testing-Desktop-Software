@@ -11,7 +11,7 @@ const nextConfig = {
   images: {
     unoptimized: true,
   },
-  // Disable server-side features for Electron
+  // Disable server-side features for static Tauri exports
   experimental: {
     esmExternals: false,
   },

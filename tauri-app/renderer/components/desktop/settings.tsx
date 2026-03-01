@@ -10,12 +10,13 @@ import { Separator } from "@/renderer/components/ui/separator"
 import { Badge } from "@/renderer/components/ui/badge"
 import { SettingsIcon, Moon, Sun, Bell, Shield, Palette } from "lucide-react"
 import { useTheme } from "next-themes"
+import { message } from "@tauri-apps/plugin-dialog"
 
 interface SettingsProps {
-  isElectron: boolean
+  isTauri?: boolean
 }
 
-export function Settings({ isElectron }: SettingsProps) {
+export function Settings({ isTauri = true }: SettingsProps) {
   const { theme, setTheme } = useTheme()
   const [mounted, setMounted] = useState(false)
   const [notifications, setNotifications] = useState(true)
@@ -34,18 +35,14 @@ export function Settings({ isElectron }: SettingsProps) {
       language,
     }
 
-    if (isElectron && window.electron) {
-      const result = await window.electron.saveData({ settings })
-      if (result.success) {
-        await window.electron.showMessageBox({
-          type: "info",
-          title: "Settings Saved",
-          message: "Your settings have been saved successfully!",
-          buttons: ["OK"],
-        })
-      }
+    localStorage.setItem("app-settings", JSON.stringify(settings))
+
+    if (isTauri) {
+      await message("Your settings have been saved successfully!", {
+        title: "Settings Saved",
+        kind: "info",
+      })
     } else {
-      localStorage.setItem("app-settings", JSON.stringify(settings))
       alert("Settings saved to local storage!")
     }
   }
@@ -130,7 +127,7 @@ export function Settings({ isElectron }: SettingsProps) {
             </div>
 
             <div className="grid gap-4">
-              {isElectron && (
+              {isTauri && (
                 <div className="flex items-center justify-between">
                   <div className="space-y-0.5">
                     <Label htmlFor="autostart">Auto Start</Label>
@@ -166,8 +163,8 @@ export function Settings({ isElectron }: SettingsProps) {
           <div className="space-y-4">
             <h3 className="text-lg font-semibold">Environment</h3>
             <div className="flex flex-wrap gap-2">
-              <Badge variant={isElectron ? "default" : "secondary"}>{isElectron ? "Desktop App" : "Web Browser"}</Badge>
-              <Badge variant="outline">Next.js 14</Badge>
+              <Badge variant={isTauri ? "default" : "secondary"}>{isTauri ? "Desktop App" : "Web Browser"}</Badge>
+              <Badge variant="outline">Next.js 15</Badge>
               <Badge variant="outline">Tailwind CSS</Badge>
               <Badge variant="outline">TypeScript</Badge>
             </div>

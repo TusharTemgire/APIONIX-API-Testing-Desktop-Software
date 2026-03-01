@@ -9,8 +9,10 @@ import { Separator } from "@/renderer/components/ui/separator"
 import { Badge } from "@/renderer/components/ui/badge"
 import { Folder, File, Upload, Download, Plus, Search } from "lucide-react"
 
+import { message } from "@tauri-apps/plugin-dialog"
+
 interface FileManagerProps {
-  isElectron: boolean
+  isTauri?: boolean
 }
 
 interface FileItem {
@@ -20,7 +22,7 @@ interface FileItem {
   modified: string
 }
 
-export function FileManager({ isElectron }: FileManagerProps) {
+export function FileManager({ isTauri = true }: FileManagerProps) {
   const [searchTerm, setSearchTerm] = useState("")
   const [currentPath, setCurrentPath] = useState("/Documents")
 
@@ -36,12 +38,10 @@ export function FileManager({ isElectron }: FileManagerProps) {
   const filteredFiles = files.filter((file) => file.name.toLowerCase().includes(searchTerm.toLowerCase()))
 
   const handleCreateFolder = async () => {
-    if (isElectron && window.electron) {
-      await window.electron.showMessageBox({
-        type: "info",
+    if (isTauri) {
+      await message("This would create a new folder in the desktop app", {
         title: "Create Folder",
-        message: "This would create a new folder in the desktop app",
-        buttons: ["OK"],
+        kind: "info",
       })
     } else {
       alert("Folder creation would work in the desktop app")
@@ -49,12 +49,10 @@ export function FileManager({ isElectron }: FileManagerProps) {
   }
 
   const handleUploadFile = async () => {
-    if (isElectron && window.electron) {
-      await window.electron.showMessageBox({
-        type: "info",
+    if (isTauri) {
+      await message("This would open a file picker in the desktop app", {
         title: "Upload File",
-        message: "This would open a file picker in the desktop app",
-        buttons: ["OK"],
+        kind: "info",
       })
     } else {
       alert("File upload would work in the desktop app")
@@ -69,7 +67,7 @@ export function FileManager({ isElectron }: FileManagerProps) {
             <Folder className="w-5 h-5" />
             File Manager
           </CardTitle>
-          <CardDescription>Browse and manage files {isElectron ? "on your system" : "in the web app"}</CardDescription>
+          <CardDescription>Browse and manage files {isTauri ? "on your system" : "in the web app"}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {/* Path and Actions */}
