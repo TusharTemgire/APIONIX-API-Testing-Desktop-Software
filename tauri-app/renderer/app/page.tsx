@@ -21,7 +21,7 @@ import {
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
-import { Toaster, toast } from "sonner";
+import { Toaster, sileo as toast } from "sileo";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
 import TitleBar from "../components/TitleBar";
 
@@ -152,21 +152,7 @@ export default function Home() {
     try {
       localStorage.setItem("apionix-app-state", JSON.stringify(appState));
     } catch (error) {
-      toast.error("Failed to save to localStorage", {
-        style: {
-          backgroundColor: "rgba(18, 18, 18, 0.8)",
-          backdropFilter: "blur(5px)",
-          color: "#ffffff",
-          borderRadius: "10px",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
-          boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
-          padding: "8px 12px",
-          fontSize: "12px",
-          fontWeight: "500",
-        },
-        icon: "✗",
-        duration: 2000,
-      });
+      toast.error({ title: "Failed to save to localStorage", duration: 2000 });
     }
   };
 
@@ -255,21 +241,7 @@ export default function Home() {
         ]);
       }
     } catch (error) {
-      toast.error("Failed to load from localStorage", {
-        style: {
-          backgroundColor: "rgba(18, 18, 18, 0.8)",
-          backdropFilter: "blur(5px)",
-          color: "#ffffff",
-          borderRadius: "10px",
-          border: "1px solid rgba(255, 255, 255, 0.1)",
-          boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
-          padding: "8px 12px",
-          fontSize: "12px",
-          fontWeight: "500",
-        },
-        icon: "✗",
-        duration: 2000,
-      });
+      toast.error({ title: "Failed to load from localStorage", duration: 2000 });
       setTabs([
         {
           id: "1",
@@ -1102,17 +1074,7 @@ export default function Home() {
         <Loader className="animate-spin" size={14} />
         <div className="relative z-10 flex flex-col items-center">
           <div className="">
-            <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <g clipPath="url(#clip0_4418_6503)">
-                <path opacity="0.4" d="M16.1599 10C16.1599 10 16.0099 11 12.9099 15C9.9999 18.77 14.2099 21.64 14.7099 21.97C14.7399 21.99 14.7699 21.99 14.8099 21.97C15.4899 21.55 23.0599 16.68 16.1599 10Z" stroke="#fff" strokeWidth="1" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" />
-                <path d="M13.7598 7.79006C13.7598 5.49006 12.8598 3.39006 11.9598 2.19006C11.6598 1.89006 11.1598 1.99006 11.0598 2.39006C10.6598 3.89006 9.45977 7.09006 6.55977 10.8901C2.85977 15.6901 6.25978 20.8901 9.75978 21.8901C11.6598 22.3901 9.25979 20.8901 8.95979 17.7901C8.65979 13.8901 13.7598 10.9901 13.7598 7.79006Z" stroke="#fff" strokeWidth="1" strokeMiterlimit="10" strokeLinecap="round" strokeLinejoin="round" />
-              </g>
-              <defs>
-                <clipPath id="clip0_4418_6503">
-                  <rect width="24" height="24" fill="white" />
-                </clipPath>
-              </defs>
-            </svg>
+            <img src="/tronix-icon.png" alt="APIONIX Logo" className="w-[80px] h-[80px] rounded-2xl shadow-sm object-contain" />
           </div>
           <div className="text-[#73DC8C] text-3xl tracking-wide">APIONIX</div>
           <div className="text-[#3a9c66] text-xs font-medium">Loading...</div>
@@ -1734,22 +1696,7 @@ export default function Home() {
                             onChange={(e) => {
                               const file = e.target.files?.[0];
                               if (file) {
-                                toast.success("File Selected: " + file.name, {
-                                  style: {
-                                    backgroundColor: "rgba(18, 18, 18, 0.8)",
-                                    backdropFilter: "blur(5px)",
-                                    color: "#ffffff",
-                                    borderRadius: "10px",
-                                    border:
-                                      "1px solid rgba(255, 255, 255, 0.1)",
-                                    boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
-                                    padding: "8px 12px",
-                                    fontSize: "12px",
-                                    fontWeight: "500",
-                                  },
-                                  icon: "✓",
-                                  duration: 2000,
-                                });
+                                toast.success({ title: "File Selected: " + file.name, duration: 2000 });
                               }
                             }}
                           />
@@ -1808,22 +1755,7 @@ export default function Home() {
                             onChange={(e) => {
                               const file = e.target.files?.[0];
                               if (file) {
-                                toast.success("File Selected: " + file.name, {
-                                  style: {
-                                    backgroundColor: "rgba(18, 18, 18, 0.8)",
-                                    backdropFilter: "blur(5px)",
-                                    color: "#ffffff",
-                                    borderRadius: "10px",
-                                    border:
-                                      "1px solid rgba(255, 255, 255, 0.1)",
-                                    boxShadow: "0 3px 8px rgba(0, 0, 0, 0.3)",
-                                    padding: "8px 12px",
-                                    fontSize: "12px",
-                                    fontWeight: "500",
-                                  },
-                                  icon: "✓",
-                                  duration: 2000,
-                                });
+                                toast.success({ title: "File Selected: " + file.name, duration: 2000 });
                               }
                             }}
                           />

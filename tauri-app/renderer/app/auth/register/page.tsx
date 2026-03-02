@@ -15,7 +15,7 @@ const page = () => {
                 tushar@example.com
               </a>
               <img
-                src="/netflix-icon.png"
+                src="/tronix-icon.png"
                 alt="Description of image"
                 className="mt-4 w-28 h-28 rounded-lg shadow-md"
               />
