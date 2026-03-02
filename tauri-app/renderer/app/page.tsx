@@ -699,7 +699,7 @@ export default function Home() {
 
   const runLoadTest = async () => {
     if (!msg || msg.trim() === "" || !isValidUrl(msg.trim())) {
-      toast.error("Invalid URL for Load Test");
+      toast.error({ title: "Invalid URL for Load Test" });
       return;
     }
 
@@ -798,7 +798,7 @@ export default function Home() {
     const workers = Array.from({ length: Math.min(concurrency, requests) }, () => runWorker());
     await Promise.all(workers);
     setIsLoadTesting(false);
-    toast.success("Load Test Complete");
+    toast.success({ title: "Load Test Complete" });
   };
 
   // Revised logic with full featured support
@@ -813,7 +813,7 @@ export default function Home() {
     }
 
     if (!isValidUrl(url)) {
-      toast.error("Invalid URL");
+      toast.error({ title: "Invalid URL" });
       return;
     }
 
@@ -914,7 +914,7 @@ export default function Home() {
       setApiResponse(responseData);
 
     } catch (error) {
-      toast.error("Request failed: " + (error instanceof Error ? error.message : "Unknown error"));
+      toast.error({ title: "Request failed: " + (error instanceof Error ? error.message : "Unknown error") });
       setApiResponse({ error: "Network Error", details: error instanceof Error ? error.message : "Unknown" });
       setResponseStatus(0);
       setResponseTime(Date.now() - startTime);
