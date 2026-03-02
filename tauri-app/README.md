@@ -64,6 +64,15 @@ Visually build out URL query parameters, complex custom headers, URL-encoded dat
 🌐 **Offline-First Persistence** 
 All of your workspaces, configs, saved secrets, and endpoints are securely stored locally via the `@tauri-apps/plugin-store` and rendered instantaneously on launch.
 
+🛡️ **Security Sentinel (Automated Audit)**
+Go beyond basic testing with integrated security auditing. APIONIX automatically analyzes every response for missing security headers (HSTS, CSP, X-Frame-Options, etc.), sensitive info leaks, and protocol misconfigurations, providing instant fix recommendations.
+
+📈 **Integrated Performance Insights**
+Track API health over time with real-time latency history. Analyze performance trends using visual sparklines and aggregate statistics (Average Latency, Success Rate) built into your response workflow.
+
+🖥️ **Advanced Server Monitoring**
+Built-in dashboard for real-time tracking of remote server health. Add your server credentials to monitor CPU, RAM, and Disk utilization using stunning amCharts visualizations.
+
 ---
 
 ## 🛠️ Tech Stack & Architecture Details
@@ -87,7 +96,8 @@ APIONIX uses a multi-layered architecture separating OS-level logic and high-per
 
 ### 4. **Enhanced User Experience Modules**
 - **[Sileo](https://sileo.aaryan.design/)**: Provides buttery-smooth, natively animated toast notifications using gooey SVG morphing and spring physics. Implemented for conveying successful API calls, load test completions, validation notices, and system errors seamlessly without bloat.
-- **[Recharts](https://recharts.org/)**: A composable charting library built on React components. Used purely for our innovative real-time **Load Testing module**, rendering instantaneous performance matrices (p95 metrics) dynamically as requests are fired.
+- **[Recharts](https://recharts.org/)**: A composable charting library built on React components. Used for real-time **Load Testing benchmarks** and **Performance Insights** history plotting.
+- **[amCharts](https://www.amcharts.com/)**: High-performance charting engine utilized in our **Server Monitoring** dashboard for real-time system resource visualization.
 
 ---
 

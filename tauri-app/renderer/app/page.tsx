@@ -1011,6 +1011,28 @@ export default function Home() {
       });
     }
 
+    // Check Referrer-Policy
+    if (!h("Referrer-Policy")) {
+      findings.push({
+        id: "referrer",
+        title: "Referrer Policy Not Set",
+        description: "No Referrer-Policy header found, risking data leakage via the Referer header.",
+        severity: "low",
+        recommendation: "Add 'Referrer-Policy: no-referrer-when-downgrade' or stricter."
+      });
+    }
+
+    // Check Permissions-Policy
+    if (!h("Permissions-Policy")) {
+      findings.push({
+        id: "permissions",
+        title: "Permissions Policy Missing",
+        description: "Browser features are not restricted by Permissions-Policy.",
+        severity: "low",
+        recommendation: "Restrict browser features (camera, mic, etc.) using Permissions-Policy."
+      });
+    }
+
     if (findings.length === 0) {
       findings.push({
         id: "perfect",
@@ -1021,7 +1043,10 @@ export default function Home() {
       });
     }
 
-    setSecurityFindings(findings);
+    setSecurityFindings(findings.sort((a, b) => {
+      const order = { high: 0, medium: 1, low: 2, passed: 3 };
+      return order[a.severity] - order[b.severity];
+    }));
   };
 
   const isValidUrl = (url: string): boolean => {
@@ -3058,9 +3083,9 @@ export default function Home() {
                       <div className="space-y-2 pb-10">
                         {securityFindings.length > 0 ? securityFindings.map(finding => (
                           <div key={finding.id} className={`p-3 rounded-lg border ${finding.severity === 'high' ? 'bg-red-500/5 border-red-500/20' :
-                              finding.severity === 'medium' ? 'bg-orange-500/5 border-orange-500/20' :
-                                finding.severity === 'low' ? 'bg-blue-500/5 border-blue-500/20' :
-                                  'bg-green-500/5 border-green-500/20'
+                            finding.severity === 'medium' ? 'bg-orange-500/5 border-orange-500/20' :
+                              finding.severity === 'low' ? 'bg-blue-500/5 border-blue-500/20' :
+                                'bg-green-500/5 border-green-500/20'
                             }`}>
                             <div className="flex items-center gap-2 mb-1">
                               {finding.severity === 'high' ? <ShieldAlert size={14} className="text-red-400" /> :
@@ -3069,9 +3094,9 @@ export default function Home() {
                                     <ShieldCheck size={14} className="text-[#73DC8C]" />}
                               <span className="text-xs font-bold text-white/90">{finding.title}</span>
                               <span className={`text-[9px] px-1.5 py-0.5 rounded-full border uppercase ml-auto ${finding.severity === 'high' ? 'border-red-500/30 text-red-400 bg-red-400/10' :
-                                  finding.severity === 'medium' ? 'border-orange-500/30 text-orange-400 bg-orange-400/10' :
-                                    finding.severity === 'low' ? 'border-blue-500/30 text-blue-400 bg-blue-400/10' :
-                                      'border-[#73DC8C]/30 text-[#73DC8C] bg-[#73DC8C]/10'
+                                finding.severity === 'medium' ? 'border-orange-500/30 text-orange-400 bg-orange-400/10' :
+                                  finding.severity === 'low' ? 'border-blue-500/30 text-blue-400 bg-blue-400/10' :
+                                    'border-[#73DC8C]/30 text-[#73DC8C] bg-[#73DC8C]/10'
                                 }`}>
                                 {finding.severity}
                               </span>
