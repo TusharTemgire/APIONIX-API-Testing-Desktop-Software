@@ -3,7 +3,6 @@ import type { Metadata, Viewport } from "next"
 import { Space_Grotesk } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "../components/theme-provider"
-import TitleBar from '../components/TitleBar'
 const tronixfont = Space_Grotesk({ subsets: ["latin"] })
 
 export const metadata: Metadata = {

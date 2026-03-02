@@ -23,8 +23,6 @@ import { useEffect, useState } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { Toaster, sileo as toast } from "sileo";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
-import TitleBar from "../components/TitleBar";
-
 
 
 interface JsonError {
@@ -1085,9 +1083,6 @@ export default function Home() {
 
   return (
     <div className="h-svh flex flex-col items-center justify-start bg-[#191515] p-2">
-      <div className="pb-2 w-full">
-        <TitleBar />
-      </div>
       <Toaster position="top-center" />
       <div className="w-full mb-1">
         <div className="flex items-center">
