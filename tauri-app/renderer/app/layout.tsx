@@ -1,9 +1,7 @@
 import type React from "react"
 import type { Metadata, Viewport } from "next"
-import { Space_Grotesk } from "next/font/google"
 import "./globals.css"
 import { ThemeProvider } from "../components/theme-provider"
-const tronixfont = Space_Grotesk({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
   title: "APIONIX | The Ultimate API Experience",
@@ -50,7 +48,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className={tronixfont.className}>
+      <body style={{ fontFamily: "'CircularStd', -apple-system, BlinkMacSystemFont, sans-serif" }}>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
 
           {children}

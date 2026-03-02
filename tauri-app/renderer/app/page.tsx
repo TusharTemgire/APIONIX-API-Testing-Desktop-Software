@@ -18,11 +18,15 @@ import {
   Loader,
   LoaderCircle,
   Layers,
+  Monitor,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
 import { Toaster, sileo as toast } from "sileo";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer } from "recharts";
+import dynamic from "next/dynamic";
+
+const ServerMonitor = dynamic(() => import("../components/ServerMonitor"), { ssr: false });
 
 
 interface JsonError {
@@ -65,6 +69,7 @@ interface KeyValueItem {
 
 export default function Home() {
   const [msg, setMsg] = useState("");
+  const [activeView, setActiveView] = useState<"api" | "monitor">("api");
   const [bodyData, setBodyData] = useState("");
   const [rowCount, setRowCount] = useState(1);
   const [isExpanded, setIsExpanded] = useState(false);
@@ -1138,577 +1143,599 @@ export default function Home() {
               <Layers size={14} className="text-white/60" />
               <span className="text-white/80 text-[10px]">Environment</span>
             </button>
+            <div className="w-px h-4 bg-white/10 mx-0.5" />
+            <button
+              onClick={() => setActiveView(activeView === "monitor" ? "api" : "monitor")}
+              className={`p-1.5 rounded-md transition-colors duration-200 flex items-center gap-1 ${activeView === "monitor"
+                ? "bg-[#73DC8C]/15 text-[#73DC8C]"
+                : "hover:bg-white/10 bg-white/5 text-white/60"
+                }`}
+              title="Server Monitor"
+            >
+              <Monitor size={14} />
+              <span className="text-[10px]">Monitor</span>
+            </button>
           </div>
         </div>
       </div>
-      <div className="bg-[#1C1818] w-full p-1.5 border flex items-center justify-center border-gray-600/20 rounded-lg mb-2">
-        <div className="relative method-dropdown bg-white/5 rounded-[5px] mr-1">
-          <button
-            onClick={toggleMethodDropdown}
-            className="hover:bg-white/5 flex justify-center gap-1 items-center text-xs px-2 py-1 rounded-md"
-            style={{
-              color: httpMethods.find((m) => m.name === selectedMethod)?.color,
-            }}
-          >
-            {selectedMethod}
-            <ChevronsUpDown size={14} />
-          </button>
+      {activeView === "api" && (
+        <div className="bg-[#1C1818] w-full p-1.5 border flex items-center justify-center border-gray-600/20 rounded-lg mb-2">
+          <div className="relative method-dropdown bg-white/5 rounded-[5px] mr-1">
+            <button
+              onClick={toggleMethodDropdown}
+              className="hover:bg-white/5 flex justify-center gap-1 items-center text-xs px-2 py-1 rounded-md"
+              style={{
+                color: httpMethods.find((m) => m.name === selectedMethod)?.color,
+              }}
+            >
+              {selectedMethod}
+              <ChevronsUpDown size={14} />
+            </button>
 
-          {showMethodDropdown && (
-            <div className="absolute top-full left-0 mt-1 bg-[#2a2a2a] border border-gray-600/20 rounded-lg shadow-lg z-50 min-w-[100px]">
-              {httpMethods.map((method) => (
-                <button
-                  key={method.name}
-                  onClick={() => handleMethodSelect(method.name)}
-                  className="w-full px-3 py-1 text-xs hover:bg-white/5 border-b border-gray-600/20 first:rounded-t-md last:rounded-b-md transition-colors"
-                  style={{ color: method.color }}
-                >
-                  {method.name}
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-        <input
-          type="text"
-          placeholder="https://api.example.com"
-          className="flex-1 bg-transparent  placeholder:text-white/40 text-white text-xs outline-none border-gray-600/20 mr-2 px-1 py-1"
-          value={msg}
-          onChange={(e) => handleUrlChange(e.target.value)}
-          onMouseEnter={(e) =>
-          ((e.target as HTMLInputElement).placeholder =
-            "Enter API URL, e.g., https://api.example.com")
-          }
-          onMouseLeave={(e) =>
-          ((e.target as HTMLInputElement).placeholder =
-            "https://api.example.com")
-          }
-        />
-        <div className="flex gap-1.5">
-          <button
-            onClick={handleHello}
-            disabled={isLoading || !isValidUrl(msg)}
-            className={`
+            {showMethodDropdown && (
+              <div className="absolute top-full left-0 mt-1 bg-[#2a2a2a] border border-gray-600/20 rounded-lg shadow-lg z-50 min-w-[100px]">
+                {httpMethods.map((method) => (
+                  <button
+                    key={method.name}
+                    onClick={() => handleMethodSelect(method.name)}
+                    className="w-full px-3 py-1 text-xs hover:bg-white/5 border-b border-gray-600/20 first:rounded-t-md last:rounded-b-md transition-colors"
+                    style={{ color: method.color }}
+                  >
+                    {method.name}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <input
+            type="text"
+            placeholder="https://api.example.com"
+            className="flex-1 bg-transparent  placeholder:text-white/40 text-white text-xs outline-none border-gray-600/20 mr-2 px-1 py-1"
+            value={msg}
+            onChange={(e) => handleUrlChange(e.target.value)}
+            onMouseEnter={(e) =>
+            ((e.target as HTMLInputElement).placeholder =
+              "Enter API URL, e.g., https://api.example.com")
+            }
+            onMouseLeave={(e) =>
+            ((e.target as HTMLInputElement).placeholder =
+              "https://api.example.com")
+            }
+          />
+          <div className="flex gap-1.5">
+            <button
+              onClick={handleHello}
+              disabled={isLoading || !isValidUrl(msg)}
+              className={`
             flex justify-center items-center text-black text-xs px-2 py-1 rounded-md shadow-[0_0_5px_rgba(115,220,140,0.2)]
             transition-all duration-200
             ${isLoading || !isValidUrl(msg)
-                ? "bg-[#5ea372] cursor-not-allowed"
-                : "bg-[#73DC8C] hover:bg-[#66c97f]"
-              }
+                  ? "bg-[#5ea372] cursor-not-allowed"
+                  : "bg-[#73DC8C] hover:bg-[#66c97f]"
+                }
           `}
-          >
-            {isLoading ? (
-              <>
-                <div className="animate-spin mr-1">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
-                    fill="black" viewBox="0 0 24 24" >
-                    <path d="M12 18a2 2 0 1 0 0 4 2 2 0 1 0 0-4M12 2a2 2 0 1 0 0 4 2 2 0 1 0 0-4M7.76 19.07c-.78.78-2.05.78-2.83 0s-.78-2.05 0-2.83 2.05-.78 2.83 0 .78 2.05 0 2.83M19.07 7.76c-.78.78-2.05.78-2.83 0s-.78-2.05 0-2.83 2.05-.78 2.83 0 .78 2.05 0 2.83M4 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2M20 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2M4.93 7.76c-.78-.78-.78-2.05 0-2.83s2.05-.78 2.83 0 .78 2.05 0 2.83-2.05.78-2.83 0M16.24 19.07c-.78-.78-.78-2.05 0-2.83s2.05-.78 2.83 0 .78 2.05 0 2.83-2.05.78-2.83 0"></path>
-                  </svg>
-                </div>
-                {/* <LoaderCircle className="animate-spin mr-1" size={12} /> */}
-                Sending
-              </>
-            ) : !isValidUrl(msg) ? (
-              "Enter URL"
-            ) : (
-              "Send"
-            )}
-          </button>
-          <button className="hover:bg-[#1a1a1a] bg-[#2a2a2a] border border-gray-600/20 p-1 flex justify-center items-center text-white rounded-md">
-            <GlobeLock size={14} />
-          </button>
+            >
+              {isLoading ? (
+                <>
+                  <div className="animate-spin mr-1">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12"
+                      fill="black" viewBox="0 0 24 24" >
+                      <path d="M12 18a2 2 0 1 0 0 4 2 2 0 1 0 0-4M12 2a2 2 0 1 0 0 4 2 2 0 1 0 0-4M7.76 19.07c-.78.78-2.05.78-2.83 0s-.78-2.05 0-2.83 2.05-.78 2.83 0 .78 2.05 0 2.83M19.07 7.76c-.78.78-2.05.78-2.83 0s-.78-2.05 0-2.83 2.05-.78 2.83 0 .78 2.05 0 2.83M4 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2M20 14c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2M4.93 7.76c-.78-.78-.78-2.05 0-2.83s2.05-.78 2.83 0 .78 2.05 0 2.83-2.05.78-2.83 0M16.24 19.07c-.78-.78-.78-2.05 0-2.83s2.05-.78 2.83 0 .78 2.05 0 2.83-2.05.78-2.83 0"></path>
+                    </svg>
+                  </div>
+                  {/* <LoaderCircle className="animate-spin mr-1" size={12} /> */}
+                  Sending
+                </>
+              ) : !isValidUrl(msg) ? (
+                "Enter URL"
+              ) : (
+                "Send"
+              )}
+            </button>
+            <button className="hover:bg-[#1a1a1a] bg-[#2a2a2a] border border-gray-600/20 p-1 flex justify-center items-center text-white rounded-md">
+              <GlobeLock size={14} />
+            </button>
+          </div>
         </div>
-      </div>
 
-      <div className="w-full min-h-0 h-full overflow-hidden">
-        <PanelGroup direction="horizontal">
-          <Panel defaultSize={50} minSize={30}>
-            <div className="bg-[#1C1818] w-full h-full p-2 border border-gray-600/20 rounded-lg">
-              <div className="flex items-center justify-start gap-1 mb-3">
-                <button
-                  onClick={() => handleActiveRequestTabChange("Params")}
-                  className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeRequestTab === "Params"
-                    ? "bg-black/5 text-white border-gray-500/20"
-                    : "bg-black/20 hover:bg-black/5 text-white/50"
-                    }`}
-                >
-                  Params
-                </button>
-                <button
-                  onClick={() => handleActiveRequestTabChange("Headers")}
-                  className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeRequestTab === "Headers"
-                    ? "bg-black/5 text-white border-gray-500/20"
-                    : "bg-black/20 hover:bg-black/5 text-white/50"
-                    }`}
-                >
-                  Headers
-                </button>
-                <button
-                  onClick={() => handleActiveRequestTabChange("Auth")}
-                  className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeRequestTab === "Auth"
-                    ? "bg-black/5 text-white border-gray-500/20"
-                    : "bg-black/20 hover:bg-black/5 text-white/50"
-                    }`}
-                >
-                  Auth
-                </button>
-                <button
-                  onClick={() => handleActiveRequestTabChange("Body")}
-                  className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeRequestTab === "Body"
-                    ? "bg-black/5 text-white border-gray-500/20"
-                    : "bg-black/20 hover:bg-black/5 text-white/50"
-                    }`}
-                >
-                  Body
-                </button>
-                <button
-                  onClick={() => handleActiveRequestTabChange("Load Test")}
-                  className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeRequestTab === "Load Test"
-                    ? "bg-black/5 text-purple-400 border-gray-500/20"
-                    : "bg-black/20 hover:bg-black/5 text-purple-400/50"
-                    }`}
-                >
-                  Load Test
-                </button>
-                <div className="flex justify-end w-full gap-2">
-                  {activeRequestTab === "Body" && bodyData.trim() && (
-                    <div className="flex items-center gap-1">
-                      {jsonErrors.length > 0 ? (
-                        <AlertCircle size={14} className="text-red-400" />
-                      ) : (
-                        <CheckCircle size={14} className="text-green-400" />
-                      )}
-                      <span
-                        className={`text-xs ${jsonErrors.length > 0
-                          ? "text-red-400"
-                          : "text-green-400"
-                          }`}
-                      >
-                        {jsonErrors.length > 0 ? "Invalid JSON" : "Valid JSON"}
-                      </span>
-                    </div>
-                  )}
+      )}
 
-                  {activeRequestTab === "Body" &&
-                    jsonSuggestions.length > 0 && (
-                      <button
-                        onClick={() => setShowSuggestions(!showSuggestions)}
-                        className="bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-gray-600/20 p-1 flex justify-center items-center text-yellow-400 rounded-md relative"
-                      >
-                        <Lightbulb size={14} />
-                        <span className="absolute -top-1 -right-1 bg-yellow-400 text-black text-xs rounded-full w-4 h-4 flex items-center justify-center">
-                          {jsonSuggestions.length}
-                        </span>
-                      </button>
-                    )}
-                  <button className="bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-gray-600/20 p-1 flex justify-center items-center text-white rounded-md">
-                    <CodeXml size={14} />
+      {activeView === "monitor" && (
+        <div className="w-full min-h-0 h-full overflow-hidden">
+          <ServerMonitor />
+        </div>
+      )}
+
+      {activeView === "api" && (
+        <div className="w-full min-h-0 h-full overflow-hidden">
+          <PanelGroup direction="horizontal">
+            <Panel defaultSize={50} minSize={30}>
+              <div className="bg-[#1C1818] w-full h-full p-2 border border-gray-600/20 rounded-lg">
+                <div className="flex items-center justify-start gap-1 mb-3 overflow-x-auto [&::-webkit-scrollbar]:hidden [scrollbar-width:none]">
+                  <button
+                    onClick={() => handleActiveRequestTabChange("Params")}
+                    className={`border border-gray-500/20 flex-shrink-0 whitespace-nowrap flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeRequestTab === "Params"
+                      ? "bg-black/5 text-white border-gray-500/20"
+                      : "bg-black/20 hover:bg-black/5 text-white/50"
+                      }`}
+                  >
+                    Params
                   </button>
-                </div>
-              </div>
+                  <button
+                    onClick={() => handleActiveRequestTabChange("Headers")}
+                    className={`border border-gray-500/20 flex-shrink-0 whitespace-nowrap flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeRequestTab === "Headers"
+                      ? "bg-black/5 text-white border-gray-500/20"
+                      : "bg-black/20 hover:bg-black/5 text-white/50"
+                      }`}
+                  >
+                    Headers
+                  </button>
+                  <button
+                    onClick={() => handleActiveRequestTabChange("Auth")}
+                    className={`border border-gray-500/20 flex-shrink-0 whitespace-nowrap flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeRequestTab === "Auth"
+                      ? "bg-black/5 text-white border-gray-500/20"
+                      : "bg-black/20 hover:bg-black/5 text-white/50"
+                      }`}
+                  >
+                    Auth
+                  </button>
+                  <button
+                    onClick={() => handleActiveRequestTabChange("Body")}
+                    className={`border border-gray-500/20 flex-shrink-0 whitespace-nowrap flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeRequestTab === "Body"
+                      ? "bg-black/5 text-white border-gray-500/20"
+                      : "bg-black/20 hover:bg-black/5 text-white/50"
+                      }`}
+                  >
+                    Body
+                  </button>
+                  <button
+                    onClick={() => handleActiveRequestTabChange("Load Test")}
+                    className={`border border-gray-500/20 flex-shrink-0 whitespace-nowrap flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeRequestTab === "Load Test"
+                      ? "bg-black/5 text-purple-400 border-gray-500/20"
+                      : "bg-black/20 hover:bg-black/5 text-purple-400/50"
+                      }`}
+                  >
+                    Load Test
+                  </button>
+                  <div className="flex justify-end w-full gap-2">
+                    {activeRequestTab === "Body" && bodyData.trim() && (
+                      <div className="flex items-center gap-1">
+                        {jsonErrors.length > 0 ? (
+                          <AlertCircle size={14} className="text-red-400" />
+                        ) : (
+                          <CheckCircle size={14} className="text-green-400" />
+                        )}
+                        <span
+                          className={`text-xs ${jsonErrors.length > 0
+                            ? "text-red-400"
+                            : "text-green-400"
+                            }`}
+                        >
+                          {jsonErrors.length > 0 ? "Invalid JSON" : "Valid JSON"}
+                        </span>
+                      </div>
+                    )}
 
-              {activeRequestTab === "Auth" && (
-                <div className="h-auto mb-2">
-                  <div className="flex items-center gap-2 border rounded-lg hover:border-[#4B78E6]/50 border-gray-600/20 px-2 py-1 mt-2">
-                    <KeyRound className="text-white/50" size={14} />
-                    <input
-                      type={showToken ? "text" : "password"}
-                      placeholder="Authorization token"
-                      className="flex-1 bg-transparent placeholder:text-white/40 text-white text-xs outline-none"
-                      value={authToken}
-                      onChange={(e) => handleAuthTokenChange(e.target.value)}
-                    />
-                    <button
-                      onClick={() => setShowToken(!showToken)}
-                      className="p-1 hover:bg-white/10 rounded transition-colors duration-200"
-                    >
-                      {showToken ? (
-                        <Eye
-                          className="text-white/50 hover:text-white/70"
-                          size={14}
-                        />
-                      ) : (
-                        <EyeClosed
-                          className="text-white/50 hover:text-white/70"
-                          size={14}
-                        />
+                    {activeRequestTab === "Body" &&
+                      jsonSuggestions.length > 0 && (
+                        <button
+                          onClick={() => setShowSuggestions(!showSuggestions)}
+                          className="bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-gray-600/20 p-1 flex justify-center items-center text-yellow-400 rounded-md relative"
+                        >
+                          <Lightbulb size={14} />
+                          <span className="absolute -top-1 -right-1 bg-yellow-400 text-black text-xs rounded-full w-4 h-4 flex items-center justify-center">
+                            {jsonSuggestions.length}
+                          </span>
+                        </button>
                       )}
+                    <button className="bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-gray-600/20 p-1 flex justify-center items-center text-white rounded-md">
+                      <CodeXml size={14} />
                     </button>
                   </div>
                 </div>
-              )}
 
-              {activeRequestTab === "Auth" && (
-                <div className="h-screen overflow-y-auto mb-2 mt-4 [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none]">
-                  <div className="mb-4">
-                    <label className="text-white/70 text-xs mb-1 block">
-                      Authentication Type
-                    </label>
-                    <div className="flex gap-1">
-                      {[
-                        { value: "bearer", label: "Bearer Token" },
-                        { value: "basic", label: "Basic Auth" },
-                        { value: "api-key", label: "API Key" },
-                      ].map((type) => (
-                        <button
-                          key={type.value}
-                          onClick={() => setAuthType(type.value as any)}
-                          className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${authType === type.value
-                            ? "bg-black/5 text-[#73DC8C] border-gray-500/20"
-                            : "bg-black/20 hover:bg-black/5 text-white/50"
-                            }`}
-                        >
-                          {type.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {/* Bearer Token */}
-                  {authType === "bearer" && (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-white/70 text-xs mb-1 block">
-                          Bearer Token
-                        </label>
-                        <div className="flex items-center gap-2 border rounded-lg hover:border-[#4B78E6]/50 border-gray-600/20 px-2 py-1">
-                          <KeyRound className="text-white/50" size={14} />
-                          <input
-                            type={showToken ? "text" : "password"}
-                            placeholder="Enter your bearer token"
-                            className="flex-1 bg-transparent placeholder:text-white/40 text-white text-xs outline-none"
-                            value={authToken}
-                            onChange={(e) => setAuthToken(e.target.value)}
-                          />
-                          <button
-                            onClick={() => setShowToken(!showToken)}
-                            className="p-1 hover:bg-white/10 rounded transition-colors duration-200"
-                          >
-                            {showToken ? (
-                              <Eye
-                                className="text-white/50 hover:text-white/70"
-                                size={14}
-                              />
-                            ) : (
-                              <EyeClosed
-                                className="text-white/50 hover:text-white/70"
-                                size={14}
-                              />
-                            )}
-                          </button>
-                        </div>
-                        <p className="text-white/40 text-xs mt-1">
-                          Token will be sent as: Authorization: Bearer{" "}
-                          {authToken ? "●●●●●●●●" : "[token]"}
-                        </p>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* Basic Authentication */}
-                  {authType === "basic" && (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-white/70 text-xs mb-1 block">
-                          Username
-                        </label>
-                        <div className="flex items-center gap-2 border rounded-lg hover:border-[#4B78E6]/50 border-gray-600/20 px-2 py-1">
-                          <KeyRound className="text-white/50" size={14} />
-                          <input
-                            type="text"
-                            placeholder="Enter username"
-                            className="flex-1 bg-transparent placeholder:text-white/40 text-white text-xs outline-none"
-                            value={basicAuthUsername}
-                            onChange={(e) =>
-                              setBasicAuthUsername(e.target.value)
-                            }
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-white/70 text-xs mb-1 block">
-                          Password
-                        </label>
-                        <div className="flex items-center gap-2 border rounded-lg hover:border-[#4B78E6]/50 border-gray-600/20 px-2 py-1">
-                          <KeyRound className="text-white/50" size={14} />
-                          <input
-                            type={showToken ? "text" : "password"}
-                            placeholder="Enter password"
-                            className="flex-1 bg-transparent placeholder:text-white/40 text-white text-xs outline-none"
-                            value={basicAuthPassword}
-                            onChange={(e) =>
-                              setBasicAuthPassword(e.target.value)
-                            }
-                          />
-                          <button
-                            onClick={() => setShowToken(!showToken)}
-                            className="p-1 hover:bg-white/10 rounded transition-colors duration-200"
-                          >
-                            {showToken ? (
-                              <Eye
-                                className="text-white/50 hover:text-white/70"
-                                size={14}
-                              />
-                            ) : (
-                              <EyeClosed
-                                className="text-white/50 hover:text-white/70"
-                                size={14}
-                              />
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                      {basicAuthUsername && basicAuthPassword && (
-                        <p className="text-white/40 text-xs">
-                          Credentials will be sent as: Authorization: Basic{" "}
-                          {btoa(
-                            `${basicAuthUsername}:${basicAuthPassword}`
-                          ).substring(0, 12)}
-                          ...
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* API Key */}
-                  {authType === "api-key" && (
-                    <div className="space-y-3">
-                      <div>
-                        <label className="text-white/70 text-xs mb-1 block">
-                          Header Name
-                        </label>
-                        <div className="flex items-center gap-2 border rounded-lg hover:border-[#4B78E6]/50 border-gray-600/20 px-2 py-1">
-                          <KeyRound className="text-white/50" size={14} />
-                          <input
-                            type="text"
-                            placeholder="e.g., X-API-Key, Authorization"
-                            className="flex-1 bg-transparent placeholder:text-white/40 text-white text-xs outline-none"
-                            value={apiKeyName}
-                            onChange={(e) => setApiKeyName(e.target.value)}
-                          />
-                        </div>
-                      </div>
-                      <div>
-                        <label className="text-white/70 text-xs mb-1 block">
-                          API Key Value
-                        </label>
-                        <div className="flex items-center gap-2 border rounded-lg hover:border-[#4B78E6]/50 border-gray-600/20 px-2 py-1">
-                          <KeyRound className="text-white/50" size={14} />
-                          <input
-                            type={showToken ? "text" : "password"}
-                            placeholder="Enter your API key"
-                            className="flex-1 bg-transparent placeholder:text-white/40 text-white text-xs outline-none"
-                            value={apiKeyValue}
-                            onChange={(e) => setApiKeyValue(e.target.value)}
-                          />
-                          <button
-                            onClick={() => setShowToken(!showToken)}
-                            className="p-1 hover:bg-white/10 rounded transition-colors duration-200"
-                          >
-                            {showToken ? (
-                              <Eye
-                                className="text-white/50 hover:text-white/70"
-                                size={14}
-                              />
-                            ) : (
-                              <EyeClosed
-                                className="text-white/50 hover:text-white/70"
-                                size={14}
-                              />
-                            )}
-                          </button>
-                        </div>
-                      </div>
-                      {apiKeyName && apiKeyValue && (
-                        <p className="text-white/40 text-xs">
-                          Header will be sent as: {apiKeyName}:{" "}
-                          {apiKeyValue ? "●●●●●●●●" : "[value]"}
-                        </p>
-                      )}
-                    </div>
-                  )}
-
-                  {/* Auth Status */}
-                  <div className="mt-4 p-2 bg-black/20 rounded-lg border border-gray-600/20">
-                    <div className="flex items-center gap-2 mb-1">
-                      {(() => {
-                        const hasAuth =
-                          (authType === "bearer" && authToken) ||
-                          (authType === "basic" &&
-                            basicAuthUsername &&
-                            basicAuthPassword) ||
-                          (authType === "api-key" && apiKeyName && apiKeyValue);
-
-                        return hasAuth ? (
-                          <>
-                            <CheckCircle size={12} className="text-green-400" />
-                            <span className="text-green-400 text-xs">
-                              Authentication configured
-                            </span>
-                          </>
-                        ) : (
-                          <>
-                            <AlertCircle
-                              size={12}
-                              className="text-yellow-400"
-                            />
-                            <span className="text-yellow-400 text-xs">
-                              No authentication
-                            </span>
-                          </>
-                        );
-                      })()}
-                    </div>
-                    <p className="text-white/50 text-xs">
-                      {authType === "bearer" &&
-                        "Bearer tokens are commonly used for OAuth 2.0 and JWT authentication."}
-                      {authType === "basic" &&
-                        "Basic authentication sends credentials as base64-encoded username:password."}
-                      {authType === "api-key" &&
-                        "API keys are sent as custom headers and vary by service provider."}
-                    </p>
-                  </div>
-                  <div className="h-full overflow-y-auto mt-4">
-                    <div className="flex flex-col gap-1">
-                      <div className="flex items-center gap-1 ">
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="checkbox"
-                            defaultChecked
-                            className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
-                          />
-                          <GripVertical
-                            size={14}
-                            className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
-                          />
-                        </div>
-                        <input
-                          type="text"
-                          placeholder="Content-Type"
-                          className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
-                        />
-                        <input
-                          type="text"
-                          placeholder="application/json"
-                          className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
-                        />
-                        <button className="p-1 hover:bg-white/10 rounded transition-colors duration-200">
-                          <Trash2
-                            className="text-white/50 hover:text-white/70"
-                            size={14}
-                          />
-                        </button>
-                      </div>
-
-                      <div className="flex items-center gap-1">
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="checkbox"
-                            defaultChecked
-                            className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
-                          />
-                          <GripVertical
-                            size={14}
-                            className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
-                          />
-                        </div>
-                        <input
-                          type="text"
-                          placeholder="Authorization"
-                          className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Bearer token"
-                          className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
-                        />
-                        <button className="p-1 hover:bg-white/10 rounded transition-colors duration-200">
-                          <Trash2
-                            className="text-white/50 hover:text-white/70"
-                            size={14}
-                          />
-                        </button>
-                      </div>
-
-                      <div className="flex items-center gap-1">
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="checkbox"
-                            defaultChecked
-                            className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
-                          />
-                          <GripVertical
-                            size={14}
-                            className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
-                          />
-                        </div>
-                        <input
-                          type="text"
-                          placeholder="Accept"
-                          className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
-                        />
-                        <input
-                          type="text"
-                          placeholder="application/json"
-                          className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
-                        />
-                        <button className="p-1 hover:bg-white/10 rounded transition-colors duration-200">
-                          <Trash2
-                            className="text-white/50 hover:text-white/70"
-                            size={14}
-                          />
-                        </button>
-                      </div>
-
-                      <div className="flex items-center gap-1 mt-1">
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="checkbox"
-                            defaultChecked
-                            className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
-                          />
-                          <GripVertical
-                            size={14}
-                            className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
-                          />
-                        </div>
-                        <input
-                          type="text"
-                          value="Content-Type"
-                          readOnly
-                          className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 text-white/70 text-xs outline-none px-2 py-1.5"
-                        />
-                        <div className="flex-1 relative">
-                          <input
-                            type="text"
-                            value="multipart/form-data"
-                            readOnly
-                            className="w-full bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 text-white/70 text-xs outline-none px-2 py-1.5"
-                          />
-                          <input
-                            type="file"
-                            className="absolute inset-0 opacity-0 cursor-pointer"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                toast.success({ title: "File Selected: " + file.name, duration: 2000 });
-                              }
-                            }}
-                          />
-                        </div>
-                        <button className="p-1 hover:bg-white/10 rounded transition-colors duration-200">
-                          <Trash2
-                            className="text-white/50 hover:text-white/70"
-                            size={14}
-                          />
-                        </button>
-                      </div>
-
+                {activeRequestTab === "Auth" && (
+                  <div className="h-auto mb-2">
+                    <div className="flex items-center gap-2 border rounded-lg hover:border-[#4B78E6]/50 border-gray-600/20 px-2 py-1 mt-2">
+                      <KeyRound className="text-white/50" size={14} />
+                      <input
+                        type={showToken ? "text" : "password"}
+                        placeholder="Authorization token"
+                        className="flex-1 bg-transparent placeholder:text-white/40 text-white text-xs outline-none"
+                        value={authToken}
+                        onChange={(e) => handleAuthTokenChange(e.target.value)}
+                      />
                       <button
-                        onClick={() => {
-                          const headerRow = document.createElement("div");
-                          headerRow.className = "flex items-center gap-1 mt-1";
-                          headerRow.innerHTML = `
+                        onClick={() => setShowToken(!showToken)}
+                        className="p-1 hover:bg-white/10 rounded transition-colors duration-200"
+                      >
+                        {showToken ? (
+                          <Eye
+                            className="text-white/50 hover:text-white/70"
+                            size={14}
+                          />
+                        ) : (
+                          <EyeClosed
+                            className="text-white/50 hover:text-white/70"
+                            size={14}
+                          />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {activeRequestTab === "Auth" && (
+                  <div className="h-screen overflow-y-auto mb-2 mt-4 [&::-webkit-scrollbar]:hidden [scrollbar-width:none] [-ms-overflow-style:none]">
+                    <div className="mb-4">
+                      <label className="text-white/70 text-xs mb-1 block">
+                        Authentication Type
+                      </label>
+                      <div className="flex gap-1">
+                        {[
+                          { value: "bearer", label: "Bearer Token" },
+                          { value: "basic", label: "Basic Auth" },
+                          { value: "api-key", label: "API Key" },
+                        ].map((type) => (
+                          <button
+                            key={type.value}
+                            onClick={() => setAuthType(type.value as any)}
+                            className={`border border-gray-500/20 flex justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${authType === type.value
+                              ? "bg-black/5 text-[#73DC8C] border-gray-500/20"
+                              : "bg-black/20 hover:bg-black/5 text-white/50"
+                              }`}
+                          >
+                            {type.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Bearer Token */}
+                    {authType === "bearer" && (
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-white/70 text-xs mb-1 block">
+                            Bearer Token
+                          </label>
+                          <div className="flex items-center gap-2 border rounded-lg hover:border-[#4B78E6]/50 border-gray-600/20 px-2 py-1">
+                            <KeyRound className="text-white/50" size={14} />
+                            <input
+                              type={showToken ? "text" : "password"}
+                              placeholder="Enter your bearer token"
+                              className="flex-1 bg-transparent placeholder:text-white/40 text-white text-xs outline-none"
+                              value={authToken}
+                              onChange={(e) => setAuthToken(e.target.value)}
+                            />
+                            <button
+                              onClick={() => setShowToken(!showToken)}
+                              className="p-1 hover:bg-white/10 rounded transition-colors duration-200"
+                            >
+                              {showToken ? (
+                                <Eye
+                                  className="text-white/50 hover:text-white/70"
+                                  size={14}
+                                />
+                              ) : (
+                                <EyeClosed
+                                  className="text-white/50 hover:text-white/70"
+                                  size={14}
+                                />
+                              )}
+                            </button>
+                          </div>
+                          <p className="text-white/40 text-xs mt-1">
+                            Token will be sent as: Authorization: Bearer{" "}
+                            {authToken ? "●●●●●●●●" : "[token]"}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Basic Authentication */}
+                    {authType === "basic" && (
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-white/70 text-xs mb-1 block">
+                            Username
+                          </label>
+                          <div className="flex items-center gap-2 border rounded-lg hover:border-[#4B78E6]/50 border-gray-600/20 px-2 py-1">
+                            <KeyRound className="text-white/50" size={14} />
+                            <input
+                              type="text"
+                              placeholder="Enter username"
+                              className="flex-1 bg-transparent placeholder:text-white/40 text-white text-xs outline-none"
+                              value={basicAuthUsername}
+                              onChange={(e) =>
+                                setBasicAuthUsername(e.target.value)
+                              }
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-white/70 text-xs mb-1 block">
+                            Password
+                          </label>
+                          <div className="flex items-center gap-2 border rounded-lg hover:border-[#4B78E6]/50 border-gray-600/20 px-2 py-1">
+                            <KeyRound className="text-white/50" size={14} />
+                            <input
+                              type={showToken ? "text" : "password"}
+                              placeholder="Enter password"
+                              className="flex-1 bg-transparent placeholder:text-white/40 text-white text-xs outline-none"
+                              value={basicAuthPassword}
+                              onChange={(e) =>
+                                setBasicAuthPassword(e.target.value)
+                              }
+                            />
+                            <button
+                              onClick={() => setShowToken(!showToken)}
+                              className="p-1 hover:bg-white/10 rounded transition-colors duration-200"
+                            >
+                              {showToken ? (
+                                <Eye
+                                  className="text-white/50 hover:text-white/70"
+                                  size={14}
+                                />
+                              ) : (
+                                <EyeClosed
+                                  className="text-white/50 hover:text-white/70"
+                                  size={14}
+                                />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                        {basicAuthUsername && basicAuthPassword && (
+                          <p className="text-white/40 text-xs">
+                            Credentials will be sent as: Authorization: Basic{" "}
+                            {btoa(
+                              `${basicAuthUsername}:${basicAuthPassword}`
+                            ).substring(0, 12)}
+                            ...
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* API Key */}
+                    {authType === "api-key" && (
+                      <div className="space-y-3">
+                        <div>
+                          <label className="text-white/70 text-xs mb-1 block">
+                            Header Name
+                          </label>
+                          <div className="flex items-center gap-2 border rounded-lg hover:border-[#4B78E6]/50 border-gray-600/20 px-2 py-1">
+                            <KeyRound className="text-white/50" size={14} />
+                            <input
+                              type="text"
+                              placeholder="e.g., X-API-Key, Authorization"
+                              className="flex-1 bg-transparent placeholder:text-white/40 text-white text-xs outline-none"
+                              value={apiKeyName}
+                              onChange={(e) => setApiKeyName(e.target.value)}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-white/70 text-xs mb-1 block">
+                            API Key Value
+                          </label>
+                          <div className="flex items-center gap-2 border rounded-lg hover:border-[#4B78E6]/50 border-gray-600/20 px-2 py-1">
+                            <KeyRound className="text-white/50" size={14} />
+                            <input
+                              type={showToken ? "text" : "password"}
+                              placeholder="Enter your API key"
+                              className="flex-1 bg-transparent placeholder:text-white/40 text-white text-xs outline-none"
+                              value={apiKeyValue}
+                              onChange={(e) => setApiKeyValue(e.target.value)}
+                            />
+                            <button
+                              onClick={() => setShowToken(!showToken)}
+                              className="p-1 hover:bg-white/10 rounded transition-colors duration-200"
+                            >
+                              {showToken ? (
+                                <Eye
+                                  className="text-white/50 hover:text-white/70"
+                                  size={14}
+                                />
+                              ) : (
+                                <EyeClosed
+                                  className="text-white/50 hover:text-white/70"
+                                  size={14}
+                                />
+                              )}
+                            </button>
+                          </div>
+                        </div>
+                        {apiKeyName && apiKeyValue && (
+                          <p className="text-white/40 text-xs">
+                            Header will be sent as: {apiKeyName}:{" "}
+                            {apiKeyValue ? "●●●●●●●●" : "[value]"}
+                          </p>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Auth Status */}
+                    <div className="mt-4 p-2 bg-black/20 rounded-lg border border-gray-600/20">
+                      <div className="flex items-center gap-2 mb-1">
+                        {(() => {
+                          const hasAuth =
+                            (authType === "bearer" && authToken) ||
+                            (authType === "basic" &&
+                              basicAuthUsername &&
+                              basicAuthPassword) ||
+                            (authType === "api-key" && apiKeyName && apiKeyValue);
+
+                          return hasAuth ? (
+                            <>
+                              <CheckCircle size={12} className="text-green-400" />
+                              <span className="text-green-400 text-xs">
+                                Authentication configured
+                              </span>
+                            </>
+                          ) : (
+                            <>
+                              <AlertCircle
+                                size={12}
+                                className="text-yellow-400"
+                              />
+                              <span className="text-yellow-400 text-xs">
+                                No authentication
+                              </span>
+                            </>
+                          );
+                        })()}
+                      </div>
+                      <p className="text-white/50 text-xs">
+                        {authType === "bearer" &&
+                          "Bearer tokens are commonly used for OAuth 2.0 and JWT authentication."}
+                        {authType === "basic" &&
+                          "Basic authentication sends credentials as base64-encoded username:password."}
+                        {authType === "api-key" &&
+                          "API keys are sent as custom headers and vary by service provider."}
+                      </p>
+                    </div>
+                    <div className="h-full overflow-y-auto mt-4">
+                      <div className="flex flex-col gap-1">
+                        <div className="flex items-center gap-1 ">
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="checkbox"
+                              defaultChecked
+                              className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
+                            />
+                            <GripVertical
+                              size={14}
+                              className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
+                            />
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="Content-Type"
+                            className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
+                          />
+                          <input
+                            type="text"
+                            placeholder="application/json"
+                            className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
+                          />
+                          <button className="p-1 hover:bg-white/10 rounded transition-colors duration-200">
+                            <Trash2
+                              className="text-white/50 hover:text-white/70"
+                              size={14}
+                            />
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="checkbox"
+                              defaultChecked
+                              className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
+                            />
+                            <GripVertical
+                              size={14}
+                              className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
+                            />
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="Authorization"
+                            className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Bearer token"
+                            className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
+                          />
+                          <button className="p-1 hover:bg-white/10 rounded transition-colors duration-200">
+                            <Trash2
+                              className="text-white/50 hover:text-white/70"
+                              size={14}
+                            />
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-1">
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="checkbox"
+                              defaultChecked
+                              className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
+                            />
+                            <GripVertical
+                              size={14}
+                              className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
+                            />
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="Accept"
+                            className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
+                          />
+                          <input
+                            type="text"
+                            placeholder="application/json"
+                            className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5"
+                          />
+                          <button className="p-1 hover:bg-white/10 rounded transition-colors duration-200">
+                            <Trash2
+                              className="text-white/50 hover:text-white/70"
+                              size={14}
+                            />
+                          </button>
+                        </div>
+
+                        <div className="flex items-center gap-1 mt-1">
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="checkbox"
+                              defaultChecked
+                              className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
+                            />
+                            <GripVertical
+                              size={14}
+                              className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
+                            />
+                          </div>
+                          <input
+                            type="text"
+                            value="Content-Type"
+                            readOnly
+                            className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 text-white/70 text-xs outline-none px-2 py-1.5"
+                          />
+                          <div className="flex-1 relative">
+                            <input
+                              type="text"
+                              value="multipart/form-data"
+                              readOnly
+                              className="w-full bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 text-white/70 text-xs outline-none px-2 py-1.5"
+                            />
+                            <input
+                              type="file"
+                              className="absolute inset-0 opacity-0 cursor-pointer"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  toast.success({ title: "File Selected: " + file.name, duration: 2000 });
+                                }
+                              }}
+                            />
+                          </div>
+                          <button className="p-1 hover:bg-white/10 rounded transition-colors duration-200">
+                            <Trash2
+                              className="text-white/50 hover:text-white/70"
+                              size={14}
+                            />
+                          </button>
+                        </div>
+
+                        <button
+                          onClick={() => {
+                            const headerRow = document.createElement("div");
+                            headerRow.className = "flex items-center gap-1 mt-1";
+                            headerRow.innerHTML = `
                           <div class="flex items-center gap-1">
                             <input type="checkbox" checked class="accent-[#DBDE52] h-3 w-3 cursor-pointer">
                             <svg class="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing" width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -1724,40 +1751,40 @@ export default function Home() {
                           </button>
                         `;
 
-                          const addButton = document.querySelector(
-                            ".flex.items-center.gap-1\\.5.text-\\[\\#4B78E6\\]"
-                          );
-                          if (addButton && addButton.parentNode) {
-                            addButton.parentNode.insertBefore(
-                              headerRow,
-                              addButton
+                            const addButton = document.querySelector(
+                              ".flex.items-center.gap-1\\.5.text-\\[\\#4B78E6\\]"
                             );
-                          }
-                        }}
-                        className="flex items-center gap-1.5 text-[#4B78E6] text-xs border border-dashed border-gray-600/20 hover:border-[#4B78E6]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors"
-                      >
-                        <Plus size={12} />
-                        Add New Header
-                      </button>
+                            if (addButton && addButton.parentNode) {
+                              addButton.parentNode.insertBefore(
+                                headerRow,
+                                addButton
+                              );
+                            }
+                          }}
+                          className="flex items-center gap-1.5 text-[#4B78E6] text-xs border border-dashed border-gray-600/20 hover:border-[#4B78E6]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors"
+                        >
+                          <Plus size={12} />
+                          Add New Header
+                        </button>
 
-                      <div className="flex items-center gap-1.5 text-[#73DC8C] text-xs border border-dashed border-green-600/20 hover:border-[#73DC8C]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors cursor-pointer">
-                        <Plus size={12} />
-                        <label className="flex-1 cursor-pointer">
-                          Add File Upload
-                          <input
-                            type="file"
-                            className="hidden"
-                            onChange={(e) => {
-                              const file = e.target.files?.[0];
-                              if (file) {
-                                toast.success({ title: "File Selected: " + file.name, duration: 2000 });
-                              }
-                            }}
-                          />
-                        </label>
-                      </div>
+                        <div className="flex items-center gap-1.5 text-[#73DC8C] text-xs border border-dashed border-green-600/20 hover:border-[#73DC8C]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors cursor-pointer">
+                          <Plus size={12} />
+                          <label className="flex-1 cursor-pointer">
+                            Add File Upload
+                            <input
+                              type="file"
+                              className="hidden"
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) {
+                                  toast.success({ title: "File Selected: " + file.name, duration: 2000 });
+                                }
+                              }}
+                            />
+                          </label>
+                        </div>
 
-                      {/* <div className="mt-1 bg-black/20 rounded-lg p-2 border border-gray-600/20">
+                        {/* <div className="mt-1 bg-black/20 rounded-lg p-2 border border-gray-600/20">
                         <p className="text-white/60 text-xs mb-1">
                           Common Headers:
                         </p>
@@ -1790,1029 +1817,851 @@ export default function Home() {
                         </div>
                       </div> */}
 
-                      <div className="mt-1 bg-black/20 shadow-sm rounded-xl p-3 border border-gray-600/20">
-                        <div className="flex items-center justify-between mb-2">
-                          <p className="text-white/70 text-xs font-medium">Common Headers</p>
-                        </div>
-
-                        <div className="space-y-2">
-                          {/* Header category: Content Types */}
-                          <div>
-                            <p className="text-white/40 text-[10px] mb-1 border-b border-gray-600/10 pb-0.5">Content Types</p>
-                            <div className="grid grid-cols-2 gap-1">
-                              <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
-                                Content-Type
-                              </button>
-                              <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
-                                application/json
-                              </button>
-
-                              <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
-                                Content-Type
-                              </button>
-                              <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
-                                multipart/form-data
-                              </button>
-
-                              <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
-                                Accept
-                              </button>
-                              <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
-                                application/json
-                              </button>
-                            </div>
+                        <div className="mt-1 bg-black/20 shadow-sm rounded-xl p-3 border border-gray-600/20">
+                          <div className="flex items-center justify-between mb-2">
+                            <p className="text-white/70 text-xs font-medium">Common Headers</p>
                           </div>
 
-                          {/* Header category: Authentication */}
-                          <div>
-                            <p className="text-white/40 text-[10px] mb-1 border-b border-gray-600/10 pb-0.5">Authentication</p>
-                            <div className="grid grid-cols-2 gap-1">
-                              <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
-                                Authorization
-                              </button>
-                              <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
-                                Bearer {authToken ? "..." : "token"}
-                              </button>
+                          <div className="space-y-2">
+                            {/* Header category: Content Types */}
+                            <div>
+                              <p className="text-white/40 text-[10px] mb-1 border-b border-gray-600/10 pb-0.5">Content Types</p>
+                              <div className="grid grid-cols-2 gap-1">
+                                <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
+                                  Content-Type
+                                </button>
+                                <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
+                                  application/json
+                                </button>
 
-                              <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
-                                X-API-Key
-                              </button>
-                              <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
-                                your-api-key
-                              </button>
-                            </div>
-                          </div>
+                                <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
+                                  Content-Type
+                                </button>
+                                <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
+                                  multipart/form-data
+                                </button>
 
-                          {/* Header category: Caching */}
-                          <div>
-                            <p className="text-white/40 text-[10px] mb-1 border-b border-gray-600/10 pb-0.5">Caching & Control</p>
-                            <div className="grid grid-cols-2 gap-1">
-                              <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
-                                Cache-Control
-                              </button>
-                              <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
-                                no-cache, no-store
-                              </button>
-
-                              <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
-                                User-Agent
-                              </button>
-                              <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
-                                APIONIX/1.0
-                              </button>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {activeRequestTab === "Body" && (
-                <div className="flex flex-col h-full">
-                  <div className="flex items-center gap-2 mb-2 px-1">
-                    <div className="flex bg-black/20 p-1 rounded-lg border border-gray-600/20">
-                      {[
-                        { type: "none", label: "None" },
-                        { type: "json", label: "JSON" },
-                        { type: "text", label: "Text" },
-                        { type: "xml", label: "XML" },
-                        { type: "form-data", label: "Form Data" },
-                        { type: "x-www-form-urlencoded", label: "x-www-form-urlencoded" },
-                      ].map((t) => (
-                        <button
-                          key={t.type}
-                          onClick={() => updateActiveTab({ bodyType: t.type as any })}
-                          className={`text-[10px] px-2 py-1 rounded transition-colors ${activeTab?.bodyType === t.type
-                            ? "bg-[#73DC8C] text-black font-medium shadow-sm"
-                            : "text-white/50 hover:text-white hover:bg-white/5"
-                            }`}
-                        >
-                          {t.label}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-
-                  {(activeTab?.bodyType === "json" || activeTab?.bodyType === "text" || activeTab?.bodyType === "xml") && (
-                    <>
-                      {activeTab.bodyType === "json" && showSuggestions && jsonSuggestions.length > 0 && (
-                        <div className="mb-2 bg-black/30 border border-yellow-400/20 rounded-xl p-2">
-                          <div className="flex items-center gap-1.5 mb-1.5">
-                            <Lightbulb size={14} className="text-yellow-400" />
-                            <h3 className="text-yellow-400 text-xs font-medium">
-                              JSON Suggestions
-                            </h3>
-                          </div>
-                          <div className="space-y-1.5">
-                            {jsonSuggestions.map((suggestion, index) => (
-                              <div
-                                key={index}
-                                className="flex items-center justify-between bg-black/20 p-1.5 rounded border border-gray-600/20"
-                              >
-                                <div className="flex-1">
-                                  <p className="text-white/80 text-xs">
-                                    {suggestion.description}
-                                  </p>
-                                  <p className="text-white/50 text-[10px] capitalize">
-                                    {suggestion.type}
-                                  </p>
-                                </div>
-                                <button
-                                  onClick={() => applySuggestion(suggestion)}
-                                  className="bg-yellow-400 hover:bg-yellow-500 text-black text-[10px] px-2 py-0.5 rounded transition-colors"
-                                >
-                                  Apply
+                                <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
+                                  Accept
+                                </button>
+                                <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
+                                  application/json
                                 </button>
                               </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-
-                      {activeTab.bodyType === "json" && jsonErrors.length > 0 && (
-                        <div className="mb-3 bg-red-900/20 border border-red-400/20 rounded-xl p-2">
-                          <div className="flex items-center gap-2 mb-1">
-                            <AlertCircle size={14} className="text-red-400" />
-                            <h3 className="text-red-400 text-xs font-medium">
-                              JSON Errors
-                            </h3>
-                          </div>
-                          <div className="space-y-1.5">
-                            {jsonErrors.map((error, index) => (
-                              <div
-                                key={index}
-                                className="bg-black/20 p-1.5 rounded border border-red-600/20"
-                              >
-                                <p className="text-red-300 text-xs">
-                                  Line {error.line}, Column {error.col}
-                                </p>
-                                <p className="text-white/80 text-xs">
-                                  {error.message}
-                                </p>
-                                {error.suggestion && (
-                                  <p className="text-yellow-300 text-xs mt-0.5">
-                                    💡 {error.suggestion}
-                                  </p>
-                                )}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-
-                      <div className="relative h-full overflow-hidden">
-                        <div className="absolute left-0 top-0 w-8 h-full border-gray-600/20 flex flex-col text-white/30 text-xs font-mono pt-1">
-                          {Array.from({ length: rowCount }, (_, i) => (
-                            <div
-                              key={i + 1}
-                              className={`h-[1.4em] flex items-center justify-center leading-none ${jsonErrors.some((error) => error.line === i + 1)
-                                ? "text-red-400 bg-red-900/20"
-                                : ""
-                                }`}
-                            >
-                              {i + 1}
                             </div>
-                          ))}
-                        </div>
-                        <div className="relative w-full h-full">
-                          <textarea
-                            className="absolute inset-0 w-full h-full bg-transparent placeholder:text-white/5 text-transparent text-xs outline-none pl-10 pr-2 py-1 resize-none font-mono z-10"
-                            placeholder={`Enter ${activeTab.bodyType} body data here...`}
-                            value={bodyData}
-                            onChange={(e) => handleBodyDataChange(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === "Enter") {
-                                setRowCount((prev) => Math.min(prev + 1, 100));
-                              }
-                              if (e.key === "Backspace") {
-                                const textarea = e.target as HTMLTextAreaElement;
-                                const cursorPos = textarea.selectionStart;
-                                const textBefore = textarea.value.substring(
-                                  0,
-                                  cursorPos
-                                );
-                                if (cursorPos > 0 && textBefore.endsWith("\n")) {
-                                  setTimeout(() => {
-                                    const newLines =
-                                      textarea.value.split("\n").length;
-                                    setRowCount(Math.max(1, newLines));
-                                  }, 0);
-                                }
-                              }
-                            }}
-                            style={{
-                              lineHeight: "1.4",
-                              caretColor: "white",
-                            }}
-                          />
-                          <pre
-                            className="absolute inset-0 w-full h-full text-xs pl-10 pr-2 py-1 font-mono pointer-events-none overflow-hidden whitespace-pre-wrap"
-                            style={{
-                              lineHeight: "1.4",
-                              color: "#ffffff80",
-                            }}
-                            dangerouslySetInnerHTML={{
-                              __html: bodyData
-                                ? (activeTab.bodyType === "json" ? formatJsonText(bodyData) : bodyData.replace(/</g, "&lt;").replace(/>/g, "&gt;"))
-                                : '<span style="color: #ffffff40">Enter body data here...</span>',
-                            }}
-                          />
-                        </div>
-                      </div>
-                    </>
-                  )}
 
-                  {activeTab?.bodyType === "form-data" && (
-                    <div className="h-full overflow-y-auto">
-                      <div className="flex flex-col gap-1">
-                        {activeTab.formData.map((item) => (
-                          <div key={item.id} className="flex items-center gap-1 group">
-                            <div className="flex items-center gap-1">
-                              <input
-                                type="checkbox"
-                                checked={item.isActive}
-                                onChange={(e) => {
-                                  const newData = activeTab.formData.map(i => i.id === item.id ? { ...i, isActive: e.target.checked } : i);
-                                  updateActiveTab({ formData: newData });
-                                }}
-                                className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
-                              />
-                              <div className="relative">
-                                <select
-                                  value={item.type || 'text'}
-                                  onChange={(e) => {
-                                    const newData = activeTab.formData.map(i => i.id === item.id ? { ...i, type: e.target.value as any } : i);
-                                    updateActiveTab({ formData: newData });
-                                  }}
-                                  className="bg-transparent text-[10px] text-white/50 border-none outline-none appearance-none w-10 cursor-pointer"
-                                >
-                                  <option value="text" className="bg-[#1C1818]">Text</option>
-                                  <option value="file" className="bg-[#1C1818]">File</option>
-                                </select>
-                              </div>
-                            </div>
-                            <input
-                              type="text"
-                              placeholder="Key"
-                              value={item.key}
-                              onChange={(e) => {
-                                const newData = activeTab.formData.map(i => i.id === item.id ? { ...i, key: e.target.value } : i);
-                                updateActiveTab({ formData: newData });
-                              }}
-                              className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5 focus:border-[#4B78E6]"
-                            />
-                            {item.type === 'file' ? (
-                              <div className="flex-1 relative">
-                                <div className="w-full bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 text-white/70 text-xs px-2 py-1.5 truncate">
-                                  {item.file ? item.file.name : "Select File"}
-                                </div>
-                                <input
-                                  type="file"
-                                  className="absolute inset-0 opacity-0 cursor-pointer"
-                                  onChange={(e) => {
-                                    const file = e.target.files?.[0];
-                                    if (file) {
-                                      const newData = activeTab.formData.map(i => i.id === item.id ? { ...i, file: file, value: file.name } : i);
-                                      updateActiveTab({ formData: newData });
-                                    }
-                                  }}
-                                />
-                              </div>
-                            ) : (
-                              <input
-                                type="text"
-                                placeholder="Value"
-                                value={item.value}
-                                onChange={(e) => {
-                                  const newData = activeTab.formData.map(i => i.id === item.id ? { ...i, value: e.target.value } : i);
-                                  updateActiveTab({ formData: newData });
-                                }}
-                                className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5 focus:border-[#4B78E6]"
-                              />
-                            )}
-
-                            <button
-                              onClick={() => {
-                                const newData = activeTab.formData.filter(i => i.id !== item.id);
-                                updateActiveTab({ formData: newData });
-                              }}
-                              className="p-1 hover:bg-white/10 rounded transition-colors duration-200 opacity-0 group-hover:opacity-100"
-                            >
-                              <Trash2 size={14} className="text-white/50 hover:text-white/70" />
-                            </button>
-                          </div>
-                        ))}
-                        <button
-                          onClick={addFormData}
-                          className="flex items-center gap-1.5 text-[#4B78E6] text-xs border border-dashed border-gray-600/20 hover:border-[#4B78E6]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors w-max"
-                        >
-                          <Plus size={12} />
-                          Add Form Data
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {activeTab?.bodyType === "x-www-form-urlencoded" && (
-                    <div className="h-full overflow-y-auto">
-                      <div className="flex flex-col gap-1">
-                        {activeTab.urlEncodedData.map((item) => (
-                          <div key={item.id} className="flex items-center gap-1 group">
-                            <div className="flex items-center gap-1">
-                              <input
-                                type="checkbox"
-                                checked={item.isActive}
-                                onChange={(e) => {
-                                  const newData = activeTab.urlEncodedData.map(i => i.id === item.id ? { ...i, isActive: e.target.checked } : i);
-                                  updateActiveTab({ urlEncodedData: newData });
-                                }}
-                                className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
-                              />
-                              <GripVertical size={14} className="text-white/30" />
-                            </div>
-                            <input
-                              type="text"
-                              placeholder="Key"
-                              value={item.key}
-                              onChange={(e) => {
-                                const newData = activeTab.urlEncodedData.map(i => i.id === item.id ? { ...i, key: e.target.value } : i);
-                                updateActiveTab({ urlEncodedData: newData });
-                              }}
-                              className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5 focus:border-[#4B78E6]"
-                            />
-                            <input
-                              type="text"
-                              placeholder="Value"
-                              value={item.value}
-                              onChange={(e) => {
-                                const newData = activeTab.urlEncodedData.map(i => i.id === item.id ? { ...i, value: e.target.value } : i);
-                                updateActiveTab({ urlEncodedData: newData });
-                              }}
-                              className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5 focus:border-[#4B78E6]"
-                            />
-                            <button
-                              onClick={() => {
-                                const newData = activeTab.urlEncodedData.filter(i => i.id !== item.id);
-                                updateActiveTab({ urlEncodedData: newData });
-                              }}
-                              className="p-1 hover:bg-white/10 rounded transition-colors duration-200 opacity-0 group-hover:opacity-100"
-                            >
-                              <Trash2 size={14} className="text-white/50 hover:text-white/70" />
-                            </button>
-                          </div>
-                        ))}
-                        <button
-                          onClick={addUrlEncoded}
-                          className="flex items-center gap-1.5 text-[#4B78E6] text-xs border border-dashed border-gray-600/20 hover:border-[#4B78E6]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors w-max"
-                        >
-                          <Plus size={12} />
-                          Add Url Encoded Param
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {activeTab?.bodyType === "none" && (
-                    <div className="flex items-center justify-center h-full text-white/30 text-xs">
-                      This request does not have a body
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {activeRequestTab === "Load Test" && (
-                <div className="h-full overflow-y-auto">
-                  <div className="flex flex-col gap-4 p-2">
-                    <div className="text-white/80 text-sm font-medium flex gap-2 items-center"><Layers size={16} /> Load Testing</div>
-                    <div className="text-white/50 text-xs mb-2">Simulate concurrent traffic to test API performance.</div>
-
-                    <div className="grid grid-cols-2 gap-4 mb-4">
-                      <div>
-                        <label className="text-white/70 text-xs mb-1 block">Total Requests</label>
-                        <input
-                          type="number"
-                          value={loadTestConfig.requests}
-                          onChange={(e) => setLoadTestConfig(prev => ({ ...prev, requests: parseInt(e.target.value) || 1 }))}
-                          className="w-full bg-black/20 border border-gray-600/20 text-white text-xs px-2 py-1.5 rounded-lg focus:border-[#4B78E6]"
-                        />
-                      </div>
-                      <div>
-                        <label className="text-white/70 text-xs mb-1 block">Concurrency</label>
-                        <input
-                          type="number"
-                          value={loadTestConfig.concurrency}
-                          onChange={(e) => setLoadTestConfig(prev => ({ ...prev, concurrency: parseInt(e.target.value) || 1 }))}
-                          className="w-full bg-black/20 border border-gray-600/20 text-white text-xs px-2 py-1.5 rounded-lg focus:border-[#4B78E6]"
-                        />
-                      </div>
-                    </div>
-
-                    <button
-                      onClick={runLoadTest}
-                      disabled={isLoadTesting}
-                      className={`py-2 rounded-lg text-xs font-medium transition-colors w-full mb-4
-                        ${isLoadTesting ? "bg-[#9b59b6]/50 text-white/50 cursor-not-allowed" : "bg-[#9b59b6] hover:bg-[#8e44ad] text-white shadow-md"}`}
-                    >
-                      {isLoadTesting ? "Running Test..." : "Start Load Test"}
-                    </button>
-
-                    {loadTestResults && (
-                      <div className="bg-black/20 rounded-lg p-3 border border-gray-600/20">
-                        <div className="flex justify-between items-center mb-4">
-                          <h4 className="text-white text-xs font-medium">Test Results</h4>
-                          <span className="text-[10px] text-white/50">
-                            {loadTestResults.currentProgress.toFixed(0)}% Complete
-                          </span>
-                        </div>
-
-                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
-                          <div className="bg-black/40 rounded p-2">
-                            <div className="text-xs text-white/50">Total</div>
-                            <div className="text-sm text-white font-medium">{loadTestResults.total}</div>
-                          </div>
-                          <div className="bg-black/40 rounded p-2">
-                            <div className="text-xs text-white/50">Success</div>
-                            <div className="text-sm text-green-400 font-medium">{loadTestResults.success}</div>
-                          </div>
-                          <div className="bg-black/40 rounded p-2">
-                            <div className="text-xs text-white/50">Failed</div>
-                            <div className="text-sm text-red-400 font-medium">{loadTestResults.failed}</div>
-                          </div>
-                          <div className="bg-black/40 rounded p-2">
-                            <div className="text-xs text-white/50">Avg Time</div>
-                            <div className="text-sm text-yellow-400 font-medium">{loadTestResults.avgTime.toFixed(0)}ms</div>
-                          </div>
-                          <div className="bg-black/40 rounded p-2">
-                            <div className="text-xs text-white/50">Min Time</div>
-                            <div className="text-sm text-purple-400 font-medium">{loadTestResults.minTime}ms</div>
-                          </div>
-                          <div className="bg-black/40 rounded p-2">
-                            <div className="text-xs text-white/50">Max Time</div>
-                            <div className="text-sm text-purple-400 font-medium">{loadTestResults.maxTime}ms</div>
-                          </div>
-                          <div className="bg-black/40 rounded p-2">
-                            <div className="text-xs text-white/50">p95 Time</div>
-                            <div className="text-sm text-purple-400 font-medium">{loadTestResults.p95Time}ms</div>
-                          </div>
-                        </div>
-
-                        {loadTestResults.history.length > 0 && (
-                          <div className="h-40 mt-4 w-full text-xs">
-                            <ResponsiveContainer width="100%" height="100%">
-                              <LineChart data={loadTestResults.history}>
-                                <XAxis dataKey="index" stroke="#ffffff40" fontSize={10} />
-                                <YAxis stroke="#ffffff40" fontSize={10} width={40} />
-                                <Tooltip contentStyle={{ backgroundColor: "#1C1818", border: "1px solid #333", fontSize: "10px" }} />
-                                <Line type="monotone" dataKey="timeMs" stroke="#9b59b6" strokeWidth={2} dot={false} isAnimationActive={false} />
-                              </LineChart>
-                            </ResponsiveContainer>
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                </div>
-              )}
-
-              {activeRequestTab === "Params" && (
-                <div className="h-full overflow-y-auto">
-                  <div className="flex flex-col gap-1">
-                    {/* Render Query Params */}
-                    {activeTab?.queryParams.map((param) => (
-                      <div key={param.id} className="flex items-center gap-1 group">
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="checkbox"
-                            checked={param.isActive}
-                            onChange={(e) => handleParamChange(param.id, 'isActive', e.target.checked)}
-                            className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
-                          />
-                          <GripVertical
-                            size={14}
-                            className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
-                          />
-                        </div>
-                        <input
-                          type="text"
-                          placeholder="Key"
-                          value={param.key}
-                          onChange={(e) => handleParamChange(param.id, 'key', e.target.value)}
-                          className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5 focus:border-[#4B78E6]"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Value"
-                          value={param.value}
-                          onChange={(e) => handleParamChange(param.id, 'value', e.target.value)}
-                          className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5 focus:border-[#4B78E6]"
-                        />
-                        <button
-                          onClick={() => removeParam(param.id)}
-                          className="p-1 hover:bg-white/10 rounded transition-colors duration-200 opacity-0 group-hover:opacity-100"
-                        >
-                          <Trash2 size={14} className="text-white/50 hover:text-white/70" />
-                        </button>
-                      </div>
-                    ))}
-
-                    <button
-                      onClick={addParam}
-                      className="flex items-center gap-1.5 text-[#4B78E6] text-xs border border-dashed border-gray-600/20 hover:border-[#4B78E6]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors w-max"
-                    >
-                      <Plus size={12} />
-                      Add New Param
-                    </button>
-                  </div>
-                </div>
-              )}
-
-              {activeRequestTab === "Headers" && (
-                <div className="h-full overflow-y-auto">
-                  <div className="flex flex-col gap-1">
-                    {/* Render Headers */}
-                    {activeTab?.headers.map((header) => (
-                      <div key={header.id} className="flex items-center gap-1 group">
-                        <div className="flex items-center gap-1">
-                          <input
-                            type="checkbox"
-                            checked={header.isActive}
-                            onChange={(e) => handleHeaderChange(header.id, 'isActive', e.target.checked)}
-                            className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
-                          />
-                          <GripVertical
-                            size={14}
-                            className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
-                          />
-                        </div>
-                        <input
-                          type="text"
-                          placeholder="Header"
-                          value={header.key}
-                          onChange={(e) => handleHeaderChange(header.id, 'key', e.target.value)}
-                          className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5 focus:border-[#4B78E6]"
-                        />
-                        <input
-                          type="text"
-                          placeholder="Value"
-                          value={header.value}
-                          onChange={(e) => handleHeaderChange(header.id, 'value', e.target.value)}
-                          className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5 focus:border-[#4B78E6]"
-                        />
-                        <button
-                          onClick={() => removeHeader(header.id)}
-                          className="p-1 hover:bg-white/10 rounded transition-colors duration-200 opacity-0 group-hover:opacity-100"
-                        >
-                          <Trash2 size={14} className="text-white/50 hover:text-white/70" />
-                        </button>
-                      </div>
-                    ))}
-
-                    <button
-                      onClick={addHeader}
-                      className="flex items-center gap-1.5 text-[#4B78E6] text-xs border border-dashed border-gray-600/20 hover:border-[#4B78E6]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors w-max"
-                    >
-                      <Plus size={12} />
-                      Add New Header
-                    </button>
-
-                    <div className="mt-4 bg-black/20 rounded-lg p-2 border border-gray-600/20">
-                      <p className="text-white/60 text-xs mb-1">
-                        Common Headers:
-                      </p>
-                      <div className="grid grid-cols-2 gap-1">
-                        <span className="text-[#4B78E6] text-xs">
-                          Content-Type
-                        </span>
-                        <span className="text-white/50 text-xs">
-                          application/json
-                        </span>
-
-                        <span className="text-[#4B78E6] text-xs">Accept</span>
-                        <span className="text-white/50 text-xs">
-                          application/json
-                        </span>
-
-                        <span className="text-[#4B78E6] text-xs">
-                          Authorization
-                        </span>
-                        <span className="text-white/50 text-xs">
-                          Bearer token
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-            </div>
-          </Panel>
-
-          <PanelResizeHandle className="w-1 cursor-col-resize" />
-
-          <Panel defaultSize={50} minSize={30}>
-            <div className="bg-[#201C1C] w-full h-full p-2 border border-gray-600/20 rounded-lg">
-              <div className="flex items-center justify-start gap-1 mb-1.5">
-                <button
-                  onClick={() => handleActiveResponseTabChange("Request")}
-                  className={`hover:bg-black/10 border border-gray-500/20 flex gap-1 justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeResponseTab === "Request"
-                    ? "bg-black/5 text-white border-gray-500/20"
-                    : "text-white/50"
-                    }`}
-                >
-                  Request
-                  <h2 className="text-[#73DC8C] text-xs">{selectedMethod}</h2>
-                </button>
-                <button
-                  onClick={() => handleActiveResponseTabChange("Response")}
-                  className={`hover:bg-black/10 border border-gray-500/20 flex gap-1 justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeResponseTab === "Response"
-                    ? "bg-black/5 text-white border-gray-500/20"
-                    : "text-white/50"
-                    }`}
-                >
-                  Response
-                  <h2 className="text-[#73DC8C] text-xs">200</h2>
-                </button>
-              </div>
-
-              <div className="h-full flex flex-col">
-                {activeResponseTab === "Request" && (
-                  <div>
-                    <div
-                      className={`
-                        overflow-hidden rounded-md -mt-1
-                        transition-all duration-300 ease-in-out
-                        ${isExpanded ? "max-h-auto" : "max-h-12"}
-                      `}
-                    >
-                      <div className="hover:bg-black/10 flex gap-1 justify-start items-center text-white/50 text-xs px-2 py-1">
-                        <button
-                          onClick={() => setIsExpanded(!isExpanded)}
-                          className={`
-                            bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-gray-600/20 p-1 
-                            flex justify-center items-center text-white rounded-md
-                            transition-transform duration-300 ease-in-out
-                            ${isExpanded ? "rotate-90" : "rotate-0"}
-                          `}
-                        >
-                          <ChevronsRight size={14} />
-                        </button>
-                        <h2 className="text-[#73DC8C] flex items-center gap-1 text-[13px] whitespace-nowrap overflow-hidden">
-                          <span>{selectedMethod}</span>
-                          <span className="text-white font-mono ">
-                            {msg || "https://apionix/api/users"}
-                          </span>
-                          <span className="text-white/40 border border-gray-700/50 shadow-sm bg-white/5 px-1.5 rounded text-[10px] font-mono flex-shrink-0">
-                            HTTP/1.1
-                          </span>
-                        </h2>
-                      </div>
-
-                      <div
-                        className={`
-                        pb-2 text-white/50 text-xs space-y-2
-                        transition-opacity duration-300 ease-in-out
-                        ${isExpanded ? "opacity-100" : "opacity-0"}
-                      `}
-                      >
-                        <div className="bg-black/20 p-3 rounded-md">
-                          <p className="text-[#73DC8C] font-extrabold mb-1">
-                            {selectedMethod}
-                          </p>
-                          <div className="border-t border-gray-600/10"></div>
-                          <div className="space-y-2 mt-1 text-white/60">
-                            <div className="grid grid-cols-2 gap-2">
-                              <span className="text-[#4B78E6]">
-                                Content-Type
-                              </span>
-                              <span>
-                                {(() => {
-                                  if (
-                                    ["POST", "PUT", "PATCH"].includes(
-                                      selectedMethod
-                                    ) &&
-                                    bodyData
-                                  ) {
-                                    try {
-                                      JSON.parse(bodyData);
-                                      return "application/json";
-                                    } catch {
-                                      if (
-                                        bodyData.includes(
-                                          "Content-Disposition: form-data"
-                                        ) ||
-                                        bodyData.includes(
-                                          "------WebKitFormBoundary"
-                                        )
-                                      ) {
-                                        return "multipart/form-data";
-                                      } else if (
-                                        bodyData.includes("=") &&
-                                        !bodyData.includes("{")
-                                      ) {
-                                        return "application/x-www-form-urlencoded";
-                                      }
-                                      return "text/plain";
-                                    }
-                                  } else if (selectedMethod === "GET") {
-                                    return "application/json";
-                                  }
-                                  return "application/json";
-                                })()}
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                              <span className="text-[#4B78E6]">Host</span>
-                              <span>
-                                {msg
-                                  ? msg.startsWith("http://") ||
-                                    msg.startsWith("https://")
-                                    ? new URL(msg).host
-                                    : msg.includes("/")
-                                      ? msg.split("/")[0]
-                                      : msg
-                                  : "api.tronix.in"}
-                              </span>
-                            </div>
-                            <div className="grid grid-cols-2 gap-2">
-                              <span className="text-[#4B78E6]">User-Agent</span>
-                              <span>APIONIX</span>
-                            </div>
-                            {msg && (
-                              <>
-                                <div className="grid grid-cols-2 gap-2">
-                                  <span className="text-[#4B78E6]">Path</span>
-                                  <span>
-                                    {(() => {
-                                      try {
-                                        const url =
-                                          msg.startsWith("http://") ||
-                                            msg.startsWith("https://")
-                                            ? new URL(msg).pathname
-                                            : "/" +
-                                            (msg.includes("/")
-                                              ? msg
-                                                .split("/")
-                                                .slice(1)
-                                                .join("/")
-                                              : "");
-                                        return url || "/";
-                                      } catch {
-                                        return "/";
-                                      }
-                                    })()}
-                                  </span>
-                                </div>
-                                {msg.includes("?") && (
-                                  <div className="grid grid-cols-2 gap-2">
-                                    <span className="text-[#4B78E6]">
-                                      Query Params
-                                    </span>
-                                    <div>
-                                      {(() => {
-                                        try {
-                                          const urlObj = new URL(
-                                            msg.startsWith("http")
-                                              ? msg
-                                              : `https://${msg}`
-                                          );
-                                          return Array.from(
-                                            urlObj.searchParams.entries()
-                                          ).map(([key, value], i) => (
-                                            <div key={i} className="text-xs">
-                                              <span className="text-yellow-300">
-                                                {key}
-                                              </span>
-                                              <span className="text-white/50">
-                                                {" "}
-                                                ={" "}
-                                              </span>
-                                              <span className="text-green-300">
-                                                {value}
-                                              </span>
-                                            </div>
-                                          ));
-                                        } catch {
-                                          return null;
-                                        }
-                                      })()}
-                                    </div>
-                                  </div>
-                                )}
-                              </>
-                            )}
-                            {authToken && (
-                              <div className="grid grid-cols-2 gap-2">
-                                <span className="text-[#4B78E6]">
+                            {/* Header category: Authentication */}
+                            <div>
+                              <p className="text-white/40 text-[10px] mb-1 border-b border-gray-600/10 pb-0.5">Authentication</p>
+                              <div className="grid grid-cols-2 gap-1">
+                                <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
                                   Authorization
-                                </span>
-                                <span>
-                                  Bearer{" "}
-                                  <span className="text-[#789b28]">
-                                    {authToken.substring(0, 40)}...
-                                  </span>
-                                </span>
+                                </button>
+                                <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
+                                  Bearer {authToken ? "..." : "token"}
+                                </button>
+
+                                <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
+                                  X-API-Key
+                                </button>
+                                <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
+                                  your-api-key
+                                </button>
                               </div>
-                            )}
+                            </div>
+
+                            {/* Header category: Caching */}
+                            <div>
+                              <p className="text-white/40 text-[10px] mb-1 border-b border-gray-600/10 pb-0.5">Caching & Control</p>
+                              <div className="grid grid-cols-2 gap-1">
+                                <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
+                                  Cache-Control
+                                </button>
+                                <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
+                                  no-cache, no-store
+                                </button>
+
+                                <button className="text-left text-[#4B78E6] text-xs hover:text-[#73DC8C] transition-colors">
+                                  User-Agent
+                                </button>
+                                <button className="text-left text-white/50 text-xs hover:bg-white/5 rounded px-1 transition-all">
+                                  APIONIX/1.0
+                                </button>
+                              </div>
+                            </div>
                           </div>
-                          {bodyData && (
-                            <>
-                              <div className="border-t border-gray-600/10 mt-2"></div>
-                              <div className="mt-2">
-                                <p className="text-[#4B78E6] text-xs mb-1">
-                                  Request Body:
-                                </p>
-                                <pre
-                                  className="text-xs font-mono mt-2 whitespace-pre-wrap break-words max-w-full"
-                                  style={{
-                                    fontFamily:
-                                      "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
-                                  }}
-                                  dangerouslySetInnerHTML={{
-                                    __html: bodyData
-                                      ? formatJsonText(bodyData)
-                                      : '<span class="text-gray-400">No request body</span>',
-                                  }}
-                                />
-                              </div>
-                            </>
-                          )}
                         </div>
                       </div>
                     </div>
                   </div>
                 )}
 
-                {activeResponseTab === "Response" && (
-                  <div className="h-full flex flex-col pb-4">
-                    <div
-                      className={`
-        overflow-hidden rounded-md -mt-1 flex-shrink-0
-        transition-all duration-300 ease-in-out
-        ${isResponseExpanded ? "max-h-96" : "max-h-12"}
-      `}
-                    >
-                      <div className="hover:bg-black/10 flex gap-1 justify-start items-center text-white/50 text-xs px-2 py-1">
-                        <button
-                          onClick={handleResponseExpand}
-                          className={`
-            bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-gray-600/20 p-1 
-            flex justify-center items-center text-white rounded-md
-            transition-transform duration-300 ease-in-out
-            ${isResponseExpanded ? "rotate-90" : "rotate-0"}
-          `}
-                        >
-                          <ChevronsRight size={14} />
-                        </button>
+                {activeRequestTab === "Body" && (
+                  <div className="flex flex-col h-full">
+                    <div className="flex items-center gap-2 mb-2 px-1">
+                      <div className="flex bg-black/20 p-1 rounded-lg border border-gray-600/20">
+                        {[
+                          { type: "none", label: "None" },
+                          { type: "json", label: "JSON" },
+                          { type: "text", label: "Text" },
+                          { type: "xml", label: "XML" },
+                          { type: "form-data", label: "Form Data" },
+                          { type: "x-www-form-urlencoded", label: "x-www-form-urlencoded" },
+                        ].map((t) => (
+                          <button
+                            key={t.type}
+                            onClick={() => updateActiveTab({ bodyType: t.type as any })}
+                            className={`text-[10px] px-2 py-1 rounded transition-colors ${activeTab?.bodyType === t.type
+                              ? "bg-[#73DC8C] text-black font-medium shadow-sm"
+                              : "text-white/50 hover:text-white hover:bg-white/5"
+                              }`}
+                          >
+                            {t.label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
-                        <h2
-                          className="text-[13px]"
-                          style={{ color: getStatusColor(responseStatus) }}
-                        >
-                          {responseStatus
-                            ? `${responseStatus} ${getStatusText(
-                              responseStatus
-                            )}`
-                            : "No Response"}
-                        </h2>
-                        {responseTime > 0 && (
-                          <span className="text-white/40 text-[10px] ml-auto">
-                            {responseTime}ms
-                          </span>
+                    {(activeTab?.bodyType === "json" || activeTab?.bodyType === "text" || activeTab?.bodyType === "xml") && (
+                      <>
+                        {activeTab.bodyType === "json" && showSuggestions && jsonSuggestions.length > 0 && (
+                          <div className="mb-2 bg-black/30 border border-yellow-400/20 rounded-xl p-2">
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                              <Lightbulb size={14} className="text-yellow-400" />
+                              <h3 className="text-yellow-400 text-xs font-medium">
+                                JSON Suggestions
+                              </h3>
+                            </div>
+                            <div className="space-y-1.5">
+                              {jsonSuggestions.map((suggestion, index) => (
+                                <div
+                                  key={index}
+                                  className="flex items-center justify-between bg-black/20 p-1.5 rounded border border-gray-600/20"
+                                >
+                                  <div className="flex-1">
+                                    <p className="text-white/80 text-xs">
+                                      {suggestion.description}
+                                    </p>
+                                    <p className="text-white/50 text-[10px] capitalize">
+                                      {suggestion.type}
+                                    </p>
+                                  </div>
+                                  <button
+                                    onClick={() => applySuggestion(suggestion)}
+                                    className="bg-yellow-400 hover:bg-yellow-500 text-black text-[10px] px-2 py-0.5 rounded transition-colors"
+                                  >
+                                    Apply
+                                  </button>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
                         )}
+
+
+                        {activeTab.bodyType === "json" && jsonErrors.length > 0 && (
+                          <div className="mb-3 bg-red-900/20 border border-red-400/20 rounded-xl p-2">
+                            <div className="flex items-center gap-2 mb-1">
+                              <AlertCircle size={14} className="text-red-400" />
+                              <h3 className="text-red-400 text-xs font-medium">
+                                JSON Errors
+                              </h3>
+                            </div>
+                            <div className="space-y-1.5">
+                              {jsonErrors.map((error, index) => (
+                                <div
+                                  key={index}
+                                  className="bg-black/20 p-1.5 rounded border border-red-600/20"
+                                >
+                                  <p className="text-red-300 text-xs">
+                                    Line {error.line}, Column {error.col}
+                                  </p>
+                                  <p className="text-white/80 text-xs">
+                                    {error.message}
+                                  </p>
+                                  {error.suggestion && (
+                                    <p className="text-yellow-300 text-xs mt-0.5">
+                                      💡 {error.suggestion}
+                                    </p>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="relative h-full overflow-hidden">
+                          <div className="absolute left-0 top-0 w-8 h-full border-gray-600/20 flex flex-col text-white/30 text-xs font-mono pt-1">
+                            {Array.from({ length: rowCount }, (_, i) => (
+                              <div
+                                key={i + 1}
+                                className={`h-[1.4em] flex items-center justify-center leading-none ${jsonErrors.some((error) => error.line === i + 1)
+                                  ? "text-red-400 bg-red-900/20"
+                                  : ""
+                                  }`}
+                              >
+                                {i + 1}
+                              </div>
+                            ))}
+                          </div>
+                          <div className="relative w-full h-full">
+                            <textarea
+                              className="absolute inset-0 w-full h-full bg-transparent placeholder:text-white/5 text-transparent text-xs outline-none pl-10 pr-2 py-1 resize-none font-mono z-10"
+                              placeholder={`Enter ${activeTab.bodyType} body data here...`}
+                              value={bodyData}
+                              onChange={(e) => handleBodyDataChange(e.target.value)}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") {
+                                  setRowCount((prev) => Math.min(prev + 1, 100));
+                                }
+                                if (e.key === "Backspace") {
+                                  const textarea = e.target as HTMLTextAreaElement;
+                                  const cursorPos = textarea.selectionStart;
+                                  const textBefore = textarea.value.substring(
+                                    0,
+                                    cursorPos
+                                  );
+                                  if (cursorPos > 0 && textBefore.endsWith("\n")) {
+                                    setTimeout(() => {
+                                      const newLines =
+                                        textarea.value.split("\n").length;
+                                      setRowCount(Math.max(1, newLines));
+                                    }, 0);
+                                  }
+                                }
+                              }}
+                              style={{
+                                lineHeight: "1.4",
+                                caretColor: "white",
+                              }}
+                            />
+                            <pre
+                              className="absolute inset-0 w-full h-full text-xs pl-10 pr-2 py-1 font-mono pointer-events-none overflow-hidden whitespace-pre-wrap"
+                              style={{
+                                lineHeight: "1.4",
+                                color: "#ffffff80",
+                              }}
+                              dangerouslySetInnerHTML={{
+                                __html: bodyData
+                                  ? (activeTab.bodyType === "json" ? formatJsonText(bodyData) : bodyData.replace(/</g, "&lt;").replace(/>/g, "&gt;"))
+                                  : '<span style="color: #ffffff40">Enter body data here...</span>',
+                              }}
+                            />
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    {activeTab?.bodyType === "form-data" && (
+                      <div className="h-full overflow-y-auto">
+                        <div className="flex flex-col gap-1">
+                          {activeTab.formData.map((item) => (
+                            <div key={item.id} className="flex items-center gap-1 group">
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="checkbox"
+                                  checked={item.isActive}
+                                  onChange={(e) => {
+                                    const newData = activeTab.formData.map(i => i.id === item.id ? { ...i, isActive: e.target.checked } : i);
+                                    updateActiveTab({ formData: newData });
+                                  }}
+                                  className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
+                                />
+                                <div className="relative">
+                                  <select
+                                    value={item.type || 'text'}
+                                    onChange={(e) => {
+                                      const newData = activeTab.formData.map(i => i.id === item.id ? { ...i, type: e.target.value as any } : i);
+                                      updateActiveTab({ formData: newData });
+                                    }}
+                                    className="bg-transparent text-[10px] text-white/50 border-none outline-none appearance-none w-10 cursor-pointer"
+                                  >
+                                    <option value="text" className="bg-[#1C1818]">Text</option>
+                                    <option value="file" className="bg-[#1C1818]">File</option>
+                                  </select>
+                                </div>
+                              </div>
+                              <input
+                                type="text"
+                                placeholder="Key"
+                                value={item.key}
+                                onChange={(e) => {
+                                  const newData = activeTab.formData.map(i => i.id === item.id ? { ...i, key: e.target.value } : i);
+                                  updateActiveTab({ formData: newData });
+                                }}
+                                className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5 focus:border-[#4B78E6]"
+                              />
+                              {item.type === 'file' ? (
+                                <div className="flex-1 relative">
+                                  <div className="w-full bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 text-white/70 text-xs px-2 py-1.5 truncate">
+                                    {item.file ? item.file.name : "Select File"}
+                                  </div>
+                                  <input
+                                    type="file"
+                                    className="absolute inset-0 opacity-0 cursor-pointer"
+                                    onChange={(e) => {
+                                      const file = e.target.files?.[0];
+                                      if (file) {
+                                        const newData = activeTab.formData.map(i => i.id === item.id ? { ...i, file: file, value: file.name } : i);
+                                        updateActiveTab({ formData: newData });
+                                      }
+                                    }}
+                                  />
+                                </div>
+                              ) : (
+                                <input
+                                  type="text"
+                                  placeholder="Value"
+                                  value={item.value}
+                                  onChange={(e) => {
+                                    const newData = activeTab.formData.map(i => i.id === item.id ? { ...i, value: e.target.value } : i);
+                                    updateActiveTab({ formData: newData });
+                                  }}
+                                  className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5 focus:border-[#4B78E6]"
+                                />
+                              )}
+
+                              <button
+                                onClick={() => {
+                                  const newData = activeTab.formData.filter(i => i.id !== item.id);
+                                  updateActiveTab({ formData: newData });
+                                }}
+                                className="p-1 hover:bg-white/10 rounded transition-colors duration-200 opacity-0 group-hover:opacity-100"
+                              >
+                                <Trash2 size={14} className="text-white/50 hover:text-white/70" />
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            onClick={addFormData}
+                            className="flex items-center gap-1.5 text-[#4B78E6] text-xs border border-dashed border-gray-600/20 hover:border-[#4B78E6]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors w-max"
+                          >
+                            <Plus size={12} />
+                            Add Form Data
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeTab?.bodyType === "x-www-form-urlencoded" && (
+                      <div className="h-full overflow-y-auto">
+                        <div className="flex flex-col gap-1">
+                          {activeTab.urlEncodedData.map((item) => (
+                            <div key={item.id} className="flex items-center gap-1 group">
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="checkbox"
+                                  checked={item.isActive}
+                                  onChange={(e) => {
+                                    const newData = activeTab.urlEncodedData.map(i => i.id === item.id ? { ...i, isActive: e.target.checked } : i);
+                                    updateActiveTab({ urlEncodedData: newData });
+                                  }}
+                                  className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
+                                />
+                                <GripVertical size={14} className="text-white/30" />
+                              </div>
+                              <input
+                                type="text"
+                                placeholder="Key"
+                                value={item.key}
+                                onChange={(e) => {
+                                  const newData = activeTab.urlEncodedData.map(i => i.id === item.id ? { ...i, key: e.target.value } : i);
+                                  updateActiveTab({ urlEncodedData: newData });
+                                }}
+                                className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5 focus:border-[#4B78E6]"
+                              />
+                              <input
+                                type="text"
+                                placeholder="Value"
+                                value={item.value}
+                                onChange={(e) => {
+                                  const newData = activeTab.urlEncodedData.map(i => i.id === item.id ? { ...i, value: e.target.value } : i);
+                                  updateActiveTab({ urlEncodedData: newData });
+                                }}
+                                className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5 focus:border-[#4B78E6]"
+                              />
+                              <button
+                                onClick={() => {
+                                  const newData = activeTab.urlEncodedData.filter(i => i.id !== item.id);
+                                  updateActiveTab({ urlEncodedData: newData });
+                                }}
+                                className="p-1 hover:bg-white/10 rounded transition-colors duration-200 opacity-0 group-hover:opacity-100"
+                              >
+                                <Trash2 size={14} className="text-white/50 hover:text-white/70" />
+                              </button>
+                            </div>
+                          ))}
+                          <button
+                            onClick={addUrlEncoded}
+                            className="flex items-center gap-1.5 text-[#4B78E6] text-xs border border-dashed border-gray-600/20 hover:border-[#4B78E6]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors w-max"
+                          >
+                            <Plus size={12} />
+                            Add Url Encoded Param
+                          </button>
+                        </div>
+                      </div>
+                    )}
+
+                    {activeTab?.bodyType === "none" && (
+                      <div className="flex items-center justify-center h-full text-white/30 text-xs">
+                        This request does not have a body
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {activeRequestTab === "Load Test" && (
+                  <div className="h-full overflow-y-auto">
+                    <div className="flex flex-col gap-4 p-2">
+                      <div className="text-white/80 text-sm font-medium flex gap-2 items-center"><Layers size={16} /> Load Testing</div>
+                      <div className="text-white/50 text-xs mb-2">Simulate concurrent traffic to test API performance.</div>
+
+                      <div className="grid grid-cols-2 gap-4 mb-4">
+                        <div>
+                          <label className="text-white/70 text-xs mb-1 block">Total Requests</label>
+                          <input
+                            type="number"
+                            value={loadTestConfig.requests}
+                            onChange={(e) => setLoadTestConfig(prev => ({ ...prev, requests: parseInt(e.target.value) || 1 }))}
+                            className="w-full bg-black/20 border border-gray-600/20 text-white text-xs px-2 py-1.5 rounded-lg focus:border-[#4B78E6]"
+                          />
+                        </div>
+                        <div>
+                          <label className="text-white/70 text-xs mb-1 block">Concurrency</label>
+                          <input
+                            type="number"
+                            value={loadTestConfig.concurrency}
+                            onChange={(e) => setLoadTestConfig(prev => ({ ...prev, concurrency: parseInt(e.target.value) || 1 }))}
+                            className="w-full bg-black/20 border border-gray-600/20 text-white text-xs px-2 py-1.5 rounded-lg focus:border-[#4B78E6]"
+                          />
+                        </div>
                       </div>
 
+                      <button
+                        onClick={runLoadTest}
+                        disabled={isLoadTesting}
+                        className={`py-2 rounded-lg text-xs font-medium transition-colors w-full mb-4
+                        ${isLoadTesting ? "bg-[#9b59b6]/50 text-white/50 cursor-not-allowed" : "bg-[#9b59b6] hover:bg-[#8e44ad] text-white shadow-md"}`}
+                      >
+                        {isLoadTesting ? "Running Test..." : "Start Load Test"}
+                      </button>
+
+                      {loadTestResults && (
+                        <div className="bg-black/20 rounded-lg p-3 border border-gray-600/20">
+                          <div className="flex justify-between items-center mb-4">
+                            <h4 className="text-white text-xs font-medium">Test Results</h4>
+                            <span className="text-[10px] text-white/50">
+                              {loadTestResults.currentProgress.toFixed(0)}% Complete
+                            </span>
+                          </div>
+
+                          <div className="grid grid-cols-2 lg:grid-cols-4 gap-2 mb-4">
+                            <div className="bg-black/40 rounded p-2">
+                              <div className="text-xs text-white/50">Total</div>
+                              <div className="text-sm text-white font-medium">{loadTestResults.total}</div>
+                            </div>
+                            <div className="bg-black/40 rounded p-2">
+                              <div className="text-xs text-white/50">Success</div>
+                              <div className="text-sm text-green-400 font-medium">{loadTestResults.success}</div>
+                            </div>
+                            <div className="bg-black/40 rounded p-2">
+                              <div className="text-xs text-white/50">Failed</div>
+                              <div className="text-sm text-red-400 font-medium">{loadTestResults.failed}</div>
+                            </div>
+                            <div className="bg-black/40 rounded p-2">
+                              <div className="text-xs text-white/50">Avg Time</div>
+                              <div className="text-sm text-yellow-400 font-medium">{loadTestResults.avgTime.toFixed(0)}ms</div>
+                            </div>
+                            <div className="bg-black/40 rounded p-2">
+                              <div className="text-xs text-white/50">Min Time</div>
+                              <div className="text-sm text-purple-400 font-medium">{loadTestResults.minTime}ms</div>
+                            </div>
+                            <div className="bg-black/40 rounded p-2">
+                              <div className="text-xs text-white/50">Max Time</div>
+                              <div className="text-sm text-purple-400 font-medium">{loadTestResults.maxTime}ms</div>
+                            </div>
+                            <div className="bg-black/40 rounded p-2">
+                              <div className="text-xs text-white/50">p95 Time</div>
+                              <div className="text-sm text-purple-400 font-medium">{loadTestResults.p95Time}ms</div>
+                            </div>
+                          </div>
+
+                          {loadTestResults.history.length > 0 && (
+                            <div className="h-40 mt-4 w-full text-xs">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <LineChart data={loadTestResults.history}>
+                                  <XAxis dataKey="index" stroke="#ffffff40" fontSize={10} />
+                                  <YAxis stroke="#ffffff40" fontSize={10} width={40} />
+                                  <Tooltip contentStyle={{ backgroundColor: "#1C1818", border: "1px solid #333", fontSize: "10px" }} />
+                                  <Line type="monotone" dataKey="timeMs" stroke="#9b59b6" strokeWidth={2} dot={false} isAnimationActive={false} />
+                                </LineChart>
+                              </ResponsiveContainer>
+                            </div>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {activeRequestTab === "Params" && (
+                  <div className="h-full overflow-y-auto">
+                    <div className="flex flex-col gap-1">
+                      {/* Render Query Params */}
+                      {activeTab?.queryParams.map((param) => (
+                        <div key={param.id} className="flex items-center gap-1 group">
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="checkbox"
+                              checked={param.isActive}
+                              onChange={(e) => handleParamChange(param.id, 'isActive', e.target.checked)}
+                              className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
+                            />
+                            <GripVertical
+                              size={14}
+                              className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
+                            />
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="Key"
+                            value={param.key}
+                            onChange={(e) => handleParamChange(param.id, 'key', e.target.value)}
+                            className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5 focus:border-[#4B78E6]"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Value"
+                            value={param.value}
+                            onChange={(e) => handleParamChange(param.id, 'value', e.target.value)}
+                            className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5 focus:border-[#4B78E6]"
+                          />
+                          <button
+                            onClick={() => removeParam(param.id)}
+                            className="p-1 hover:bg-white/10 rounded transition-colors duration-200 opacity-0 group-hover:opacity-100"
+                          >
+                            <Trash2 size={14} className="text-white/50 hover:text-white/70" />
+                          </button>
+                        </div>
+                      ))}
+
+                      <button
+                        onClick={addParam}
+                        className="flex items-center gap-1.5 text-[#4B78E6] text-xs border border-dashed border-gray-600/20 hover:border-[#4B78E6]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors w-max"
+                      >
+                        <Plus size={12} />
+                        Add New Param
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {activeRequestTab === "Headers" && (
+                  <div className="h-full overflow-y-auto">
+                    <div className="flex flex-col gap-1">
+                      {/* Render Headers */}
+                      {activeTab?.headers.map((header) => (
+                        <div key={header.id} className="flex items-center gap-1 group">
+                          <div className="flex items-center gap-1">
+                            <input
+                              type="checkbox"
+                              checked={header.isActive}
+                              onChange={(e) => handleHeaderChange(header.id, 'isActive', e.target.checked)}
+                              className="accent-[#DBDE52] h-3 w-3 cursor-pointer"
+                            />
+                            <GripVertical
+                              size={14}
+                              className="text-white/30 hover:text-white/60 cursor-grab active:cursor-grabbing"
+                            />
+                          </div>
+                          <input
+                            type="text"
+                            placeholder="Header"
+                            value={header.key}
+                            onChange={(e) => handleHeaderChange(header.id, 'key', e.target.value)}
+                            className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5 focus:border-[#4B78E6]"
+                          />
+                          <input
+                            type="text"
+                            placeholder="Value"
+                            value={header.value}
+                            onChange={(e) => handleHeaderChange(header.id, 'value', e.target.value)}
+                            className="flex-1 bg-transparent border rounded-lg border-gray-600/20 hover:border-[#4B78E6]/50 placeholder:text-white/40 text-white text-xs outline-none px-2 py-1.5 focus:border-[#4B78E6]"
+                          />
+                          <button
+                            onClick={() => removeHeader(header.id)}
+                            className="p-1 hover:bg-white/10 rounded transition-colors duration-200 opacity-0 group-hover:opacity-100"
+                          >
+                            <Trash2 size={14} className="text-white/50 hover:text-white/70" />
+                          </button>
+                        </div>
+                      ))}
+
+                      <button
+                        onClick={addHeader}
+                        className="flex items-center gap-1.5 text-[#4B78E6] text-xs border border-dashed border-gray-600/20 hover:border-[#4B78E6]/50 rounded-lg px-2 py-1.5 mt-1 transition-colors w-max"
+                      >
+                        <Plus size={12} />
+                        Add New Header
+                      </button>
+
+                      <div className="mt-4 bg-black/20 rounded-lg p-2 border border-gray-600/20">
+                        <p className="text-white/60 text-xs mb-1">
+                          Common Headers:
+                        </p>
+                        <div className="grid grid-cols-2 gap-1">
+                          <span className="text-[#4B78E6] text-xs">
+                            Content-Type
+                          </span>
+                          <span className="text-white/50 text-xs">
+                            application/json
+                          </span>
+
+                          <span className="text-[#4B78E6] text-xs">Accept</span>
+                          <span className="text-white/50 text-xs">
+                            application/json
+                          </span>
+
+                          <span className="text-[#4B78E6] text-xs">
+                            Authorization
+                          </span>
+                          <span className="text-white/50 text-xs">
+                            Bearer token
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Panel>
+
+            <PanelResizeHandle className="w-1 cursor-col-resize" />
+
+            <Panel defaultSize={50} minSize={30}>
+              <div className="bg-[#201C1C] w-full h-full p-2 border border-gray-600/20 rounded-lg">
+                <div className="flex items-center justify-start gap-1 mb-1.5">
+                  <button
+                    onClick={() => handleActiveResponseTabChange("Request")}
+                    className={`hover:bg-black/10 border border-gray-500/20 flex gap-1 justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeResponseTab === "Request"
+                      ? "bg-black/5 text-white border-gray-500/20"
+                      : "text-white/50"
+                      }`}
+                  >
+                    Request
+                    <h2 className="text-[#73DC8C] text-xs">{selectedMethod}</h2>
+                  </button>
+                  <button
+                    onClick={() => handleActiveResponseTabChange("Response")}
+                    className={`hover:bg-black/10 border border-gray-500/20 flex gap-1 justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeResponseTab === "Response"
+                      ? "bg-black/5 text-white border-gray-500/20"
+                      : "text-white/50"
+                      }`}
+                  >
+                    Response
+                    <h2 className="text-[#73DC8C] text-xs">200</h2>
+                  </button>
+                </div>
+
+                <div className="h-full flex flex-col">
+                  {activeResponseTab === "Request" && (
+                    <div>
                       <div
                         className={`
-        pb-2 text-white/50 text-xs space-y-2
-        transition-opacity duration-300 ease-in-out
-        ${isResponseExpanded ? "opacity-100" : "opacity-0"}
-      `}
+                        overflow-hidden rounded-md -mt-1
+                        transition-all duration-300 ease-in-out
+                        ${isExpanded ? "max-h-auto" : "max-h-12"}
+                      `}
                       >
-                        <div className="bg-black/20 p-2 sm:p-3 rounded-md overflow-x-auto">
-                          <div className="flex items-center justify-between mb-1">
-                            <p
-                              className="text-xs font-bold"
-                              style={{ color: getStatusColor(responseStatus) }}
-                            >
-                              HTTP/1.1{" "}
-                              {responseStatus ? (
-                                `${responseStatus} ${getStatusText(
-                                  responseStatus
-                                )}`
-                              ) : (
-                                <span className="ml-2 text-gray-400">
-                                  No Response Data Available
-                                </span>
-                              )}
+                        <div className="hover:bg-black/10 flex gap-1 justify-start items-center text-white/50 text-xs px-2 py-1">
+                          <button
+                            onClick={() => setIsExpanded(!isExpanded)}
+                            className={`
+                            bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-gray-600/20 p-1 
+                            flex justify-center items-center text-white rounded-md
+                            transition-transform duration-300 ease-in-out
+                            ${isExpanded ? "rotate-90" : "rotate-0"}
+                          `}
+                          >
+                            <ChevronsRight size={14} />
+                          </button>
+                          <h2 className="text-[#73DC8C] flex items-center gap-1 text-[13px] whitespace-nowrap overflow-hidden">
+                            <span>{selectedMethod}</span>
+                            <span className="text-white font-mono ">
+                              {msg || "https://apionix/api/users"}
+                            </span>
+                            <span className="text-white/40 border border-gray-700/50 shadow-sm bg-white/5 px-1.5 rounded text-[10px] font-mono flex-shrink-0">
+                              HTTP/1.1
+                            </span>
+                          </h2>
+                        </div>
+
+                        <div
+                          className={`
+                        pb-2 text-white/50 text-xs space-y-2
+                        transition-opacity duration-300 ease-in-out
+                        ${isExpanded ? "opacity-100" : "opacity-0"}
+                      `}
+                        >
+                          <div className="bg-black/20 p-3 rounded-md">
+                            <p className="text-[#73DC8C] font-extrabold mb-1">
+                              {selectedMethod}
                             </p>
-                            {responseTime > 0 && (
-                              <span className="text-white/40 text-[10px]">
-                                {responseTime}ms
-                              </span>
-                            )}
-                          </div>
-                          <div className="border-t border-gray-600/10"></div>
-
-                          <div className="space-y-2 text-white/60 mt-1 min-w-[300px]">
-                            {Object.keys(responseHeaders).length > 0 ? (
-                              <>
-                                {Object.entries(responseHeaders).map(
-                                  ([key, value]) => (
-                                    <div
-                                      key={key}
-                                      className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2"
-                                    >
-                                      <span className="text-[#4B78E6] text-xs">
-                                        {key
-                                          .split("-")
-                                          .map(
-                                            (word) =>
-                                              word.charAt(0).toUpperCase() +
-                                              word.slice(1)
+                            <div className="border-t border-gray-600/10"></div>
+                            <div className="space-y-2 mt-1 text-white/60">
+                              <div className="grid grid-cols-2 gap-2">
+                                <span className="text-[#4B78E6]">
+                                  Content-Type
+                                </span>
+                                <span>
+                                  {(() => {
+                                    if (
+                                      ["POST", "PUT", "PATCH"].includes(
+                                        selectedMethod
+                                      ) &&
+                                      bodyData
+                                    ) {
+                                      try {
+                                        JSON.parse(bodyData);
+                                        return "application/json";
+                                      } catch {
+                                        if (
+                                          bodyData.includes(
+                                            "Content-Disposition: form-data"
+                                          ) ||
+                                          bodyData.includes(
+                                            "------WebKitFormBoundary"
                                           )
-                                          .join("-")}
-                                      </span>
-                                      <span className="text-xs break-all ml-4 sm:ml-0">
-                                        {value}
-                                      </span>
-                                    </div>
-                                  )
-                                )}
-
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                                  <span className="text-[#4B78E6] text-xs">
-                                    Content-Length
-                                  </span>
-                                  <span className="text-xs break-all ml-4 sm:ml-0">
-                                    {responseHeaders["content-length"] ||
-                                      responseHeaders["Content-Length"] ||
-                                      (apiResponse
-                                        ? JSON.stringify(apiResponse).length +
-                                        " bytes"
-                                        : "Unknown")}
-                                  </span>
-                                </div>
-
-                                {apiResponse && (
-                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                                    <span className="text-[#4B78E6] text-xs">
-                                      Response Size
-                                    </span>
-                                    <span className="text-xs break-all ml-4 sm:ml-0">
-                                      {(
-                                        JSON.stringify(apiResponse).length /
-                                        1024
-                                      ).toFixed(2)}{" "}
-                                      KB
+                                        ) {
+                                          return "multipart/form-data";
+                                        } else if (
+                                          bodyData.includes("=") &&
+                                          !bodyData.includes("{")
+                                        ) {
+                                          return "application/x-www-form-urlencoded";
+                                        }
+                                        return "text/plain";
+                                      }
+                                    } else if (selectedMethod === "GET") {
+                                      return "application/json";
+                                    }
+                                    return "application/json";
+                                  })()}
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <span className="text-[#4B78E6]">Host</span>
+                                <span>
+                                  {msg
+                                    ? msg.startsWith("http://") ||
+                                      msg.startsWith("https://")
+                                      ? new URL(msg).host
+                                      : msg.includes("/")
+                                        ? msg.split("/")[0]
+                                        : msg
+                                    : "api.tronix.in"}
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-2 gap-2">
+                                <span className="text-[#4B78E6]">User-Agent</span>
+                                <span>APIONIX</span>
+                              </div>
+                              {msg && (
+                                <>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    <span className="text-[#4B78E6]">Path</span>
+                                    <span>
+                                      {(() => {
+                                        try {
+                                          const url =
+                                            msg.startsWith("http://") ||
+                                              msg.startsWith("https://")
+                                              ? new URL(msg).pathname
+                                              : "/" +
+                                              (msg.includes("/")
+                                                ? msg
+                                                  .split("/")
+                                                  .slice(1)
+                                                  .join("/")
+                                                : "");
+                                          return url || "/";
+                                        } catch {
+                                          return "/";
+                                        }
+                                      })()}
                                     </span>
                                   </div>
-                                )}
-                              </>
-                            ) : (
+                                  {msg.includes("?") && (
+                                    <div className="grid grid-cols-2 gap-2">
+                                      <span className="text-[#4B78E6]">
+                                        Query Params
+                                      </span>
+                                      <div>
+                                        {(() => {
+                                          try {
+                                            const urlObj = new URL(
+                                              msg.startsWith("http")
+                                                ? msg
+                                                : `https://${msg}`
+                                            );
+                                            return Array.from(
+                                              urlObj.searchParams.entries()
+                                            ).map(([key, value], i) => (
+                                              <div key={i} className="text-xs">
+                                                <span className="text-yellow-300">
+                                                  {key}
+                                                </span>
+                                                <span className="text-white/50">
+                                                  {" "}
+                                                  ={" "}
+                                                </span>
+                                                <span className="text-green-300">
+                                                  {value}
+                                                </span>
+                                              </div>
+                                            ));
+                                          } catch {
+                                            return null;
+                                          }
+                                        })()}
+                                      </div>
+                                    </div>
+                                  )}
+                                </>
+                              )}
+                              {authToken && (
+                                <div className="grid grid-cols-2 gap-2">
+                                  <span className="text-[#4B78E6]">
+                                    Authorization
+                                  </span>
+                                  <span>
+                                    Bearer{" "}
+                                    <span className="text-[#789b28]">
+                                      {authToken.substring(0, 40)}...
+                                    </span>
+                                  </span>
+                                </div>
+                              )}
+                            </div>
+                            {bodyData && (
                               <>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                                  <span className="text-[#4B78E6] text-xs">
-                                    Access-Control-Allow-Origin
-                                  </span>
-                                  <span className="text-xs break-all ml-4 sm:ml-0">
-                                    *
-                                  </span>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                                  <span className="text-[#4B78E6] text-xs">
-                                    Connection
-                                  </span>
-                                  <span className="text-xs break-all ml-4 sm:ml-0">
-                                    {responseStatus
-                                      ? "keep-alive"
-                                      : "No response headers available"}
-                                  </span>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                                  <span className="text-[#4B78E6] text-xs">
-                                    Content-Type
-                                  </span>
-                                  <span className="text-xs break-all ml-4 sm:ml-0">
-                                    application/json; charset=utf-8
-                                  </span>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                                  <span className="text-[#4B78E6] text-xs">
-                                    Date
-                                  </span>
-                                  <span className="text-xs break-all ml-4 sm:ml-0">
-                                    {new Date().toUTCString()}
-                                  </span>
-                                </div>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
-                                  <span className="text-[#4B78E6] text-xs">
-                                    Server
-                                  </span>
-                                  <span className="text-xs break-all ml-4 sm:ml-0">
-                                    nginx/1.24.0 (Ubuntu)
-                                  </span>
+                                <div className="border-t border-gray-600/10 mt-2"></div>
+                                <div className="mt-2">
+                                  <p className="text-[#4B78E6] text-xs mb-1">
+                                    Request Body:
+                                  </p>
+                                  <pre
+                                    className="text-xs font-mono mt-2 whitespace-pre-wrap break-words max-w-full"
+                                    style={{
+                                      fontFamily:
+                                        "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
+                                    }}
+                                    dangerouslySetInnerHTML={{
+                                      __html: bodyData
+                                        ? formatJsonText(bodyData)
+                                        : '<span class="text-gray-400">No request body</span>',
+                                    }}
+                                  />
                                 </div>
                               </>
                             )}
@@ -2820,11 +2669,189 @@ export default function Home() {
                         </div>
                       </div>
                     </div>
+                  )}
 
-                    <div className="flex-1 min-h-0 overflow-hidden pb-2">
-                      <div className="h-full overflow-hidden rounded-md -mt-1 flex flex-col">
-                        <div className="bg-black/10 flex gap-1 justify-start items-center text-white/50 text-xs px-2 py-1 flex-shrink-0">
-                          {/* <button
+                  {activeResponseTab === "Response" && (
+                    <div className="h-full flex flex-col pb-4">
+                      <div
+                        className={`
+        overflow-hidden rounded-md -mt-1 flex-shrink-0
+        transition-all duration-300 ease-in-out
+        ${isResponseExpanded ? "max-h-96" : "max-h-12"}
+      `}
+                      >
+                        <div className="hover:bg-black/10 flex gap-1 justify-start items-center text-white/50 text-xs px-2 py-1">
+                          <button
+                            onClick={handleResponseExpand}
+                            className={`
+            bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-gray-600/20 p-1 
+            flex justify-center items-center text-white rounded-md
+            transition-transform duration-300 ease-in-out
+            ${isResponseExpanded ? "rotate-90" : "rotate-0"}
+          `}
+                          >
+                            <ChevronsRight size={14} />
+                          </button>
+
+                          <h2
+                            className="text-[13px]"
+                            style={{ color: getStatusColor(responseStatus) }}
+                          >
+                            {responseStatus
+                              ? `${responseStatus} ${getStatusText(
+                                responseStatus
+                              )}`
+                              : "No Response"}
+                          </h2>
+                          {responseTime > 0 && (
+                            <span className="text-white/40 text-[10px] ml-auto">
+                              {responseTime}ms
+                            </span>
+                          )}
+                        </div>
+
+                        <div
+                          className={`
+        pb-2 text-white/50 text-xs space-y-2
+        transition-opacity duration-300 ease-in-out
+        ${isResponseExpanded ? "opacity-100" : "opacity-0"}
+      `}
+                        >
+                          <div className="bg-black/20 p-2 sm:p-3 rounded-md overflow-x-auto">
+                            <div className="flex items-center justify-between mb-1">
+                              <p
+                                className="text-xs font-bold"
+                                style={{ color: getStatusColor(responseStatus) }}
+                              >
+                                HTTP/1.1{" "}
+                                {responseStatus ? (
+                                  `${responseStatus} ${getStatusText(
+                                    responseStatus
+                                  )}`
+                                ) : (
+                                  <span className="ml-2 text-gray-400">
+                                    No Response Data Available
+                                  </span>
+                                )}
+                              </p>
+                              {responseTime > 0 && (
+                                <span className="text-white/40 text-[10px]">
+                                  {responseTime}ms
+                                </span>
+                              )}
+                            </div>
+                            <div className="border-t border-gray-600/10"></div>
+
+                            <div className="space-y-2 text-white/60 mt-1 min-w-[300px]">
+                              {Object.keys(responseHeaders).length > 0 ? (
+                                <>
+                                  {Object.entries(responseHeaders).map(
+                                    ([key, value]) => (
+                                      <div
+                                        key={key}
+                                        className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2"
+                                      >
+                                        <span className="text-[#4B78E6] text-xs">
+                                          {key
+                                            .split("-")
+                                            .map(
+                                              (word) =>
+                                                word.charAt(0).toUpperCase() +
+                                                word.slice(1)
+                                            )
+                                            .join("-")}
+                                        </span>
+                                        <span className="text-xs break-all ml-4 sm:ml-0">
+                                          {value}
+                                        </span>
+                                      </div>
+                                    )
+                                  )}
+
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
+                                    <span className="text-[#4B78E6] text-xs">
+                                      Content-Length
+                                    </span>
+                                    <span className="text-xs break-all ml-4 sm:ml-0">
+                                      {responseHeaders["content-length"] ||
+                                        responseHeaders["Content-Length"] ||
+                                        (apiResponse
+                                          ? JSON.stringify(apiResponse).length +
+                                          " bytes"
+                                          : "Unknown")}
+                                    </span>
+                                  </div>
+
+                                  {apiResponse && (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
+                                      <span className="text-[#4B78E6] text-xs">
+                                        Response Size
+                                      </span>
+                                      <span className="text-xs break-all ml-4 sm:ml-0">
+                                        {(
+                                          JSON.stringify(apiResponse).length /
+                                          1024
+                                        ).toFixed(2)}{" "}
+                                        KB
+                                      </span>
+                                    </div>
+                                  )}
+                                </>
+                              ) : (
+                                <>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
+                                    <span className="text-[#4B78E6] text-xs">
+                                      Access-Control-Allow-Origin
+                                    </span>
+                                    <span className="text-xs break-all ml-4 sm:ml-0">
+                                      *
+                                    </span>
+                                  </div>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
+                                    <span className="text-[#4B78E6] text-xs">
+                                      Connection
+                                    </span>
+                                    <span className="text-xs break-all ml-4 sm:ml-0">
+                                      {responseStatus
+                                        ? "keep-alive"
+                                        : "No response headers available"}
+                                    </span>
+                                  </div>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
+                                    <span className="text-[#4B78E6] text-xs">
+                                      Content-Type
+                                    </span>
+                                    <span className="text-xs break-all ml-4 sm:ml-0">
+                                      application/json; charset=utf-8
+                                    </span>
+                                  </div>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
+                                    <span className="text-[#4B78E6] text-xs">
+                                      Date
+                                    </span>
+                                    <span className="text-xs break-all ml-4 sm:ml-0">
+                                      {new Date().toUTCString()}
+                                    </span>
+                                  </div>
+                                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-1 sm:gap-2">
+                                    <span className="text-[#4B78E6] text-xs">
+                                      Server
+                                    </span>
+                                    <span className="text-xs break-all ml-4 sm:ml-0">
+                                      nginx/1.24.0 (Ubuntu)
+                                    </span>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="flex-1 min-h-0 overflow-hidden pb-2">
+                        <div className="h-full overflow-hidden rounded-md -mt-1 flex flex-col">
+                          <div className="bg-black/10 flex gap-1 justify-start items-center text-white/50 text-xs px-2 py-1 flex-shrink-0">
+                            {/* <button
                             onClick={handleResponseBodyExpand}
                             className={`
             bg-[#1a1a1a] hover:bg-[#2a2a2a] border border-gray-600/20 p-1 
@@ -2835,64 +2862,64 @@ export default function Home() {
                           >
                             <ChevronsRight size={14} />
                           </button> */}
-                          <h3 className="text-[#73DC8C] text-xs font-medium">
-                            Response Body
-                          </h3>
-                          {apiResponse && (
-                            <span className="text-white/40 text-[10px] ml-auto">
-                              {typeof apiResponse === "object"
-                                ? "JSON"
-                                : "TEXT"}
-                            </span>
+                            <h3 className="text-[#73DC8C] text-xs font-medium">
+                              Response Body
+                            </h3>
+                            {apiResponse && (
+                              <span className="text-white/40 text-[10px] ml-auto">
+                                {typeof apiResponse === "object"
+                                  ? "JSON"
+                                  : "TEXT"}
+                              </span>
+                            )}
+                          </div>
+
+                          {apiResponse ? (
+                            <div
+                              className="flex-1 w-full bg-black/20 backdrop-blur-md rounded-md overflow-auto text-white/80 text-xs"
+                              style={{
+                                fontFamily:
+                                  "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
+                              }}
+                            >
+                              <pre
+                                className="whitespace-pre-wrap p-3 break-words"
+                                dangerouslySetInnerHTML={{
+                                  __html: formatJsonResponse(apiResponse),
+                                }}
+                              />
+                            </div>
+                          ) : (
+                            <div
+                              className="flex-1 w-full bg-black/20 backdrop-blur-md p-3 rounded-md overflow-auto text-white/80 text-xs flex items-center justify-center"
+                            // style={{
+                            //   fontFamily: "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
+                            // }}
+                            >
+                              <div className="text-white/40 text-center">
+                                {isLoading ? (
+                                  <div className="flex items-center gap-2">
+                                    <LoaderCircle
+                                      className="animate-spin"
+                                      size={16}
+                                    />
+                                    <span>Sending request...</span>
+                                  </div>
+                                ) : (
+                                  <span>
+                                    No response data available. Send a request to
+                                    see the response.
+                                  </span>
+                                )}
+                              </div>
+                            </div>
                           )}
                         </div>
-
-                        {apiResponse ? (
-                          <div
-                            className="flex-1 w-full bg-black/20 backdrop-blur-md rounded-md overflow-auto text-white/80 text-xs"
-                            style={{
-                              fontFamily:
-                                "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
-                            }}
-                          >
-                            <pre
-                              className="whitespace-pre-wrap p-3 break-words"
-                              dangerouslySetInnerHTML={{
-                                __html: formatJsonResponse(apiResponse),
-                              }}
-                            />
-                          </div>
-                        ) : (
-                          <div
-                            className="flex-1 w-full bg-black/20 backdrop-blur-md p-3 rounded-md overflow-auto text-white/80 text-xs flex items-center justify-center"
-                          // style={{
-                          //   fontFamily: "PolySansMono,ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,Liberation Mono,Courier New,monospace",
-                          // }}
-                          >
-                            <div className="text-white/40 text-center">
-                              {isLoading ? (
-                                <div className="flex items-center gap-2">
-                                  <LoaderCircle
-                                    className="animate-spin"
-                                    size={16}
-                                  />
-                                  <span>Sending request...</span>
-                                </div>
-                              ) : (
-                                <span>
-                                  No response data available. Send a request to
-                                  see the response.
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                        )}
                       </div>
                     </div>
-                  </div>
-                )}
+                  )}
 
-                {/* {activeResponseTab === "Response" && (
+                  {/* {activeResponseTab === "Response" && (
                   <div>
                     <div
                       className={`
@@ -3072,67 +3099,68 @@ export default function Home() {
                     </div>
                   </div>
                 )} */}
-              </div>
-            </div>
-          </Panel>
-        </PanelGroup>
-        <div className="flex justify-center items-center mt-2">
-          <div className="bg-[#201C1C] w-full p-3 rounded-lg shadow-md border border-gray-600/20">
-            <div className="flex items-start gap-3">
-              <div className="bg-[#1a1a1a] p-2 rounded-lg border border-gray-600/20">
-                <CodeXml size={18} className="text-[#73DC8C]" />
-              </div>
-              <div className="text-white/70 text-xs space-y-1 flex-1">
-                <p>
-                  <span className="text-[#73DC8C] font-medium">APIONIX</span> is
-                  a lightweight API testing tool designed for developers to
-                  quickly test and debug APIs without complex setups or
-                  configurations.
-                </p>
-                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[10px] text-white/70">
-                  <span className="flex items-center">
-                    <span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>
-                    HTTP methods
-                  </span>
-                  <span className="flex items-center">
-                    <span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>
-                    JSON validation
-                  </span>
-                  <span className="flex items-center">
-                    <span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>
-                    Custom headers
-                  </span>
-                  <span className="flex items-center">
-                    <span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>
-                    Multi-tab
-                  </span>
-                  <span className="flex items-center">
-                    <span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>
-                    Environment vars
-                  </span>
-                  <span className="flex items-center">
-                    <span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>
-                    Response time
-                  </span>
                 </div>
-                <div className="flex justify-between items-center mt-2 pt-1 border-t border-gray-600/20">
-                  <div className="text-white/40 text-[10px]">
-                    v1.0.1 • Built with ♥ by TRONIX
+              </div>
+            </Panel>
+          </PanelGroup>
+          <div className="flex justify-center items-center mt-2">
+            <div className="bg-[#201C1C] w-full p-3 rounded-lg shadow-md border border-gray-600/20">
+              <div className="flex items-start gap-3">
+                <div className="bg-[#1a1a1a] p-2 rounded-lg border border-gray-600/20">
+                  <CodeXml size={18} className="text-[#73DC8C]" />
+                </div>
+                <div className="text-white/70 text-xs space-y-1 flex-1">
+                  <p>
+                    <span className="text-[#73DC8C] font-medium">APIONIX</span> is
+                    a lightweight API testing tool designed for developers to
+                    quickly test and debug APIs without complex setups or
+                    configurations.
+                  </p>
+                  <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-2 text-[10px] text-white/70">
+                    <span className="flex items-center">
+                      <span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>
+                      HTTP methods
+                    </span>
+                    <span className="flex items-center">
+                      <span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>
+                      JSON validation
+                    </span>
+                    <span className="flex items-center">
+                      <span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>
+                      Custom headers
+                    </span>
+                    <span className="flex items-center">
+                      <span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>
+                      Multi-tab
+                    </span>
+                    <span className="flex items-center">
+                      <span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>
+                      Environment vars
+                    </span>
+                    <span className="flex items-center">
+                      <span className="w-1 h-1 rounded-full bg-[#73DC8C] mr-1"></span>
+                      Response time
+                    </span>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <button className="px-2 py-0.5 bg-[#1a1a1a] shadow-sm hover:bg-[#2a2a2a] border border-gray-600/20 rounded text-[10px] text-white/60">
-                      Documentation
-                    </button>
-                    <button className="px-2 py-0.5 bg-[#1a1a1a] shadow-sm hover:bg-[#2a2a2a] border border-gray-600/20 rounded text-[10px] text-white/60">
-                      About
-                    </button>
+                  <div className="flex justify-between items-center mt-2 pt-1 border-t border-gray-600/20">
+                    <div className="text-white/40 text-[10px]">
+                      v1.0.1 • Built with ♥ by TRONIX
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <button className="px-2 py-0.5 bg-[#1a1a1a] shadow-sm hover:bg-[#2a2a2a] border border-gray-600/20 rounded text-[10px] text-white/60">
+                        Documentation
+                      </button>
+                      <button className="px-2 py-0.5 bg-[#1a1a1a] shadow-sm hover:bg-[#2a2a2a] border border-gray-600/20 rounded text-[10px] text-white/60">
+                        About
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }
