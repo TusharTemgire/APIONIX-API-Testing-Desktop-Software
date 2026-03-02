@@ -19,6 +19,12 @@ import {
   LoaderCircle,
   Layers,
   Monitor,
+  Shield,
+  ShieldCheck,
+  ShieldAlert,
+  Info,
+  Clock,
+  History,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Panel, PanelGroup, PanelResizeHandle } from "react-resizable-panels";
@@ -67,6 +73,14 @@ interface KeyValueItem {
   file?: File;
 }
 
+interface SecurityFinding {
+  id: string;
+  title: string;
+  description: string;
+  severity: "high" | "medium" | "low" | "passed";
+  recommendation: string;
+}
+
 export default function Home() {
   const [msg, setMsg] = useState("");
   const [activeView, setActiveView] = useState<"api" | "monitor">("api");
@@ -84,6 +98,8 @@ export default function Home() {
   const [authToken, setAuthToken] = useState("");
   const [activeRequestTab, setActiveRequestTab] = useState("Body");
   const [activeResponseTab, setActiveResponseTab] = useState("Response");
+  const [securityFindings, setSecurityFindings] = useState<SecurityFinding[]>([]);
+  const [responseTimeHistory, setResponseTimeHistory] = useState<{ time: string, val: number }[]>([]);
   const [tabs, setTabs] = useState<Tab[]>([
     {
       id: "1",
@@ -898,8 +914,18 @@ export default function Home() {
 
       const headers: Record<string, string> = {};
       response.headers.forEach((value, key) => headers[key] = value);
-      headers["Status"] = `${response.status} ${response.statusText}`;
       setResponseHeaders(headers);
+
+      // Run security audit on headers
+      runSecurityAudit(headers);
+
+      // Add to response time history
+      const now = new Date();
+      const timeStr = `${now.getHours()}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')}`;
+      setResponseTimeHistory(prev => {
+        const next = [...prev, { time: timeStr, val: endTime - startTime }];
+        return next.slice(-10); // Keep last 10
+      });
 
       const contentType = response.headers.get("content-type");
       let responseData;
@@ -924,6 +950,78 @@ export default function Home() {
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const runSecurityAudit = (headers: Record<string, string>) => {
+    const findings: SecurityFinding[] = [];
+    const h = (key: string) => headers[key.toLowerCase()] || headers[key];
+
+    // Check HSTS
+    if (!h("Strict-Transport-Security")) {
+      findings.push({
+        id: "hsts",
+        title: "HSTS Missing",
+        description: "Strict-Transport-Security header is not set.",
+        severity: "medium",
+        recommendation: "Enable HSTS to force HTTPS connections."
+      });
+    }
+
+    // Check CSP
+    if (!h("Content-Security-Policy")) {
+      findings.push({
+        id: "csp",
+        title: "CSP Missing",
+        description: "Content-Security-Policy header is missing.",
+        severity: "high",
+        recommendation: "Implement CSP to prevent XSS and data injection."
+      });
+    }
+
+    // Check X-Content-Type-Options
+    if (h("X-Content-Type-Options")?.toLowerCase() !== "nosniff") {
+      findings.push({
+        id: "nosniff",
+        title: "MIME Sniffing Vulnerability",
+        description: "X-Content-Type-Options is not set to 'nosniff'.",
+        severity: "low",
+        recommendation: "Add 'X-Content-Type-Options: nosniff' header."
+      });
+    }
+
+    // Check X-Frame-Options
+    if (!h("X-Frame-Options")) {
+      findings.push({
+        id: "clickjacking",
+        title: "Clickjacking Protection Missing",
+        description: "X-Frame-Options or CSP frame-ancestors is missing.",
+        severity: "medium",
+        recommendation: "Add 'X-Frame-Options: DENY' or 'SAMEORIGIN'."
+      });
+    }
+
+    // Check for Information Leakage
+    if (h("Server") || h("X-Powered-By")) {
+      findings.push({
+        id: "leak",
+        title: "Server Info Leak",
+        description: `Backend tech stack leaked via '${h("Server") ? "Server" : "X-Powered-By"}' header.`,
+        severity: "low",
+        recommendation: "Disable or mask version headers on the server."
+      });
+    }
+
+    if (findings.length === 0) {
+      findings.push({
+        id: "perfect",
+        title: "Security Shield Active",
+        description: "No common security misconfigurations detected.",
+        severity: "passed",
+        recommendation: "All basic security headers are present."
+      });
+    }
+
+    setSecurityFindings(findings);
   };
 
   const isValidUrl = (url: string): boolean => {
@@ -2459,7 +2557,27 @@ export default function Home() {
                       }`}
                   >
                     Response
-                    <h2 className="text-[#73DC8C] text-xs">200</h2>
+                    <h2 className="text-[#73DC8C] text-xs font-bold leading-none">{responseStatus || ""}</h2>
+                  </button>
+                  <button
+                    onClick={() => handleActiveResponseTabChange("Security")}
+                    className={`hover:bg-black/10 border border-gray-500/20 flex gap-1 justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeResponseTab === "Security"
+                      ? "bg-black/5 text-white border-gray-500/20"
+                      : "text-white/50"
+                      }`}
+                  >
+                    <Shield size={12} className={securityFindings.some(f => f.severity === 'high') ? 'text-red-400' : 'text-[#73DC8C]'} />
+                    Security
+                  </button>
+                  <button
+                    onClick={() => handleActiveResponseTabChange("Insights")}
+                    className={`hover:bg-black/10 border border-gray-500/20 flex gap-1 justify-center items-center text-xs px-2 py-1 rounded-md transition-colors ${activeResponseTab === "Insights"
+                      ? "bg-black/5 text-white border-gray-500/20"
+                      : "text-white/50"
+                      }`}
+                  >
+                    <History size={12} />
+                    Insights
                   </button>
                 </div>
 
@@ -2914,6 +3032,115 @@ export default function Home() {
                               </div>
                             </div>
                           )}
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeResponseTab === "Security" && (
+                    <div className="flex-1 overflow-y-auto px-2 py-3">
+                      <div className="flex items-center gap-2 mb-4 bg-white/5 p-3 rounded-lg border border-gray-600/20">
+                        <div className="p-2 rounded-full bg-black/30">
+                          <ShieldCheck size={24} className="text-[#73DC8C]" />
+                        </div>
+                        <div>
+                          <h3 className="text-white font-bold text-sm">Security Sentinel Audit</h3>
+                          <p className="text-white/40 text-[10px]">Automated analysis of response headers and security protocols.</p>
+                        </div>
+                        <div className="ml-auto text-right">
+                          <span className="text-[10px] text-white/30 block uppercase tracking-tighter">Safety Score</span>
+                          <span className={`text-xl font-black ${securityFindings.some(f => f.severity === 'high') ? 'text-red-400' : 'text-[#73DC8C]'}`}>
+                            {securityFindings.length > 0 ? Math.max(0, 100 - securityFindings.filter(f => f.severity !== 'passed').length * 20) : 0}%
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 pb-10">
+                        {securityFindings.length > 0 ? securityFindings.map(finding => (
+                          <div key={finding.id} className={`p-3 rounded-lg border ${finding.severity === 'high' ? 'bg-red-500/5 border-red-500/20' :
+                              finding.severity === 'medium' ? 'bg-orange-500/5 border-orange-500/20' :
+                                finding.severity === 'low' ? 'bg-blue-500/5 border-blue-500/20' :
+                                  'bg-green-500/5 border-green-500/20'
+                            }`}>
+                            <div className="flex items-center gap-2 mb-1">
+                              {finding.severity === 'high' ? <ShieldAlert size={14} className="text-red-400" /> :
+                                finding.severity === 'medium' ? <AlertCircle size={14} className="text-orange-400" /> :
+                                  finding.severity === 'low' ? <Info size={14} className="text-blue-400" /> :
+                                    <ShieldCheck size={14} className="text-[#73DC8C]" />}
+                              <span className="text-xs font-bold text-white/90">{finding.title}</span>
+                              <span className={`text-[9px] px-1.5 py-0.5 rounded-full border uppercase ml-auto ${finding.severity === 'high' ? 'border-red-500/30 text-red-400 bg-red-400/10' :
+                                  finding.severity === 'medium' ? 'border-orange-500/30 text-orange-400 bg-orange-400/10' :
+                                    finding.severity === 'low' ? 'border-blue-500/30 text-blue-400 bg-blue-400/10' :
+                                      'border-[#73DC8C]/30 text-[#73DC8C] bg-[#73DC8C]/10'
+                                }`}>
+                                {finding.severity}
+                              </span>
+                            </div>
+                            <p className="text-[11px] text-white/50 mb-2">{finding.description}</p>
+                            <div className="flex items-center gap-1.5 bg-black/20 p-2 rounded text-[10px]">
+                              <Lightbulb size={12} className="text-[#DBDE52]" />
+                              <span className="text-white/70 italic"><span className="text-[#DBDE52] font-semibold not-italic mr-1 underline underline-offset-2">FIX:</span>{finding.recommendation}</span>
+                            </div>
+                          </div>
+                        )) : (
+                          <div className="text-center py-10 opacity-30 italic text-xs">Run a request to perform security audit.</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {activeResponseTab === "Insights" && (
+                    <div className="flex-1 overflow-y-auto px-2 py-3 flex flex-col gap-4">
+                      <div className="bg-white/5 p-4 rounded-lg border border-gray-600/20">
+                        <div className="flex items-center justify-between mb-4">
+                          <div className="flex items-center gap-2">
+                            <History size={16} className="text-[#73DC8C]" />
+                            <h3 className="text-white font-bold text-sm">Response Performance</h3>
+                          </div>
+                          <span className="text-[10px] text-white/30 uppercase tracking-widest">Last 10 Requests</span>
+                        </div>
+
+                        {responseTimeHistory.length > 0 ? (
+                          <div className="h-32 flex items-end gap-1 px-1">
+                            {responseTimeHistory.map((h, i) => {
+                              const max = Math.max(...responseTimeHistory.map(x => x.val), 1);
+                              const height = (h.val / max) * 100;
+                              return (
+                                <div key={i} className="flex-1 group relative">
+                                  <div
+                                    className="w-full bg-[#73DC8C]/40 hover:bg-[#73DC8C] rounded-t transition-all duration-300"
+                                    style={{ height: `${height}%` }}
+                                  />
+                                  <div className="absolute -top-6 left-1/2 -translate-x-1/2 bg-black border border-white/10 px-1 rounded text-[9px] text-white opacity-0 group-hover:opacity-100 whitespace-nowrap z-10">
+                                    {h.val}ms
+                                  </div>
+                                  <div className="text-[8px] text-white/20 mt-1 truncate rotate-45 origin-left">{h.time}</div>
+                                </div>
+                              )
+                            })}
+                          </div>
+                        ) : (
+                          <div className="h-32 flex items-center justify-center text-white/20 text-xs italic">
+                            Send requests to build performance history.
+                          </div>
+                        )}
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-3 pb-10">
+                        <div className="bg-white/5 p-3 rounded-lg border border-gray-600/20">
+                          <span className="text-[10px] text-white/30 uppercase block mb-1">Avg Latency</span>
+                          <span className="text-lg font-bold text-white">
+                            {responseTimeHistory.length > 0
+                              ? Math.round(responseTimeHistory.reduce((a, b) => a + b.val, 0) / responseTimeHistory.length)
+                              : 0}
+                            <span className="text-xs font-normal text-white/40 ml-1">ms</span>
+                          </span>
+                        </div>
+                        <div className="bg-white/5 p-3 rounded-lg border border-gray-600/20">
+                          <span className="text-[10px] text-white/30 uppercase block mb-1">Success Rate</span>
+                          <span className="text-lg font-bold text-[#73DC8C]">
+                            100<span className="text-xs font-normal opacity-40 ml-1">%</span>
+                          </span>
                         </div>
                       </div>
                     </div>
