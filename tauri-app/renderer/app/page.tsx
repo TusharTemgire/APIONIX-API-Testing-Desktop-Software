@@ -1197,13 +1197,14 @@ export default function Home() {
   if (!isLoaded) {
     return (
       <div className="min-h-svh flex items-center gap-1 justify-center bg-[#191515]">
-        <Loader className="animate-spin" size={14} />
         <div className="relative z-10 flex flex-col items-center">
           <div className="">
-            <img src="/tronix-icon.png" alt="APIONIX Logo" className="w-[80px] h-[80px] rounded-2xl shadow-sm object-contain" />
+            <img src="/tronix-icon.png" alt="APIONIX Logo" className="w-[80px] h-[80px] border border-[#73DC8C]/20 rounded-2xl shadow-sm object-contain" />
           </div>
           <div className="text-[#73DC8C] text-3xl tracking-wide">APIONIX</div>
-          <div className="text-[#3a9c66] text-xs font-medium">Loading...</div>
+          <div className="flex items-center gap-1">
+            <Loader className="animate-spin" size={12} /><div className="text-[#3a9c66] tracking-[0.1em] text-xs font-medium">Loading...</div>
+          </div>
         </div>
       </div>
     );
