@@ -1,12 +1,12 @@
 "use client"
 
 import { useState } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/renderer/components/ui/card"
-import { Button } from "@/renderer/components/ui/button"
-import { Input } from "@/renderer/components/ui/input"
-import { Label } from "@/renderer/components/ui/label"
-import { Separator } from "@/renderer/components/ui/separator"
-import { Badge } from "@/renderer/components/ui/badge"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card"
+import { Button } from "../ui/button"
+import { Input } from "../ui/input"
+import { Label } from "../ui/label"
+import { Separator } from "../ui/separator"
+import { Badge } from "../ui/badge"
 import { Folder, File, Upload, Download, Plus, Search } from "lucide-react"
 
 import { message } from "@tauri-apps/plugin-dialog"

@@ -264,8 +264,8 @@ function ServerForm({ initial, onSave, onCancel }: {
                             key={t}
                             onClick={() => set("authType", t)}
                             className={`flex-1 py-1.5 rounded-lg text-[10px] font-medium transition-colors border ${form.authType === t
-                                    ? "bg-[#73DC8C]/15 text-[#73DC8C] border-[#73DC8C]/30"
-                                    : "bg-black/20 text-white/40 border-white/10 hover:bg-white/5"
+                                ? "bg-[#73DC8C]/15 text-[#73DC8C] border-[#73DC8C]/30"
+                                : "bg-black/20 text-white/40 border-white/10 hover:bg-white/5"
                                 }`}
                         >
                             {t === "none" ? "None" : t === "basic" ? "Basic Auth" : "API Key"}
@@ -320,8 +320,8 @@ function ServerForm({ initial, onSave, onCancel }: {
                     onClick={handleSave}
                     disabled={!valid}
                     className={`flex-1 py-2 rounded-lg text-xs font-medium transition-all ${valid
-                            ? "bg-[#73DC8C] text-black hover:bg-[#66c97f]"
-                            : "bg-[#73DC8C]/30 text-white/30 cursor-not-allowed"
+                        ? "bg-[#73DC8C] text-black hover:bg-[#66c97f]"
+                        : "bg-[#73DC8C]/30 text-white/30 cursor-not-allowed"
                         }`}
                 >
                     <div className="flex items-center justify-center gap-1"><Check size={12} />{initial?.id ? "Save Changes" : "Add Server"}</div>
@@ -511,17 +511,11 @@ export default function ServerMonitor() {
                 </div>
                 <button
                     onClick={() => setMode("add")}
-                    className="flex items-center gap-2 px-4 py-2 bg-[#73DC8C] text-black text-xs font-semibold rounded-lg hover:bg-[#66c97f] transition-colors shadow-[0_0_12px_rgba(115,220,140,0.2)]"
+                    className="flex items-center gap-2 px-4 py-2 bg-[#73DC8C] text-black text-xs font-semibold rounded-lg hover:bg-[#66c97f] transition-colors"
                 >
                     <Plus size={13} />
                     Add Your First Server
                 </button>
-                {mode === "add" && (
-                    <ServerForm
-                        onSave={handleSave}
-                        onCancel={() => setMode("list")}
-                    />
-                )}
             </div>
         );
     }

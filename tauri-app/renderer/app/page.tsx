@@ -1138,7 +1138,7 @@ export default function Home() {
           <div className="flex items-center gap-1 ">
             <button
               onClick={addNewTab}
-              className="p-1.5 hover:bg-white/10 bg-white/5 rounded-md transition-colors duration-200 flex items-center gap-1"
+              className="p-1.5 hover:bg-white/10 bg-white/5 rounded-md transition-colors duration-200 flex items-center justify-center gap-1"
             >
               <Layers size={14} className="text-white/60" />
               <span className="text-white/80 text-[10px]">Environment</span>
@@ -1146,14 +1146,14 @@ export default function Home() {
             <div className="w-px h-4 bg-white/10 mx-0.5" />
             <button
               onClick={() => setActiveView(activeView === "monitor" ? "api" : "monitor")}
-              className={`p-1.5 rounded-md transition-colors duration-200 flex items-center gap-1 ${activeView === "monitor"
+              className={`p-1.5 rounded-md transition-colors duration-200 flex items-center justify-center gap-1 ${activeView === "monitor"
                 ? "bg-[#73DC8C]/15 text-[#73DC8C]"
                 : "hover:bg-white/10 bg-white/5 text-white/60"
                 }`}
               title="Server Monitor"
             >
               <Monitor size={14} />
-              <span className="text-[10px]">Monitor</span>
+              <span className="text-[10px]">Server Monitor</span>
             </button>
           </div>
         </div>
@@ -2906,7 +2906,7 @@ export default function Home() {
                                     <span>Sending request...</span>
                                   </div>
                                 ) : (
-                                  <span>
+                                  <span className="font-light opacity-50">
                                     No response data available. Send a request to
                                     see the response.
                                   </span>

@@ -1,10 +1,10 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/renderer/components/ui/card"
-import { Button } from "@/renderer/components/ui/button"
-import { Badge } from "@/renderer/components/ui/badge"
-import { Separator } from "@/renderer/components/ui/separator"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "../ui/card"
+import { Button } from "../ui/button"
+import { Badge } from "../ui/badge"
+import { Separator } from "../ui/separator"
 import { Monitor, Cpu, HardDrive, Wifi, RefreshCw } from "lucide-react"
 
 import { type, arch, version } from "@tauri-apps/plugin-os"
