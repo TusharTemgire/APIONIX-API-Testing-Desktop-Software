@@ -12,6 +12,7 @@
   <img src="https://img.shields.io/badge/Next.js-15-000000?logo=next.js&logoColor=fff" alt="Next.js" />
   <img src="https://img.shields.io/badge/TypeScript-5.0-3178C6?logo=typescript&logoColor=fff" alt="TypeScript" />
   <img src="https://img.shields.io/badge/Rust-Stable-000000?logo=rust&logoColor=fff" alt="Rust" />
+  <img src="https://img.shields.io/badge/Sileo-Toasts-0ea5e9?logo=react&logoColor=fff" alt="Sileo" />
   <img src="https://img.shields.io/badge/Platform-Windows%20%7C%20macOS%20%7C%20Linux-lightgrey" alt="Platform" />
 </div>
 
@@ -25,13 +26,12 @@ Say goodbye to massive memory footprints and electron-based limitations. **Just 
 
 ## 📑 Table of Contents
 1. [Core Features](#-core-features)
-2. [Tech Stack & Architecture](#-tech-stack--architecture)
+2. [Tech Stack & Architecture Details](#-tech-stack--architecture-details)
 3. [System Prerequisites](#-system-prerequisites)
 4. [Getting Started](#-getting-started)
 5. [Building for Production](#-building-for-production)
 6. [Troubleshooting](#%EF%B8%8F-troubleshooting)
 7. [Upcoming Roadmap](#-upcoming-roadmap)
-8. [Contributing](#-contributing)
 
 ---
 
@@ -66,13 +66,28 @@ All of your workspaces, configs, saved secrets, and endpoints are securely store
 
 ---
 
-## 🛠️ Tech Stack & Architecture
+## 🛠️ Tech Stack & Architecture Details
 
-- **[Tauri v2](https://v2.tauri.app/)**: Next-generation web-viewer OS bindings (Rust)
-- **[Next.js 15 (App Router)](https://nextjs.org/)**: Deployed as a statically exported client
-- **[Tailwind CSS](https://tailwindcss.com/) & [Lucide React](https://lucide.dev/)**: Beautiful styling architectures and vector graphics
-- **[Recharts](https://recharts.org/)**: Dynamic data visualization for Load Testing
-- **[Radix UI](https://www.radix-ui.com/)**: Headless accessible component primitives 
+APIONIX uses a multi-layered architecture separating OS-level logic and high-performance threading from complex UI rendering.
+
+### 1. **Core Backbone: Tauri & Rust**
+- **[Tauri v2](https://v2.tauri.app/)**: Used as our application runtime manager. Tauri replaces Electron, providing the native OS webview container, drastically reducing install sizes and runtime memory overhead.
+- **Rust**: Handles system-level operations, secure file system access, and OS window management natively.
+
+### 2. **Frontend Architecture: Next.js & React**
+- **[Next.js 15 (App Router)](https://nextjs.org/)**: Configured as a Statically Exported Client (`output: "export"`). It powers the entire layout, efficient routing, and strict React compilation. Next.js components are fully hydrated into the Tauri Webview.
+- **[React 18](https://react.dev/)**: Handles complex state management, including heavily synchronized inputs, load-testing worker tracking, and highly nested JSON states for API configurations.
+- **[TypeScript](https://www.typescriptlang.org/)**: Enforces strict typing across all request payloads, component props, and API state responses to eliminate runtime errors.
+
+### 3. **Design System & UI Tooling**
+- **[Tailwind CSS (v3.4)](https://tailwindcss.com/)**: Serves as our primary utility-first CSS framework. It constructs the responsive flex layouts, grid systems, custom glassmorphism effects, and highly specific dark-mode (`#191515`) aesthetics.
+- **[Lucide React](https://lucide.dev/)**: Provides clean, consistent, customizable vector icons for all buttons, menus, and visual indicators.
+- **[React Resizable Panels](https://github.com/bvaughn/react-resizable-panels)**: Empowers the complex draggable layouts. It is used to split the application into draggable quadrants (Request config vs Response view).
+- **[Radix UI](https://www.radix-ui.com/)**: Supplies the accessible, unstyled primitives for complex interactive components like dropdowns, dialogues, tabs, and more.
+
+### 4. **Enhanced User Experience Modules**
+- **[Sileo](https://sileo.aaryan.design/)**: Provides buttery-smooth, natively animated toast notifications using gooey SVG morphing and spring physics. Implemented for conveying successful API calls, load test completions, validation notices, and system errors seamlessly without bloat.
+- **[Recharts](https://recharts.org/)**: A composable charting library built on React components. Used purely for our innovative real-time **Load Testing module**, rendering instantaneous performance matrices (p95 metrics) dynamically as requests are fired.
 
 ---
 
@@ -103,7 +118,7 @@ Once your prerequisites are resolved, developing on APIONIX is seamless:
    ```bash
    npm run dev
    ```
-   > _This single macro command launches Next.js on `localhost`, establishes the Rust IPC bridge, opens your Tauri desktop simulator, and natively enables Hot Module Replacement (HMR) for instant UI updates as you type!_
+   > _This single macro command launches Next.js on `localhost:3005`, establishes the Rust IPC bridge, opens your Tauri desktop simulator, and natively enables Hot Module Replacement (HMR) for instant UI updates as you type!_
 
 ---
 
@@ -140,7 +155,7 @@ This occurs if the Rust Toolchain is either missing or not fully initialized on 
    ```
 3. Ensure Cargo is in your system PATH by running:
    ```powershell
-   $env:PATH += ";$env:USERPROFILE\.cargo\bin"
+   $env:PATH += ";$env:USERPROFILE\\.cargo\\bin"
    ```
 4. Restart your Terminal or VS Code and try `npm run dev` again!
 
